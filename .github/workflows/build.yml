@@ -91,5 +91,17 @@ jobs:
       # Restore + build only the Android project (and its OWCE.csproj project
       # reference) rather than the whole .sln, so this job doesn't get tangled up in
       # the iOS/macOS/WatchOS projects it isn't meant to touch.
-      - name: Restore and build
-        run: msbuild OWCE/OWCE.Android/OWCE.Android.csproj /t:Restore,Build /p:Configuration=Debug /p:Platform=AnyCPU /p:JavaSdkDirectory="${{ env.JAVA_HOME }}" /m /v:minimal
+      #
+      # Restore and Build are deliberately separate msbuild invocations, not a single
+      # `/t:Restore,Build`. This is a classic (non-SDK-style) Xamarin.Android project,
+      # and with those, combining both targets in one invocation doesn't reliably let
+      # MSBuild pick up newly-restored referenced libraries' Android resources (eg
+      # AndroidX AppCompat, pulled in transitively by Xamarin.Forms) before the aapt2
+      # resource-linking step runs, causing "resource ... not found" errors even though
+      # the resource is very much present in the graph. Restoring first as its own step
+      # avoids that.
+      - name: Restore
+        run: msbuild OWCE/OWCE.Android/OWCE.Android.csproj /t:Restore /p:Configuration=Debug /p:Platform=AnyCPU /v:minimal
+
+      - name: Build
+        run: msbuild OWCE/OWCE.Android/OWCE.Android.csproj /t:Build /p:Configuration=Debug /p:Platform=AnyCPU /p:JavaSdkDirectory="${{ env.JAVA_HOME }}" /m /v:minimal
