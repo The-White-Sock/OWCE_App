@@ -551,9 +551,11 @@ namespace OWCE
         List<OWBoardEvent> _initialEvents;
         Ride _currentRide = null;
         bool _keepHandshakeBackgroundRunning = false;
+        bool _keepRSSIMonitorRunning = false;
         List<byte> _handshakeBuffer = null;
         bool _isHandshaking = false;
         TaskCompletionSource<byte[]> _handshakeTaskCompletionSource = null;
+        bool _isTornDown = false;
 
         public OWBoard(IOWBLE owble, OWBaseBoard baseBoard) : base(baseBoard)
         {
@@ -575,6 +577,30 @@ namespace OWCE
             // Subscribe to property changes to keep watch app in sync
             // (eg speed, battery percent changes)
             this.PropertyChanged += WatchSyncEventHandler.HandlePropertyChanged;
+        }
+
+        // Undoes everything done in the constructor/SubscribeToBLE, and stops any
+        // background timers. Must be called when the board is disconnected/discarded,
+        // otherwise this instance (and its timers) will keep running forever even
+        // though nothing references it anymore.
+        public void Teardown()
+        {
+            if (_isTornDown)
+            {
+                return;
+            }
+
+            _isTornDown = true;
+
+            _keepHandshakeBackgroundRunning = false;
+            _keepRSSIMonitorRunning = false;
+
+            _owble.BoardValueChanged -= OWBLE_BoardValueChanged;
+            _owble.RSSIUpdated -= OWBLE_RSSIUpdated;
+
+            this.PropertyChanged -= WatchSyncEventHandler.HandlePropertyChanged;
+
+            MessagingCenter.Unsubscribe<App>(this, App.UnitDisplayUpdatedKey);
         }
 
         public virtual void Init()
@@ -658,8 +684,15 @@ namespace OWCE
 
         private void RSSIMonitor()
         {
+            _keepRSSIMonitorRunning = true;
+
             Device.StartTimer(TimeSpan.FromSeconds(0.5), () =>
             {
+                if (_keepRSSIMonitorRunning == false)
+                {
+                    return false;
+                }
+
                 try
                 {
                     App.Current.OWBLE.RequestRSSIUpdate();
@@ -668,7 +701,7 @@ namespace OWCE
                 {
                     System.Diagnostics.Debug.WriteLine("RSSI fetch error: " + err.Message);
                 }
-                return true;
+                return _keepRSSIMonitorRunning;
             });
         }
 
@@ -870,6 +903,17 @@ namespace OWCE
             byte[] firmwareRevision = GetBytesForBoardFromUInt16((UInt16)FirmwareRevision, FirmwareRevisionUUID);
 
             var didWrite = await _owble.WriteValue(OWBoard.FirmwareRevisionUUID, firmwareRevision, true);
+
+            // Guard against the board never sending the full handshake response (eg it
+            // disconnected mid-handshake) which would otherwise hang this task forever.
+            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(10));
+            var completedTask = await Task.WhenAny(_handshakeTaskCompletionSource.Task, timeoutTask);
+            if (completedTask == timeoutTask)
+            {
+                _isHandshaking = false;
+                await _owble.UnsubscribeValue(OWBoard.SerialReadUUID, true);
+                throw new Exceptions.HandshakeException("Timed out waiting for a response from the board.", true);
+            }
 
             var byteArray = await _handshakeTaskCompletionSource.Task;
 
@@ -1594,9 +1638,18 @@ namespace OWCE
 
         public async void ChangeRideMode(ushort rideMode)
         {
-            _incomingRideMode = rideMode;
-            byte[] rideModeBytes = BitConverter.GetBytes(rideMode);
-            var result = await App.Current.OWBLE.WriteValue(OWBoard.RideModeUUID, rideModeBytes, true);
+            try
+            {
+                _incomingRideMode = rideMode;
+                byte[] rideModeBytes = BitConverter.GetBytes(rideMode);
+                var result = await App.Current.OWBLE.WriteValue(OWBoard.RideModeUUID, rideModeBytes, true);
+            }
+            catch (Exception err)
+            {
+                // Board likely disconnected mid-write. Swallow rather than crash, same
+                // as every other BLE write failure path in this class.
+                Debug.WriteLine("ChangeRideMode error: " + err.Message);
+            }
         }
     }
 }

@@ -367,7 +367,17 @@ namespace OWCE.Pages
                 }));
                 await PopupNavigation.Instance.PushAsync(connectingAlert, true);
 
-                var board = await App.Current.ConnectToBoard(baseBoard, cancellationTokenSource.Token);
+                OWBoard board = null;
+                try
+                {
+                    board = await App.Current.ConnectToBoard(baseBoard, cancellationTokenSource.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    // User tapped "Cancel" on the connecting popup. Connect() now
+                    // actually observes the cancellation token instead of ignoring it.
+                    board = null;
+                }
                 await PopupNavigation.Instance.PopAllAsync();
                 if (board != null)
                 {

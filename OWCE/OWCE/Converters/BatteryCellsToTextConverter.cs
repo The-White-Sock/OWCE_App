@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Globalization;
-using System.Linq;
 using System.Text;
+using OWCE.Models;
 using Xamarin.Forms;
 
 namespace OWCE.Converters
@@ -12,13 +11,16 @@ namespace OWCE.Converters
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is Dictionary<uint, uint> batteryCells)
+            // Was previously checking for `Dictionary<uint, uint>`, but OWBoard.BatteryCells
+            // is actually a Models.BatteryCells - the type check never matched, so this
+            // converter always fell through to "Unknown".
+            if (value is BatteryCells batteryCells)
             {
                 var sb = new StringBuilder();
-                foreach (var cell in batteryCells.Keys.OrderBy(k => k))
+                for (uint cellID = 0; cellID < batteryCells.CellCount; ++cellID)
                 {
-                    double voltage = batteryCells[cell] / 50.0;
-                    sb.AppendLine($"{cell}: {batteryCells[cell]} ({voltage:N2}V)");
+                    var voltage = batteryCells.GetCell(cellID);
+                    sb.AppendLine($"{cellID}: ({voltage:N2}V)");
                 }
 
                 return sb.ToString();

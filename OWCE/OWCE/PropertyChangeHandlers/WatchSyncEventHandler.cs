@@ -31,7 +31,7 @@ namespace OWCE.PropertyChangeHandlers
             if (propertyName == null || propertyName.Equals("RPM"))
             {
                 int rpm = board.RPM;
-                int speed = (int)RpmToSpeedConverter.ConvertFromRpm(rpm);
+                int speed = (int)RpmToSpeedConverter.ConvertFromRpm(rpm, board.WheelCircumference);
                 watchUpdates[WatchMessage.Speed] = speed;
             }
 
@@ -44,7 +44,7 @@ namespace OWCE.PropertyChangeHandlers
             if (propertyName == null || propertyName.Equals("TripOdometer"))
             {
                 ushort tripOdometer = board.TripOdometer;
-                string tripDescription = RotationsToDistanceConverter.ConvertRotationsToDistance(tripOdometer);
+                string tripDescription = RotationsToDistanceConverter.ConvertRotationsToDistance(tripOdometer, board.WheelCircumference);
                 watchUpdates[WatchMessage.Distance] = tripDescription;
             }
 
