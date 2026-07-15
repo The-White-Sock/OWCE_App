@@ -8,10 +8,17 @@ name: Build
 #   Xamarin toolchain needed. This is the fastest, most reliable check and will catch
 #   the majority of compile errors in the codebase.
 #
-# - `build-android` builds OWCE/OWCE.Android/OWCE.Android.csproj with MSBuild on
-#   windows-latest. GitHub's windows-latest runner image ships Visual Studio with the
-#   classic Xamarin component preinstalled, so no extra Xamarin/Android SDK
-#   installation step is required.
+# - `build-android` builds OWCE/OWCE.Android/OWCE.Android.csproj with MSBuild on the
+#   windows-2022 runner image (Visual Studio 2022), which ships the classic Xamarin
+#   component preinstalled, so no extra Xamarin/Android SDK installation step is
+#   required. This is pinned deliberately rather than using windows-latest: as of June
+#   2026 windows-latest moved to a Visual Studio 2026-based image that dropped the
+#   classic Xamarin component entirely (it's only relevant to VS2022-era tooling like
+#   this project's non-SDK-style Xamarin.Android/.iOS projects). windows-2022 is
+#   GitHub's officially supported/recommended runner for exactly this situation and is
+#   expected to remain available for the next few years, but since it's a fixed image
+#   rather than a rolling "latest" alias, it will eventually need to be re-evaluated
+#   once it's retired for good.
 #
 # - There is intentionally no iOS/macOS/WatchOS build job. Those projects use classic
 #   Xamarin.iOS/Xamarin.Mac, which requires a Mac. GitHub's macOS runner images no
@@ -56,7 +63,7 @@ jobs:
 
   build-android:
     name: Build Android app
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
 

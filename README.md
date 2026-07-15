@@ -34,7 +34,7 @@ NOTE: Because the app depends on the Onewheels low-energy Bluetooth, it will not
 
 [.github/workflows/build.yml](.github/workflows/build.yml) automatically builds the project on every push and pull request against `main`:
 * The shared core library (`OWCE/OWCE/OWCE.csproj`) builds on Ubuntu with just the .NET SDK - no Xamarin toolchain required.
-* The Android app (`OWCE/OWCE.Android/OWCE.Android.csproj`) builds with MSBuild on Windows, using the Xamarin component that ships with GitHub's `windows-latest` runner image.
+* The Android app (`OWCE/OWCE.Android/OWCE.Android.csproj`) builds with MSBuild on the `windows-2022` runner image, using its bundled Visual Studio 2022 Xamarin component. This is pinned rather than using `windows-latest`, which moved to a Visual Studio 2026-based image in June 2026 that dropped classic Xamarin support entirely.
 
 There's no CI job for iOS/macOS/WatchOS: those projects use classic Xamarin.iOS/Xamarin.Mac, which requires a Mac, and GitHub's macOS runner images no longer ship the classic Xamarin.iOS/Xamarin.Mac SDKs (Xamarin.Forms went out-of-support in May 2024). Building those still requires a Mac with Visual Studio for Mac (or an equivalent legacy Xamarin install) set up per the instructions above.
 
