@@ -999,19 +999,21 @@ namespace OWCE.Droid.DependencyImplementations
 
         public bool BluetoothEnabled()
         {
-            var bluetoothAdapter = Android.Bluetooth.BluetoothAdapter.DefaultAdapter;
-            if (bluetoothAdapter == null)
+            // Was using the obsolete BluetoothAdapter.DefaultAdapter static - the
+            // constructor already resolves the adapter via BluetoothManager into
+            // _adapter, so reuse that instead of a second, deprecated lookup.
+            if (_adapter == null)
             {
                 // Device does not support Bluetooth
                 return false;
             }
-            else if (bluetoothAdapter.IsEnabled == false)
+            else if (_adapter.IsEnabled == false)
             {
                 // Bluetooth is not enabled
                 return false;
             }
 
-            // Bluetooth is enabled 
+            // Bluetooth is enabled
             return true;
         }
 
