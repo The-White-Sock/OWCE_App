@@ -38,6 +38,37 @@ NOTE: Because the app depends on the Onewheels low-energy Bluetooth, it will not
 
 There's no CI job for iOS/macOS/WatchOS: those projects use classic Xamarin.iOS/Xamarin.Mac, which requires a Mac, and GitHub's macOS runner images no longer ship the classic Xamarin.iOS/Xamarin.Mac SDKs (Xamarin.Forms went out-of-support in May 2024). Building those still requires a Mac with Visual Studio for Mac (or an equivalent legacy Xamarin install) set up per the instructions above.
 
+### Releasing a signed Android APK
+
+[.github/workflows/release-android.yml](.github/workflows/release-android.yml) builds a signed, sideload-ready Android release APK and attaches it to a new GitHub Release. It does **not** publish to Google Play - there's no Play Store distribution set up for this project, this is for direct/manual distribution only. There's no equivalent release automation for iOS/macOS/WatchOS, for the same toolchain reasons CI doesn't cover them.
+
+To cut a release:
+
+```
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+This builds `OWCE-1.2.3.apk`, signed with the repository's release keystore, and attaches it to a new GitHub Release named "OWCE 1.2.3". The workflow can also be run manually from the Actions tab (`workflow_dispatch`) by entering a version number by hand.
+
+**One-time setup required** before this works: add these repository secrets under *Settings → Secrets and variables → Actions*:
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | Base64-encoded contents of your release `.keystore` file |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore password |
+| `ANDROID_KEY_ALIAS` | Key alias inside the keystore |
+| `ANDROID_KEY_PASSWORD` | Key password (same as the store password for PKCS12-format keystores, which is what modern `keytool` produces by default) |
+
+If you don't have a keystore yet, generate one with:
+
+```
+keytool -genkeypair -v -keystore owce-release.keystore -alias owce -keyalg RSA -keysize 2048 -validity 10000
+base64 -w0 owce-release.keystore > owce-release-keystore.base64.txt
+```
+
+**Keep the keystore file and its passwords somewhere safe outside the repo** (e.g. a password manager) - anyone with them can sign an APK that impersonates this app to any device that's ever installed it, and losing them means no future release can be signed to match a previous one, breaking updates for anyone who sideloaded an earlier version.
+
 ### Regenerating the Protobuf classes
 
 If you change [Protobuf/OWBoardEvent.proto](Protobuf/OWBoardEvent.proto), run [Protobuf/build.sh](Protobuf/build.sh) (requires `protoc`) to regenerate the C# code. It writes straight into `OWCE/OWCE/Protobuf/`, which is what the app actually builds from, so no manual copy step is needed afterwards.
