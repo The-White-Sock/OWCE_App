@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.IO;
 using OWCE.Network;
+using Xamarin.Forms;
 
 namespace OWCE.Pages
 {
@@ -52,8 +53,14 @@ namespace OWCE.Pages
                     while (inputFile.Position < inputFile.Length);
                 }
 
-                BoardEvents = null;
-                BoardEvents = boardEvents;            
+                // BoardEvents is bound to ViewRawRideDataPage's CollectionView.ItemsSource -
+                // raising its PropertyChanged off this background thread is unsafe (can
+                // crash on iOS/Android), so marshal the assignment to the main thread.
+                Device.BeginInvokeOnMainThread(() =>
+                {
+                    BoardEvents = null;
+                    BoardEvents = boardEvents;
+                });
             });
         }
     }

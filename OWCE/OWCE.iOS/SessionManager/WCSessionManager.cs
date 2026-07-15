@@ -29,6 +29,14 @@ namespace WatchConnectivity
 		{
 			get
 			{
+				// session is null on devices where WCSession.IsSupported is false - eg
+				// iPad, which this app also targets (Info.plist declares UIDeviceFamily
+				// 1 and 2) but which cannot pair with an Apple Watch at all.
+				if (session == null)
+				{
+					return null;
+				}
+
 #if __IOS__
 				System.Diagnostics.Debug.WriteLine($"Paired status:{(session.Paired ? '✓' : '✗')}");
 				System.Diagnostics.Debug.WriteLine($"Watch App Installed status:{(session.WatchAppInstalled ? '✓' : '✗')}\n");
@@ -43,7 +51,7 @@ namespace WatchConnectivity
 		{
 			get
 			{
-				return session.Reachable ? validSession : null;
+				return session != null && session.Reachable ? validSession : null;
 			}
 		}
 

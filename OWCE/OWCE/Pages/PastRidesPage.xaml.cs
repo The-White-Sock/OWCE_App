@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using OWCE.Views;
@@ -80,6 +81,14 @@ namespace OWCE.Pages
             {
                 Database.Connection.Delete(ride);
                 Rides.Remove(ride);
+
+                // The DB row is only half of a ride - the recorded telemetry lives in its
+                // own .bin file, which was previously never cleaned up here.
+                var dataFilePath = Path.Combine(App.Current.LogsDirectory, ride.DataFileName);
+                if (File.Exists(dataFilePath))
+                {
+                    File.Delete(dataFilePath);
+                }
             }
         }
 

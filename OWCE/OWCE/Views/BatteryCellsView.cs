@@ -28,6 +28,7 @@ namespace OWCE.Views
         */
 
         Dictionary<uint, Label> _cellLables = new Dictionary<uint, Label>();
+        BatteryCells _subscribedBatteryCells = null;
 
         public BatteryCellsView()
         {
@@ -49,10 +50,16 @@ namespace OWCE.Views
 
             if (BindingContextProperty.PropertyName.Equals(propertyName))
             {
-                // TODO: Unsubscribe from this.
+                if (_subscribedBatteryCells != null)
+                {
+                    _subscribedBatteryCells.PropertyChanged -= BatteryCells_PropertyChanged;
+                    _subscribedBatteryCells = null;
+                }
+
                 if (BindingContext is BatteryCells batteryCells)
                 {
                     batteryCells.PropertyChanged += BatteryCells_PropertyChanged;
+                    _subscribedBatteryCells = batteryCells;
                     SetupGrid();
                 }
             }

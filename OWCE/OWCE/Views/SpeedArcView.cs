@@ -170,6 +170,11 @@ namespace OWCE.Views
         {
             float oldSweepAngle = _currentSweepAngle;
 
+            if (MaxRPM <= 0)
+            {
+                return;
+            }
+
             float targetSweepAngle = _totalArc * ((MaxRPM - CurrentRPM) / (float)MaxRPM);
 
             if (targetSweepAngle < _minSweepAngle)

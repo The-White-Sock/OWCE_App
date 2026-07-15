@@ -79,6 +79,11 @@ namespace OWCE
                 // Not checking against AlmostEqualTo, lets just update it regardless
                 _wheelCircumference = value;
                 OnPropertyChanged();
+
+                // SpeedValue/TripOdometerDescription are declared on OWBoard, not here,
+                // same as BoardType below already notifies for OWBoard's RideModeString.
+                OnPropertyChanged("SpeedValue");
+                OnPropertyChanged("TripOdometerDescription");
             }
         }
 

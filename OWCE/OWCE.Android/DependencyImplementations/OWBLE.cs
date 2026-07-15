@@ -204,10 +204,11 @@ namespace OWCE.Droid.DependencyImplementations
                 return;
             }
 
-            if (_connectTaskCompletionSource?.Task.IsCanceled == false && _connectTaskCompletionSource?.Task.IsCompleted == false)
+            // TrySetResult (not SetResult): cancelling the "connecting..." popup can
+            // race with this callback landing on the GATT thread, and SetResult throws
+            // if the task was already cancelled in that window.
+            if (_connectTaskCompletionSource?.TrySetResult(true) == true)
             {
-                _connectTaskCompletionSource.SetResult(true);
-
                 // TODO: Fix this.
                 //BoardConnected?.Invoke(new OWBoard(_board));
             }
@@ -346,16 +347,25 @@ namespace OWCE.Droid.DependencyImplementations
 
                 if (_reconnecting)
                 {
-                    // The reconnect attempt itself failed at the connection level - retry.
-                    Reconnect();
+                    // The reconnect attempt itself failed at the connection level. Close
+                    // this failed GATT client before retrying - Reconnect() replaces
+                    // _bluetoothGatt with a new one via ConnectGatt(), so without this the
+                    // failed client would never get closed.
+                    gatt.Close();
+                    if (gatt == _bluetoothGatt)
+                    {
+                        _bluetoothGatt = null;
+                        _gattCallback = null;
+                    }
+
+                    RetryReconnect();
                     return;
                 }
 
-                if (_connectTaskCompletionSource != null && _connectTaskCompletionSource.Task.IsCanceled == false)
-                {
-                    _connectTaskCompletionSource.SetResult(false);
-                }
-
+                // TrySetResult (not SetResult): cancelling the "connecting..." popup can
+                // race with this callback landing on the GATT thread, and SetResult
+                // throws if the task was already cancelled in that window.
+                _connectTaskCompletionSource?.TrySetResult(false);
                 return;
             }
 
@@ -363,6 +373,7 @@ namespace OWCE.Droid.DependencyImplementations
             {
                 var wasStillConnecting = _reconnecting == false && _connectTaskCompletionSource != null &&
                     _connectTaskCompletionSource.Task.IsCanceled == false && _connectTaskCompletionSource.Task.IsCompleted == false;
+                var wasReconnecting = _reconnecting;
 
                 // Release the native GATT client now that the disconnect is confirmed by
                 // the OS. This was previously never called anywhere, leaking Android's
@@ -377,8 +388,9 @@ namespace OWCE.Droid.DependencyImplementations
 
                 if (wasStillConnecting)
                 {
-                    // Failed during the initial connection attempt.
-                    _connectTaskCompletionSource.SetResult(false);
+                    // Failed during the initial connection attempt. TrySetResult (not
+                    // SetResult) for the same reason as above.
+                    _connectTaskCompletionSource?.TrySetResult(false);
                     return;
                 }
 
@@ -387,8 +399,17 @@ namespace OWCE.Droid.DependencyImplementations
                 if (_requestingDisconnect == false)
                 {
                     // Board dropped out of range/lost power unexpectedly - try to recover,
-                    // same as the iOS implementation already does.
-                    Reconnect();
+                    // same as the iOS implementation already does. Back off briefly if this
+                    // is a retry (a reconnect attempt that itself disconnected again),
+                    // rather than hammering ConnectGatt() in a tight loop.
+                    if (wasReconnecting)
+                    {
+                        RetryReconnect();
+                    }
+                    else
+                    {
+                        Reconnect();
+                    }
                 }
             }
         }
@@ -680,17 +701,10 @@ namespace OWCE.Droid.DependencyImplementations
             _requestingDisconnect = true;
             _reconnecting = false;
 
-            if (_connectTaskCompletionSource != null && _connectTaskCompletionSource.Task.IsCanceled == false && _connectTaskCompletionSource.Task.IsCompleted == false && _connectTaskCompletionSource.Task.IsFaulted == false)
-            {
-                try
-                {
-                    _connectTaskCompletionSource.SetCanceled();
-                }
-                catch (Exception err)
-                {
-                    Debugger.Break();
-                }
-            }
+            // TrySetCanceled: this runs on whatever thread calls Disconnect(), which can
+            // race with a GATT callback resolving the same TaskCompletionSource on the
+            // Binder callback thread.
+            _connectTaskCompletionSource?.TrySetCanceled();
 
             _connectTaskCompletionSource = null;
 
@@ -728,6 +742,21 @@ namespace OWCE.Droid.DependencyImplementations
                 _gattCallback = new OWBLE_BluetoothGattCallback(this);
                 _bluetoothGatt = device.ConnectGatt(Xamarin.Essentials.Platform.CurrentActivity, false, _gattCallback);
             }
+        }
+
+        // Used when a reconnect attempt itself fails, to avoid hammering ConnectGatt()
+        // in a tight loop (Android's BLE stack does not respond well to rapid repeated
+        // connection attempts) if the board is genuinely out of range for a while.
+        private void RetryReconnect()
+        {
+            Device.StartTimer(TimeSpan.FromSeconds(2), () =>
+            {
+                if (_requestingDisconnect == false)
+                {
+                    Reconnect();
+                }
+                return false;
+            });
         }
 
         public async void StartScanning()
