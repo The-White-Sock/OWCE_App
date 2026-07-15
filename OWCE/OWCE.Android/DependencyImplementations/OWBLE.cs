@@ -133,10 +133,21 @@ namespace OWCE.Droid.DependencyImplementations
                 _owble.OnConnectionStateChange(gatt, status, newState);
             }
 
+            // Pre-API 33 callback. Only ever invoked on devices where the OS doesn't
+            // know about the API 33+ overload below - Android calls exactly one of the
+            // two depending on the device's OS version, never both.
             public override void OnCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, GattStatus status)
             {
                 Debug.WriteLine("OnCharacteristicRead: " + characteristic.Uuid);
                 _owble.OnCharacteristicRead(gatt, characteristic, status);
+            }
+
+            // API 33+ callback - delivers the value directly instead of requiring a
+            // separate characteristic.GetValue() call after the fact.
+            public override void OnCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] value, GattStatus status)
+            {
+                Debug.WriteLine("OnCharacteristicRead: " + characteristic.Uuid);
+                _owble.OnCharacteristicRead(gatt, characteristic, value, status);
             }
 
             public override void OnCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, GattStatus status)
@@ -145,16 +156,32 @@ namespace OWCE.Droid.DependencyImplementations
                 _owble.OnCharacteristicWrite(gatt, characteristic, status);
             }
 
+            // Pre-API 33 callback.
             public override void OnCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic)
             {
                 Debug.WriteLine("OnCharacteristicChanged: " + characteristic.Uuid);
                 _owble.OnCharacteristicChanged(gatt, characteristic);
             }
 
+            // API 33+ callback - delivers the value directly.
+            public override void OnCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] value)
+            {
+                Debug.WriteLine("OnCharacteristicChanged: " + characteristic.Uuid);
+                _owble.OnCharacteristicChanged(gatt, characteristic, value);
+            }
+
+            // Pre-API 33 callback.
             public override void OnDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, GattStatus status)
             {
                 Debug.WriteLine($"OnDescriptorRead: {descriptor.Characteristic.Uuid}, {descriptor.Uuid}");
                 _owble.OnDescriptorRead(gatt, descriptor, status);
+            }
+
+            // API 33+ callback.
+            public override void OnDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, GattStatus status, byte[] value)
+            {
+                Debug.WriteLine($"OnDescriptorRead: {descriptor.Characteristic.Uuid}, {descriptor.Uuid}");
+                _owble.OnDescriptorRead(gatt, descriptor, status, value);
             }
 
             public override void OnDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, GattStatus status)
@@ -444,8 +471,18 @@ namespace OWCE.Droid.DependencyImplementations
                     break;
 
                 case OWBLE_QueueItemOperationType.Write:
-                    bool didSetValue = item.Characteristic.SetValue(item.Data);
-                    bool didWrite = _bluetoothGatt.WriteCharacteristic(item.Characteristic);
+                    bool didWrite;
+                    if (_sdkInt >= Android.OS.BuildVersionCodes.Tiramisu) // 33
+                    {
+                        didWrite = _bluetoothGatt.WriteCharacteristic(item.Characteristic, item.Data, (int)GattWriteType.Default) == 0;
+                    }
+                    else
+                    {
+#pragma warning disable CS0618
+                        item.Characteristic.SetValue(item.Data);
+                        didWrite = _bluetoothGatt.WriteCharacteristic(item.Characteristic);
+#pragma warning restore CS0618
+                    }
                     if (didWrite == false)
                     {
                         Debug.WriteLine($"ERROR {queueNumber}: Unable to write {item.Characteristic.Uuid}");
@@ -460,8 +497,19 @@ namespace OWCE.Droid.DependencyImplementations
                     }
 
                     var subscribeDescriptor = item.Characteristic.GetDescriptor(UUID.FromString("00002902-0000-1000-8000-00805f9b34fb"));
-                    bool didSetSubscribeDescriptor = subscribeDescriptor.SetValue(BluetoothGattDescriptor.EnableNotificationValue.ToArray());
-                    bool didWriteSubscribeDescriptor = _bluetoothGatt.WriteDescriptor(subscribeDescriptor);
+                    var enableNotificationValue = BluetoothGattDescriptor.EnableNotificationValue.ToArray();
+                    bool didWriteSubscribeDescriptor;
+                    if (_sdkInt >= Android.OS.BuildVersionCodes.Tiramisu) // 33
+                    {
+                        didWriteSubscribeDescriptor = _bluetoothGatt.WriteDescriptor(subscribeDescriptor, enableNotificationValue) == 0;
+                    }
+                    else
+                    {
+#pragma warning disable CS0618
+                        subscribeDescriptor.SetValue(enableNotificationValue);
+                        didWriteSubscribeDescriptor = _bluetoothGatt.WriteDescriptor(subscribeDescriptor);
+#pragma warning restore CS0618
+                    }
                     break;
 
                 case OWBLE_QueueItemOperationType.Unsubscribe:
@@ -472,13 +520,40 @@ namespace OWCE.Droid.DependencyImplementations
                     }
 
                     var unsubscribeDescriptor = item.Characteristic.GetDescriptor(UUID.FromString("00002902-0000-1000-8000-00805f9b34fb"));
-                    var didSetUnsubscribeDescriptor = unsubscribeDescriptor.SetValue(BluetoothGattDescriptor.DisableNotificationValue.ToArray());
-                    var didWriteUnsubscribeDescriptor = _bluetoothGatt.WriteDescriptor(unsubscribeDescriptor);
+                    var disableNotificationValue = BluetoothGattDescriptor.DisableNotificationValue.ToArray();
+                    bool didWriteUnsubscribeDescriptor;
+                    if (_sdkInt >= Android.OS.BuildVersionCodes.Tiramisu) // 33
+                    {
+                        didWriteUnsubscribeDescriptor = _bluetoothGatt.WriteDescriptor(unsubscribeDescriptor, disableNotificationValue) == 0;
+                    }
+                    else
+                    {
+#pragma warning disable CS0618
+                        unsubscribeDescriptor.SetValue(disableNotificationValue);
+                        didWriteUnsubscribeDescriptor = _bluetoothGatt.WriteDescriptor(unsubscribeDescriptor);
+#pragma warning restore CS0618
+                    }
                     break;
             }
         }
 
+        // Pre-API 33 callback: the value isn't delivered directly, so GetValue() is
+        // the only way to get it here.
         private void OnCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, GattStatus status)
+        {
+#pragma warning disable CS0618
+            OnCharacteristicReadValue(characteristic, status, characteristic.GetValue());
+#pragma warning restore CS0618
+        }
+
+        // API 33+ callback: value is delivered directly, avoiding GetValue() and the
+        // race window between the callback firing and a subsequent read of it.
+        private void OnCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] value, GattStatus status)
+        {
+            OnCharacteristicReadValue(characteristic, status, value);
+        }
+
+        private void OnCharacteristicReadValue(BluetoothGattCharacteristic characteristic, GattStatus status, byte[] dataBytes)
         {
             var uuid = characteristic.Uuid.ToString().ToLower();
 
@@ -498,8 +573,6 @@ namespace OWCE.Droid.DependencyImplementations
                 }
                 else
                 {
-                    var dataBytes = characteristic.GetValue();
-
                     if (OWBoard.SerialWriteUUID.Equals(uuid, StringComparison.InvariantCultureIgnoreCase) == false &&
                         OWBoard.SerialReadUUID.Equals(uuid, StringComparison.InvariantCultureIgnoreCase) == false)
                     {
@@ -530,19 +603,12 @@ namespace OWCE.Droid.DependencyImplementations
             {
                 _writeQueue.Remove(writeCharacteristicValueRequest);
 
-                var dataBytes = characteristic.GetValue();
-
-                if (OWBoard.SerialWriteUUID.Equals(uuid, StringComparison.InvariantCultureIgnoreCase) == false &&
-                    OWBoard.SerialReadUUID.Equals(uuid, StringComparison.InvariantCultureIgnoreCase) == false)
-                {
-                    // If our system is little endian, reverse the array.
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        Array.Reverse(dataBytes);
-                    }
-                }
-
-                writeCharacteristicValueRequest.CompletionSource.SetResult(dataBytes);
+                // Use the bytes we asked to write instead of reading them back via the
+                // deprecated characteristic.GetValue() - we already know exactly what
+                // was written (this is the same value WriteValue() queued below,
+                // before the endian-reversal applied for the wire), so there's no need
+                // to round-trip through native state to reconstruct it.
+                writeCharacteristicValueRequest.CompletionSource.SetResult(writeCharacteristicValueRequest.Data);
             }
 
             _gattOperationQueueProcessing = false;
@@ -550,14 +616,27 @@ namespace OWCE.Droid.DependencyImplementations
         }
 
 
+        // Pre-API 33 callback: the value isn't delivered directly, so GetValue() is
+        // the only way to get it here.
         private void OnCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic)
+        {
+#pragma warning disable CS0618
+            OnCharacteristicChangedValue(characteristic, characteristic.GetValue());
+#pragma warning restore CS0618
+        }
+
+        // API 33+ callback: value is delivered directly.
+        private void OnCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] value)
+        {
+            OnCharacteristicChangedValue(characteristic, value);
+        }
+
+        private void OnCharacteristicChangedValue(BluetoothGattCharacteristic characteristic, byte[] dataBytes)
         {
             var uuid = characteristic.Uuid.ToString().ToLower();
 
             if (_notifyList.Contains(uuid))
             {
-                var dataBytes = characteristic.GetValue();
-
                 if (OWBoard.SerialWriteUUID.Equals(uuid, StringComparison.InvariantCultureIgnoreCase) == false &&
                    OWBoard.SerialReadUUID.Equals(uuid, StringComparison.InvariantCultureIgnoreCase) == false)
                 {
@@ -573,7 +652,9 @@ namespace OWCE.Droid.DependencyImplementations
         }
 
 
-        public void OnDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, [GeneratedEnum] GattStatus status)
+        // Pre-API 33 callback. Shared by both signatures below since this is
+        // currently a no-op either way.
+        public void OnDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, [GeneratedEnum] GattStatus status, byte[] value = null)
         {
             // TODO: ?
         }
@@ -582,28 +663,23 @@ namespace OWCE.Droid.DependencyImplementations
         {
             var uuid = descriptor.Characteristic.Uuid.ToString().ToLower();
 
-            // Check if its a subscribe or unsubscribe descriptor
+            // Check if its a subscribe or unsubscribe descriptor. Disambiguated by
+            // which queue this uuid is sitting in - not by reading the descriptor's
+            // value back via the deprecated GetValue() - since we already know
+            // exactly which of the two we asked to write.
             if (descriptor.Uuid.ToString().ToLower() == "00002902-0000-1000-8000-00805f9b34fb")
             {
-                var descriptorValue = descriptor.GetValue();
-
-                if (descriptorValue.SequenceEqual(BluetoothGattDescriptor.EnableNotificationValue.ToArray()))
+                if (_subscribeQueue.ContainsKey(uuid))
                 {
-                    if (_subscribeQueue.ContainsKey(uuid))
-                    {
-                        var subscribeItem = _subscribeQueue[uuid];
-                        _subscribeQueue.Remove(uuid);
-                        subscribeItem.SetResult(descriptorValue);
-                    }
+                    var subscribeItem = _subscribeQueue[uuid];
+                    _subscribeQueue.Remove(uuid);
+                    subscribeItem.SetResult(BluetoothGattDescriptor.EnableNotificationValue.ToArray());
                 }
-                else if(descriptorValue.SequenceEqual(BluetoothGattDescriptor.DisableNotificationValue.ToArray()))
+                else if (_unsubscribeQueue.ContainsKey(uuid))
                 {
-                    if (_unsubscribeQueue.ContainsKey(uuid))
-                    {
-                        var unsubscribeItem = _unsubscribeQueue[uuid];
-                        _unsubscribeQueue.Remove(uuid);
-                        unsubscribeItem.SetResult(descriptorValue);
-                    }
+                    var unsubscribeItem = _unsubscribeQueue[uuid];
+                    _unsubscribeQueue.Remove(uuid);
+                    unsubscribeItem.SetResult(BluetoothGattDescriptor.DisableNotificationValue.ToArray());
                 }
                 else
                 {
