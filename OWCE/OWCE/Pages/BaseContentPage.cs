@@ -207,7 +207,14 @@ namespace OWCE.Pages
                         }
                     }
 
-					if (newItem.Parent != null)
+					// newItem.Parent is set as soon as it's added to a Layout's Children.
+					// If the loop above already Insert()'d it, Parent is non-null here and
+					// adding it again would double-add (Xamarin.Forms rejects re-parenting
+					// an element that already has a parent). If the loop never found a
+					// lower-priority item to insert before, Parent is still null - that's
+					// when it needs to be appended at the end. This condition was
+					// previously inverted, which double-added or silently dropped items.
+					if (newItem.Parent == null)
                     {
 						_leftNavStackLayout.Children.Add(newItem);
                     }
@@ -235,7 +242,8 @@ namespace OWCE.Pages
 						}
 					}
 
-					if (newItem.Parent != null)
+					// Same fix as the left-side branch above - see its comment.
+					if (newItem.Parent == null)
 					{
 						_rightNavStackLayout.Children.Add(newItem);
 					}

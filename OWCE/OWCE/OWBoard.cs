@@ -180,8 +180,13 @@ namespace OWCE
         public ushort TripOdometer
         {
             get { return _tripOdometer; }
-            set { if (_tripOdometer != value) { _tripOdometer = value; OnPropertyChanged(); } }
+            set { if (_tripOdometer != value) { _tripOdometer = value; OnPropertyChanged(); OnPropertyChanged(nameof(TripOdometerDescription)); } }
         }
+
+        // Trip distance converted from rotations using this board's actual wheel
+        // circumference. See SpeedValue for why this is a plain computed property
+        // instead of a ConverterParameter-based binding.
+        public string TripOdometerDescription => Converters.RotationsToDistanceConverter.ConvertRotationsToDistance(TripOdometer, WheelCircumference);
 
         private int _statusError;
         public int StatusError
@@ -293,8 +298,16 @@ namespace OWCE
         public int RPM
         {
             get { return _rpm; }
-            set { if (_rpm != value) { _rpm = value; OnPropertyChanged(); } }
+            set { if (_rpm != value) { _rpm = value; OnPropertyChanged(); OnPropertyChanged(nameof(SpeedValue)); } }
         }
+
+        // Speed converted from RPM using this board's actual wheel circumference.
+        // Exposed as a plain computed property (rather than binding through
+        // RpmToSpeedConverter with a WheelCircumference ConverterParameter) because
+        // Xamarin.Forms' ConverterParameter cannot carry a live {Binding} value - it's
+        // a plain object property, not a BindableProperty, so a nested {Binding} there
+        // never actually resolves.
+        public float SpeedValue => Converters.RpmToSpeedConverter.ConvertFromRpm(RPM, WheelCircumference);
 
         // Value is stored in meters per second.
         float _speed;
@@ -564,6 +577,8 @@ namespace OWCE
                 OnPropertyChanged(nameof(RPM));
                 OnPropertyChanged(nameof(LifetimeOdometer));
                 OnPropertyChanged(nameof(TripOdometer));
+                OnPropertyChanged(nameof(SpeedValue));
+                OnPropertyChanged(nameof(TripOdometerDescription));
             });
 
             _owble = owble;

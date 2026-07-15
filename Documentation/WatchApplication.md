@@ -21,8 +21,14 @@ In [InterfaceController.cs](../OWCE/OWCE.WatchOS/OWCE.WatchOS.WatchOSExtension/I
 
 ### How the phone updates the watch with new values
 
-In [OWBoard.cs](../OWCE/OWCE/OWBoard.cs) under `OWBoard()`, `WatchSyncEventHandler` is registered as a `PropertyChanged` listener to keep the watch app in sync with the latest values (eg speed, pattery percent, distance).
+In [OWBoard.cs](../OWCE/OWCE/OWBoard.cs) under `OWBoard()`, `WatchSyncEventHandler` is registered as a `PropertyChanged` listener to keep the watch app in sync with the latest values (eg speed, battery percent, distance).
 
 [WatchSyncEventHandler](../OWCE/OWCE/PropertyChangeHandlers/WatchSyncEventHandler.cs) filters the list of property changes and sends the relevant updates to the [IWatch](../OWCE/OWCE/DependencyInterfaces/IWatch.cs) Dependency Interface, implemented by [Watch.cs](../OWCE/OWCE.iOS/DependencyImplementations/Watch.cs) on iOS.
 
 [Watch.cs](../OWCE/OWCE.iOS/DependencyImplementations/Watch.cs) uses the WatchConnectivity session to send update messages to the watch.
+
+Speed and distance are derived from raw RPM/rotation counts using the board's actual `WheelCircumference` (Pint/Pint X use a smaller wheel than V1/Plus/XR/GT), so the values sent to the watch match what's shown on the phone for every supported board.
+
+### When board is disconnected
+
+`OWBoard.Teardown()` unsubscribes `WatchSyncEventHandler.HandlePropertyChanged` from the board's `PropertyChanged` event, and [BoardPage.xaml.cs](../OWCE/OWCE/Pages/BoardPage.xaml.cs)'s `DisconnectAndPop()` calls `IWatch.StopListeningForWatchMessages()`. Both run whenever a board is disconnected (button press or back navigation), so a disconnected board's `OWBoard` instance stops pushing updates to the watch and the phone stops listening for messages from it.
