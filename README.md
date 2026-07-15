@@ -28,6 +28,10 @@ Using your flavor of Visual Studio, open OWCE.sln. From the platform dropdown, c
 
 NOTE: Because the app depends on the Onewheels low-energy Bluetooth, it will not function correctly in a simulator/emulator. For best results, deploy to a physical device. 
 
+### Regenerating the Protobuf classes
+
+If you change [Protobuf/OWBoardEvent.proto](Protobuf/OWBoardEvent.proto), run [Protobuf/build.sh](Protobuf/build.sh) (requires `protoc`) to regenerate the C# code. It writes straight into `OWCE/OWCE/Protobuf/`, which is what the app actually builds from, so no manual copy step is needed afterwards.
+
 
 
 ## Frequently (or not so frequently) Asked Questions
