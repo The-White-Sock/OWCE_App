@@ -1,9 +1,6 @@
 ﻿using System;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
-using Microsoft.AppCenter;
-using Microsoft.AppCenter.Analytics;
-using Microsoft.AppCenter.Crashes;
 using Xamarin.Essentials;
 using OWCE.DependencyInterfaces;
 using OWCE.Pages;
@@ -126,8 +123,6 @@ namespace OWCE
         protected override void OnStart()
         {
             // Handle when your app starts
-            AppCenter.Start($"android={AppConstants.AppCenterAndroid};ios={AppConstants.AppCenteriOS}", typeof(Analytics), typeof(Crashes));
-
 
             /*
             var cancellationTokenSource = new CancellationTokenSource();
