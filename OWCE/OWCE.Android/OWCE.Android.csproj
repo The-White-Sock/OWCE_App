@@ -91,6 +91,12 @@
   <PackageReference Include="sqlite-net-pcl">
     <Version>1.9.172</Version>
   </PackageReference>
+  <!-- Pinned explicitly to resolve MSB3277: the MonoAndroid framework reference
+       assembly ships an old 2.0.5.0 facade that otherwise wins over the 4.x
+       System.Numerics.Vectors System.Text.Json/System.Net.Http.Json need. -->
+  <PackageReference Include="System.Numerics.Vectors">
+    <Version>4.6.1</Version>
+  </PackageReference>
 </ItemGroup>
   <ItemGroup>
     <Compile Include="MainActivity.cs" />
