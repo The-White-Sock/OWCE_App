@@ -310,6 +310,13 @@ namespace OWCE.Droid.DependencyImplementations
         private BluetoothLeScanner _bleScanner;
         bool _updatingRSSI = false;
 
+        // How long to wait for a GATT operation's native callback before treating it
+        // as hung (eg the board was powered off mid-connection, which Android may not
+        // report via OnConnectionStateChange for a long time, if at all).
+        private static readonly TimeSpan GattOperationTimeout = TimeSpan.FromSeconds(10);
+        private int _operationGeneration = 0;
+        private int _consecutiveOperationTimeouts = 0;
+
 
         TaskCompletionSource<bool> _connectTaskCompletionSource = null;
         private OWBaseBoard _board = null;
@@ -385,6 +392,7 @@ namespace OWCE.Droid.DependencyImplementations
                         _gattCallback = null;
                     }
 
+                    FailAndClearPendingOperations();
                     RetryReconnect();
                     return;
                 }
@@ -412,6 +420,14 @@ namespace OWCE.Droid.DependencyImplementations
                     _bluetoothGatt = null;
                     _gattCallback = null;
                 }
+
+                // Any queued/in-flight operations belong to this now-dead connection -
+                // their BluetoothGattCharacteristic references become invalid once it's
+                // closed (a reconnect rediscovers fresh ones), and this also unwedges
+                // the queue if the disconnect was only detected via a forced
+                // Disconnect() from HandleOperationTimeout() rather than the board
+                // itself reporting it.
+                FailAndClearPendingOperations();
 
                 if (wasStillConnecting)
                 {
@@ -460,6 +476,17 @@ namespace OWCE.Droid.DependencyImplementations
             _gattOperationQueueProcessing = true;
 
             var item = _gattOperationQueue.Dequeue();
+
+            // If this operation's native callback never fires (eg the board was
+            // powered off and Android hasn't noticed the link is dead yet), this is
+            // what keeps the queue from being wedged forever.
+            var operationGeneration = ++_operationGeneration;
+            Device.StartTimer(GattOperationTimeout, () =>
+            {
+                HandleOperationTimeout(item, operationGeneration);
+                return false;
+            });
+
             switch (item.OperationType)
             {
                 case OWBLE_QueueItemOperationType.Read:
@@ -537,6 +564,117 @@ namespace OWCE.Droid.DependencyImplementations
             }
         }
 
+        // Fires GattOperationTimeout after a dequeued operation is issued. If its
+        // native callback already fired normally, either a new operation will have
+        // bumped _operationGeneration past this one, or the queue will have gone
+        // idle (_gattOperationQueueProcessing false) - either way this is a no-op.
+        // Otherwise the operation is presumed hung (eg the board went silent mid-op),
+        // and this fails it and moves the queue on instead of leaving it wedged.
+        private void HandleOperationTimeout(OWBLE_QueueItem item, int operationGeneration)
+        {
+            if (operationGeneration != _operationGeneration || _gattOperationQueueProcessing == false)
+            {
+                return;
+            }
+
+            var uuid = item.Characteristic.Uuid.ToString().ToLower();
+            Debug.WriteLine($"GATT operation timed out ({item.OperationType}): {uuid}");
+
+            switch (item.OperationType)
+            {
+                case OWBLE_QueueItemOperationType.Read:
+                    if (_readQueue.ContainsKey(uuid))
+                    {
+                        var readItem = _readQueue[uuid];
+                        _readQueue.Remove(uuid);
+                        readItem.TrySetResult(null);
+                    }
+                    break;
+
+                case OWBLE_QueueItemOperationType.Write:
+                    var writeRequest = _writeQueue.FirstOrDefault(t => t.CharacteristicId.Equals(uuid));
+                    if (writeRequest != null)
+                    {
+                        _writeQueue.Remove(writeRequest);
+                        writeRequest.CompletionSource.TrySetResult(null);
+                    }
+                    break;
+
+                case OWBLE_QueueItemOperationType.Subscribe:
+                    if (_subscribeQueue.ContainsKey(uuid))
+                    {
+                        var subscribeItem = _subscribeQueue[uuid];
+                        _subscribeQueue.Remove(uuid);
+                        subscribeItem.TrySetResult(null);
+                    }
+                    break;
+
+                case OWBLE_QueueItemOperationType.Unsubscribe:
+                    if (_unsubscribeQueue.ContainsKey(uuid))
+                    {
+                        var unsubscribeItem = _unsubscribeQueue[uuid];
+                        _unsubscribeQueue.Remove(uuid);
+                        unsubscribeItem.TrySetResult(null);
+                    }
+                    break;
+            }
+
+            _gattOperationQueueProcessing = false;
+            _consecutiveOperationTimeouts++;
+
+            if (_consecutiveOperationTimeouts >= 2)
+            {
+                // Two operations in a row never got a callback - the connection is
+                // almost certainly dead (eg the board was powered off) even though
+                // Android hasn't reported it via OnConnectionStateChange yet. Force a
+                // disconnect so that callback fires and the existing auto-reconnect
+                // logic (see OnConnectionStateChange) takes over, rather than sitting
+                // wedged indefinitely waiting for the OS to notice on its own.
+                _consecutiveOperationTimeouts = 0;
+                Debug.WriteLine("GATT connection appears dead after repeated operation timeouts - forcing a disconnect.");
+                _bluetoothGatt?.Disconnect();
+                return;
+            }
+
+            ProcessQueue();
+        }
+
+        // Fails and clears every pending/queued operation. Used both for a normal
+        // manual Disconnect() and for any detected/forced disconnect - in every case
+        // the BluetoothGattCharacteristic references queued items hold become invalid
+        // once the connection they came from is gone, and this also resets the queue
+        // so a fresh connection isn't left permanently wedged behind a dead one.
+        private void FailAndClearPendingOperations()
+        {
+            foreach (var pending in _readQueue.Values)
+            {
+                pending.TrySetResult(null);
+            }
+            _readQueue.Clear();
+
+            foreach (var pending in _writeQueue)
+            {
+                pending.CompletionSource.TrySetResult(null);
+            }
+            _writeQueue.Clear();
+
+            foreach (var pending in _subscribeQueue.Values)
+            {
+                pending.TrySetResult(null);
+            }
+            _subscribeQueue.Clear();
+
+            foreach (var pending in _unsubscribeQueue.Values)
+            {
+                pending.TrySetResult(null);
+            }
+            _unsubscribeQueue.Clear();
+
+            _gattOperationQueue.Clear();
+            _gattOperationQueueProcessing = false;
+            _consecutiveOperationTimeouts = 0;
+        }
+
         // Pre-API 33 callback: the value isn't delivered directly, so GetValue() is
         // the only way to get it here.
         private void OnCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, GattStatus status)
@@ -557,37 +695,45 @@ namespace OWCE.Droid.DependencyImplementations
         {
             var uuid = characteristic.Uuid.ToString().ToLower();
 
-            if (_readQueue.ContainsKey(uuid))
+            if (_readQueue.ContainsKey(uuid) == false)
             {
-                var readItem = _readQueue[uuid];
-                _readQueue.Remove(uuid);
+                // Already resolved - most likely HandleOperationTimeout gave up on
+                // this one and moved the queue on before this (late) callback finally
+                // arrived. Don't touch queue-advancement state here, or this stale
+                // callback could clobber a different, still-legitimately-in-flight
+                // operation that's since taken its place.
+                return;
+            }
 
-                if (status != GattStatus.Success)
+            var readItem = _readQueue[uuid];
+            _readQueue.Remove(uuid);
+
+            if (status != GattStatus.Success)
+            {
+                // A failed read used to fall through and hand back whatever
+                // characteristic.GetValue() happened to contain (stale/incorrect
+                // data) as if the read had succeeded. Resolve with null instead -
+                // OWBoard.SetValue() already treats null data as "ignore this update".
+                Debug.WriteLine($"OnCharacteristicRead Error: read of {uuid} failed with status {status}");
+                readItem.SetResult(null);
+            }
+            else
+            {
+                if (OWBoard.SerialWriteUUID.Equals(uuid, StringComparison.InvariantCultureIgnoreCase) == false &&
+                    OWBoard.SerialReadUUID.Equals(uuid, StringComparison.InvariantCultureIgnoreCase) == false)
                 {
-                    // A failed read used to fall through and hand back whatever
-                    // characteristic.GetValue() happened to contain (stale/incorrect
-                    // data) as if the read had succeeded. Resolve with null instead -
-                    // OWBoard.SetValue() already treats null data as "ignore this update".
-                    Debug.WriteLine($"OnCharacteristicRead Error: read of {uuid} failed with status {status}");
-                    readItem.SetResult(null);
-                }
-                else
-                {
-                    if (OWBoard.SerialWriteUUID.Equals(uuid, StringComparison.InvariantCultureIgnoreCase) == false &&
-                        OWBoard.SerialReadUUID.Equals(uuid, StringComparison.InvariantCultureIgnoreCase) == false)
+                    // If our system is little endian, reverse the array.
+                    if (BitConverter.IsLittleEndian)
                     {
-                        // If our system is little endian, reverse the array.
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            Array.Reverse(dataBytes);
-                        }
+                        Array.Reverse(dataBytes);
                     }
-
-                    readItem.SetResult(dataBytes);
                 }
+
+                readItem.SetResult(dataBytes);
             }
 
             _gattOperationQueueProcessing = false;
+            _consecutiveOperationTimeouts = 0;
             ProcessQueue();
         }
 
@@ -598,20 +744,25 @@ namespace OWCE.Droid.DependencyImplementations
 
             var writeCharacteristicValueRequest = _writeQueue.FirstOrDefault(t => t.CharacteristicId.Equals(uuid));
 
-
-            if (writeCharacteristicValueRequest != null)
+            if (writeCharacteristicValueRequest == null)
             {
-                _writeQueue.Remove(writeCharacteristicValueRequest);
-
-                // Use the bytes we asked to write instead of reading them back via the
-                // deprecated characteristic.GetValue() - we already know exactly what
-                // was written (this is the same value WriteValue() queued below,
-                // before the endian-reversal applied for the wire), so there's no need
-                // to round-trip through native state to reconstruct it.
-                writeCharacteristicValueRequest.CompletionSource.SetResult(writeCharacteristicValueRequest.Data);
+                // Already resolved (eg by HandleOperationTimeout) - stale callback for
+                // an operation the queue already moved past. See the same guard in
+                // OnCharacteristicReadValue for why this must not touch queue state.
+                return;
             }
 
+            _writeQueue.Remove(writeCharacteristicValueRequest);
+
+            // Use the bytes we asked to write instead of reading them back via the
+            // deprecated characteristic.GetValue() - we already know exactly what
+            // was written (this is the same value WriteValue() queued below,
+            // before the endian-reversal applied for the wire), so there's no need
+            // to round-trip through native state to reconstruct it.
+            writeCharacteristicValueRequest.CompletionSource.SetResult(writeCharacteristicValueRequest.Data);
+
             _gattOperationQueueProcessing = false;
+            _consecutiveOperationTimeouts = 0;
             ProcessQueue();
         }
 
@@ -667,6 +818,7 @@ namespace OWCE.Droid.DependencyImplementations
             // which queue this uuid is sitting in - not by reading the descriptor's
             // value back via the deprecated GetValue() - since we already know
             // exactly which of the two we asked to write.
+            bool resolved = true;
             if (descriptor.Uuid.ToString().ToLower() == "00002902-0000-1000-8000-00805f9b34fb")
             {
                 if (_subscribeQueue.ContainsKey(uuid))
@@ -683,22 +835,44 @@ namespace OWCE.Droid.DependencyImplementations
                 }
                 else
                 {
+                    // Already resolved (eg by HandleOperationTimeout) - a stale
+                    // callback for an operation the queue already moved past. See the
+                    // same guard in OnCharacteristicReadValue for why this must not
+                    // touch queue state.
+                    resolved = false;
                     Debug.WriteLine($"OnDescriptorWrite Error: Unhandled descriptor of {descriptor.Uuid} on {uuid}.");
                 }
             }
             else
             {
+                // Never issued by this class outside the CCCD subscribe/unsubscribe
+                // above - not something to advance the queue for.
+                resolved = false;
                 Debug.WriteLine($"OnDescriptorWrite Error: Unhandled descriptor of {descriptor.Uuid} on {uuid}.");
             }
 
-            _gattOperationQueueProcessing = false;
-            ProcessQueue();
+            if (resolved)
+            {
+                _gattOperationQueueProcessing = false;
+                _consecutiveOperationTimeouts = 0;
+                ProcessQueue();
+            }
         }
 
         public void OnReadRemoteRssi(BluetoothGatt gatt, int rssi, [GeneratedEnum] GattStatus status)
         {
-            RSSIUpdated?.Invoke(rssi);
             _updatingRSSI = false;
+
+            if (status != GattStatus.Success)
+            {
+                // Previously ignored entirely - a failed read (eg a stale/dying
+                // connection) would still invoke RSSIUpdated with whatever garbage
+                // value came back, as if it had succeeded.
+                Debug.WriteLine($"OnReadRemoteRssi Error: status {status}");
+                return;
+            }
+
+            RSSIUpdated?.Invoke(rssi);
         }
 
 
@@ -784,12 +958,7 @@ namespace OWCE.Droid.DependencyImplementations
 
             _connectTaskCompletionSource = null;
 
-            _readQueue.Clear();
-            _writeQueue.Clear();
-            _subscribeQueue.Clear();
-            _unsubscribeQueue.Clear();
-            _gattOperationQueue.Clear();
-            _gattOperationQueueProcessing = false;
+            FailAndClearPendingOperations();
 
             // The native BluetoothGatt.Close() (which releases the GATT client's slot -
             // Android only allows a limited number of these system-wide) happens in
@@ -1128,7 +1297,22 @@ namespace OWCE.Droid.DependencyImplementations
             }
 
             _updatingRSSI = true;
+            var requestedGatt = _bluetoothGatt;
             _bluetoothGatt?.ReadRemoteRssi();
+
+            // OnReadRemoteRssi may never fire at all on a dead/dying connection,
+            // which would otherwise permanently block every future RSSI poll via the
+            // guard above. Only reset the flag if a reconnect hasn't already swapped
+            // in a new BluetoothGatt (and with it, presumably a fresh in-flight
+            // request) in the meantime.
+            Device.StartTimer(TimeSpan.FromSeconds(5), () =>
+            {
+                if (_updatingRSSI && _bluetoothGatt == requestedGatt)
+                {
+                    _updatingRSSI = false;
+                }
+                return false;
+            });
         }
         #endregion
     }
