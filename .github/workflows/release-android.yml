@@ -1,0 +1,155 @@
+name: Release Android APK
+
+# Builds a signed, sideload-ready release APK and attaches it to a GitHub Release.
+# Does NOT publish to Google Play - this is for manual distribution only.
+#
+# Setup required before this will work (one-time):
+#   1. Generate a signing keystore (or use an existing one).
+#   2. Add these as repository secrets (Settings -> Secrets and variables -> Actions):
+#        ANDROID_KEYSTORE_BASE64   - base64-encoded contents of the .keystore file
+#        ANDROID_KEYSTORE_PASSWORD - keystore password
+#        ANDROID_KEY_ALIAS         - key alias inside the keystore
+#        ANDROID_KEY_PASSWORD      - key password (same as store password for
+#                                     PKCS12-format keystores, which is what modern
+#                                     `keytool` produces by default)
+#
+# To cut a release: git tag v1.2.3 && git push origin v1.2.3
+#
+# Runner/toolchain choices here mirror build.yml - see that file's comments for why
+# windows-2022 (not windows-latest) and a manually-installed JDK 11 are required, and
+# why Restore and Build run as separate msbuild invocations.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version name to release, eg 1.2.3 (creates tag v1.2.3)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release-android:
+    name: Build, sign, and release Android APK
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check signing secrets are configured
+        shell: bash
+        run: |
+          missing=()
+          [[ -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]] && missing+=("ANDROID_KEYSTORE_BASE64")
+          [[ -z "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ]] && missing+=("ANDROID_KEYSTORE_PASSWORD")
+          [[ -z "${{ secrets.ANDROID_KEY_ALIAS }}" ]] && missing+=("ANDROID_KEY_ALIAS")
+          [[ -z "${{ secrets.ANDROID_KEY_PASSWORD }}" ]] && missing+=("ANDROID_KEY_PASSWORD")
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "::error::Missing required repository secrets: ${missing[*]}"
+            echo "Add these under Settings -> Secrets and variables -> Actions before running this workflow."
+            exit 1
+          fi
+
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION_NAME="${{ inputs.version }}"
+            TAG_NAME="v${{ inputs.version }}"
+          else
+            TAG_NAME="${{ github.ref_name }}"
+            VERSION_NAME="${TAG_NAME#v}"
+          fi
+          # Android requires a strictly increasing integer versionCode between
+          # releases for updates to install cleanly over an existing sideload -
+          # the workflow run number is a simple, always-increasing source for that.
+          VERSION_CODE="${{ github.run_number }}"
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "Releasing version $VERSION_NAME (versionCode $VERSION_CODE) as tag $TAG_NAME"
+
+      - name: Set version in AndroidManifest.xml
+        shell: bash
+        run: |
+          MANIFEST=OWCE/OWCE.Android/Properties/AndroidManifest.xml
+          sed -i "s/android:versionCode=\"[0-9]*\"/android:versionCode=\"${{ steps.version.outputs.version_code }}\"/" "$MANIFEST"
+          sed -i "s/android:versionName=\"[^\"]*\"/android:versionName=\"${{ steps.version.outputs.version_name }}\"/" "$MANIFEST"
+          grep versionCode "$MANIFEST"
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: '11'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-android-release-${{ hashFiles('OWCE/OWCE.Android/OWCE.Android.csproj', 'OWCE/OWCE/OWCE.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-android-release-
+            ${{ runner.os }}-nuget-android-
+
+      - name: Restore
+        run: msbuild OWCE/OWCE.Android/OWCE.Android.csproj /t:Restore /p:Configuration=Release /p:Platform=AnyCPU /v:minimal
+
+      - name: Decode signing keystore
+        shell: bash
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "${{ runner.temp }}/owce-release.keystore"
+
+      - name: Build and sign release APK
+        shell: pwsh
+        run: |
+          msbuild OWCE/OWCE.Android/OWCE.Android.csproj `
+            /t:SignAndroidPackage `
+            /p:Configuration=Release `
+            /p:Platform=AnyCPU `
+            /p:JavaSdkDirectory="${{ env.JAVA_HOME }}" `
+            /p:AndroidKeyStore=true `
+            /p:AndroidSigningKeyStore="${{ runner.temp }}\owce-release.keystore" `
+            /p:AndroidSigningStorePass="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" `
+            /p:AndroidSigningKeyAlias="${{ secrets.ANDROID_KEY_ALIAS }}" `
+            /p:AndroidSigningKeyPass="${{ secrets.ANDROID_KEY_PASSWORD }}" `
+            /m /v:minimal
+
+      - name: Remove keystore from disk
+        if: always()
+        shell: bash
+        run: rm -f "${{ runner.temp }}/owce-release.keystore"
+
+      - name: Locate signed APK
+        id: apk
+        shell: bash
+        run: |
+          APK=$(find OWCE/OWCE.Android/bin/Release -iname "*-Signed.apk" | head -n1)
+          if [[ -z "$APK" ]]; then
+            APK=$(find OWCE/OWCE.Android/bin/Release -iname "*.apk" | head -n1)
+          fi
+          if [[ -z "$APK" ]]; then
+            echo "::error::No .apk found under OWCE/OWCE.Android/bin/Release"
+            exit 1
+          fi
+          echo "Found APK: $APK"
+          NEWNAME="OWCE-${{ steps.version.outputs.version_name }}.apk"
+          cp "$APK" "$NEWNAME"
+          echo "apk_path=$NEWNAME" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        shell: bash
+        run: |
+          gh release create "${{ steps.version.outputs.tag_name }}" \
+            "${{ steps.apk.outputs.apk_path }}" \
+            --title "OWCE ${{ steps.version.outputs.version_name }}" \
+            --generate-notes \
+            --target "${{ github.sha }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
