@@ -54,6 +54,8 @@ To cut a release, either:
 
 Any of these builds `OWCE-1.2.3.apk`, signed with the repository's release keystore, and attaches it to the GitHub Release for that tag.
 
+**Google Play Protect may warn "Unsafe app blocked" / "built for an older version of Android" when sideloading.** This is expected, not a broken build: the app targets API 33 (Android 13) because that's the newest API level the classic Xamarin.Android toolchain on `windows-2022` recognizes (`v14.0`/API 34 fails with `error XA0000: Could not determine API level`, confirmed by testing). The warning has an "Install anyway" option and doesn't block installation.
+
 **One-time setup required** before this works: add these repository secrets under *Settings → Secrets and variables → Actions*:
 
 | Secret | Value |
