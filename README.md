@@ -1,6 +1,8 @@
 Onewheel Community Edition (OWCE) App
 ===========
 
+[![Build](https://github.com/The-White-Sock/OWCE_App/actions/workflows/build.yml/badge.svg)](https://github.com/The-White-Sock/OWCE_App/actions/workflows/build.yml)
+
 A cross-platform app for use with the [Onewheel](https://onewheel.com/) V1, Plus, XR, Pint, Pint X and GT.
 
 NOTE: GT support requires patching with [Rewheel](https://github.com/rewheel-app/rewheel).
@@ -27,6 +29,14 @@ Before you start, you will need to install both Visual Studio and Xamarin. If yo
 Using your flavor of Visual Studio, open OWCE.sln. From the platform dropdown, choose OWCE.iOS or OWCE.Android, depending on what platform you wish to build for. Then, deploy and debug your app like any other project.
 
 NOTE: Because the app depends on the Onewheels low-energy Bluetooth, it will not function correctly in a simulator/emulator. For best results, deploy to a physical device. 
+
+### Continuous integration
+
+[.github/workflows/build.yml](.github/workflows/build.yml) automatically builds the project on every push and pull request against `main`:
+* The shared core library (`OWCE/OWCE/OWCE.csproj`) builds on Ubuntu with just the .NET SDK - no Xamarin toolchain required.
+* The Android app (`OWCE/OWCE.Android/OWCE.Android.csproj`) builds with MSBuild on Windows, using the Xamarin component that ships with GitHub's `windows-latest` runner image.
+
+There's no CI job for iOS/macOS/WatchOS: those projects use classic Xamarin.iOS/Xamarin.Mac, which requires a Mac, and GitHub's macOS runner images no longer ship the classic Xamarin.iOS/Xamarin.Mac SDKs (Xamarin.Forms went out-of-support in May 2024). Building those still requires a Mac with Visual Studio for Mac (or an equivalent legacy Xamarin install) set up per the instructions above.
 
 ### Regenerating the Protobuf classes
 

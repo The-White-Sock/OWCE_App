@@ -1,0 +1,78 @@
+name: Build
+
+# What this covers, and why it's scoped the way it is:
+#
+# - `build-core` builds OWCE/OWCE/OWCE.csproj, the shared netstandard2.1 library that
+#   holds almost all of the app's logic (BLE protocol, board state, converters, pages).
+#   It's a plain SDK-style project, so it builds on any OS with just the .NET SDK - no
+#   Xamarin toolchain needed. This is the fastest, most reliable check and will catch
+#   the majority of compile errors in the codebase.
+#
+# - `build-android` builds OWCE/OWCE.Android/OWCE.Android.csproj with MSBuild on
+#   windows-latest. GitHub's windows-latest runner image ships Visual Studio with the
+#   classic Xamarin component preinstalled, so no extra Xamarin/Android SDK
+#   installation step is required.
+#
+# - There is intentionally no iOS/macOS/WatchOS build job. Those projects use classic
+#   Xamarin.iOS/Xamarin.Mac, which requires a Mac. GitHub's macOS runner images no
+#   longer ship the classic Xamarin.iOS/Xamarin.Mac SDKs (Xamarin.Forms went
+#   out-of-support in May 2024), so a job here would just fail on missing tooling
+#   rather than catch real bugs. Building those targets still requires a Mac with the
+#   legacy Xamarin SDK installed by hand (eg Visual Studio for Mac, or a self-hosted
+#   runner set up the same way), as described in the main README.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-core:
+    name: Build core library
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-core-${{ hashFiles('OWCE/OWCE/OWCE.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-core-
+
+      - name: Restore
+        run: dotnet restore OWCE/OWCE/OWCE.csproj
+
+      - name: Build
+        run: dotnet build OWCE/OWCE/OWCE.csproj --configuration Release --no-restore
+
+  build-android:
+    name: Build Android app
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-android-${{ hashFiles('OWCE/OWCE.Android/OWCE.Android.csproj', 'OWCE/OWCE/OWCE.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-android-
+
+      # Restore + build only the Android project (and its OWCE.csproj project
+      # reference) rather than the whole .sln, so this job doesn't get tangled up in
+      # the iOS/macOS/WatchOS projects it isn't meant to touch.
+      - name: Restore and build
+        run: msbuild OWCE/OWCE.Android/OWCE.Android.csproj /t:Restore,Build /p:Configuration=Debug /p:Platform=AnyCPU /m /v:minimal
