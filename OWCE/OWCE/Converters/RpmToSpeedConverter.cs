@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using Xamarin.Forms;
 
@@ -9,24 +9,28 @@ namespace OWCE.Converters
         public const float TwoPi = (2f * (float)Math.PI);
         public const float RadConvert = (TwoPi / 60f);
         public const float MillimetersPerMinuteToMetersPerSecond = 0.00001666666667f;
+
+        // V1/Plus/XR/GT wheel circumference in mm, used when no per-board value is available.
+        public const float DefaultWheelCircumference = 917.66f;
+
         public RpmToSpeedConverter()
         {
         }
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is int rpm) // && parameter is float wheelCircumfrence)
+            if (value is int rpm)
             {
-                // TODO: Not use static wheel circumfrence.
-                return ConvertFromRpm(rpm);
+                var wheelCircumference = (parameter is float wheelCircumfrence && wheelCircumfrence > 0f) ? wheelCircumfrence : DefaultWheelCircumference;
+                return ConvertFromRpm(rpm, wheelCircumference);
             }
 
             return 0.0f;
         }
 
-        public static float ConvertFromRpm(int rpm)
+        public static float ConvertFromRpm(int rpm, float wheelCircumference = DefaultWheelCircumference)
         {
-            var metersPerSecond = 917.66f * rpm * MillimetersPerMinuteToMetersPerSecond;
+            var metersPerSecond = wheelCircumference * rpm * MillimetersPerMinuteToMetersPerSecond;
 
             if (App.Current.MetricDisplay)
             {

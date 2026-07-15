@@ -193,6 +193,17 @@ namespace OWCE.Droid.DependencyImplementations
                 _characteristics[characteristic.Uuid.ToString().ToLower()] = characteristic;
             }
 
+            if (_reconnecting)
+            {
+                // A reconnect creates a brand new BluetoothGatt (and therefore new
+                // BluetoothGattCharacteristic objects), so services need to be
+                // rediscovered - the previous connection's cached characteristics are
+                // no longer valid - before treating the board as usable again.
+                _reconnecting = false;
+                BoardReconnected?.Invoke();
+                return;
+            }
+
             if (_connectTaskCompletionSource?.Task.IsCanceled == false && _connectTaskCompletionSource?.Task.IsCompleted == false)
             {
                 _connectTaskCompletionSource.SetResult(true);
@@ -274,6 +285,8 @@ namespace OWCE.Droid.DependencyImplementations
 
         TaskCompletionSource<bool> _connectTaskCompletionSource = null;
         private OWBaseBoard _board = null;
+        private bool _requestingDisconnect = false;
+        private bool _reconnecting = false;
 
         //private OWBLE_BroadcastReceiver _broadcastReceiver;
         private OWBLE_ScanCallback _scanCallback;
@@ -319,16 +332,64 @@ namespace OWCE.Droid.DependencyImplementations
 
         private void OnConnectionStateChange(BluetoothGatt gatt, GattStatus status, ProfileState newState)
         {
-            if (_connectTaskCompletionSource.Task.IsCanceled)
-                return;
+            if (newState == ProfileState.Connected)
+            {
+                if (status == GattStatus.Success)
+                {
+                    // Re-discover services on a reconnect too (handled below in
+                    // OnServicesDiscovered) - Android hands us a fresh BluetoothGatt on
+                    // each ConnectGatt() call, so previously cached characteristics
+                    // would otherwise be stale and unusable.
+                    gatt.DiscoverServices();
+                    return;
+                }
 
-            if (status == GattStatus.Success)
-            {
-                gatt.DiscoverServices();
+                if (_reconnecting)
+                {
+                    // The reconnect attempt itself failed at the connection level - retry.
+                    Reconnect();
+                    return;
+                }
+
+                if (_connectTaskCompletionSource != null && _connectTaskCompletionSource.Task.IsCanceled == false)
+                {
+                    _connectTaskCompletionSource.SetResult(false);
+                }
+
+                return;
             }
-            else
+
+            if (newState == ProfileState.Disconnected)
             {
-                _connectTaskCompletionSource.SetResult(false);
+                var wasStillConnecting = _reconnecting == false && _connectTaskCompletionSource != null &&
+                    _connectTaskCompletionSource.Task.IsCanceled == false && _connectTaskCompletionSource.Task.IsCompleted == false;
+
+                // Release the native GATT client now that the disconnect is confirmed by
+                // the OS. This was previously never called anywhere, leaking Android's
+                // limited pool of concurrent GATT client registrations on every
+                // connect/disconnect cycle.
+                gatt.Close();
+                if (gatt == _bluetoothGatt)
+                {
+                    _bluetoothGatt = null;
+                    _gattCallback = null;
+                }
+
+                if (wasStillConnecting)
+                {
+                    // Failed during the initial connection attempt.
+                    _connectTaskCompletionSource.SetResult(false);
+                    return;
+                }
+
+                BoardDisconnected?.Invoke();
+
+                if (_requestingDisconnect == false)
+                {
+                    // Board dropped out of range/lost power unexpectedly - try to recover,
+                    // same as the iOS implementation already does.
+                    Reconnect();
+                }
             }
         }
 
@@ -405,20 +466,31 @@ namespace OWCE.Droid.DependencyImplementations
                 var readItem = _readQueue[uuid];
                 _readQueue.Remove(uuid);
 
-                var dataBytes = characteristic.GetValue();
-
-
-                if (OWBoard.SerialWriteUUID.Equals(uuid, StringComparison.InvariantCultureIgnoreCase) == false &&
-                    OWBoard.SerialReadUUID.Equals(uuid, StringComparison.InvariantCultureIgnoreCase) == false)
+                if (status != GattStatus.Success)
                 {
-                    // If our system is little endian, reverse the array.
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        Array.Reverse(dataBytes);
-                    }
+                    // A failed read used to fall through and hand back whatever
+                    // characteristic.GetValue() happened to contain (stale/incorrect
+                    // data) as if the read had succeeded. Resolve with null instead -
+                    // OWBoard.SetValue() already treats null data as "ignore this update".
+                    Debug.WriteLine($"OnCharacteristicRead Error: read of {uuid} failed with status {status}");
+                    readItem.SetResult(null);
                 }
+                else
+                {
+                    var dataBytes = characteristic.GetValue();
 
-                readItem.SetResult(dataBytes);
+                    if (OWBoard.SerialWriteUUID.Equals(uuid, StringComparison.InvariantCultureIgnoreCase) == false &&
+                        OWBoard.SerialReadUUID.Equals(uuid, StringComparison.InvariantCultureIgnoreCase) == false)
+                    {
+                        // If our system is little endian, reverse the array.
+                        if (BitConverter.IsLittleEndian)
+                        {
+                            Array.Reverse(dataBytes);
+                        }
+                    }
+
+                    readItem.SetResult(dataBytes);
+                }
             }
 
             _gattOperationQueueProcessing = false;
@@ -573,47 +645,66 @@ namespace OWCE.Droid.DependencyImplementations
         public Task<bool> Connect(OWBaseBoard board, CancellationToken cancellationToken)
         {
             _board = board;
+            _requestingDisconnect = false;
+            _reconnecting = false;
+            _gattOperationQueueProcessing = false;
 
-            _connectTaskCompletionSource = new TaskCompletionSource<bool>();
+            var connectTaskCompletionSource = new TaskCompletionSource<bool>();
+            _connectTaskCompletionSource = connectTaskCompletionSource;
 
             if (board.NativePeripheral is BluetoothDevice device)
             {
                 _gattCallback = new OWBLE_BluetoothGattCallback(this);
                 _bluetoothGatt = device.ConnectGatt(Xamarin.Essentials.Platform.CurrentActivity, false, _gattCallback);
+
+                if (cancellationToken.CanBeCanceled)
+                {
+                    cancellationToken.Register(() =>
+                    {
+                        // Was previously never observed at all - cancelling the
+                        // "connecting..." popup had no effect on the underlying BLE
+                        // connection attempt, which would complete/fail regardless.
+                        if (connectTaskCompletionSource.TrySetCanceled(cancellationToken))
+                        {
+                            _bluetoothGatt?.Disconnect();
+                        }
+                    });
+                }
             }
 
-            return _connectTaskCompletionSource.Task;
+            return connectTaskCompletionSource.Task;
         }
 
         public Task Disconnect()
         {
+            _requestingDisconnect = true;
+            _reconnecting = false;
+
             if (_connectTaskCompletionSource != null && _connectTaskCompletionSource.Task.IsCanceled == false && _connectTaskCompletionSource.Task.IsCompleted == false && _connectTaskCompletionSource.Task.IsFaulted == false)
             {
                 try
                 {
                     _connectTaskCompletionSource.SetCanceled();
-                    _connectTaskCompletionSource = null;
-
-                    _bluetoothGatt.Disconnect();
-                    _bluetoothGatt = null;
-                    _gattCallback = null;
-
-
-                    _readQueue.Clear();
-                    _writeQueue.Clear();
-                    _subscribeQueue.Clear();
-                    _unsubscribeQueue.Clear();
-                    _gattOperationQueue.Clear();
-
                 }
                 catch (Exception err)
                 {
-
                     Debugger.Break();
                 }
             }
 
-            // TODO: Handle is connecting.
+            _connectTaskCompletionSource = null;
+
+            _readQueue.Clear();
+            _writeQueue.Clear();
+            _subscribeQueue.Clear();
+            _unsubscribeQueue.Clear();
+            _gattOperationQueue.Clear();
+            _gattOperationQueueProcessing = false;
+
+            // The native BluetoothGatt.Close() (which releases the GATT client's slot -
+            // Android only allows a limited number of these system-wide) happens in
+            // OnConnectionStateChange once the disconnect is confirmed by the OS, rather
+            // than here, to avoid racing the native disconnect callback.
             if (_bluetoothGatt != null)
             {
                 _bluetoothGatt.Disconnect();
@@ -622,6 +713,21 @@ namespace OWCE.Droid.DependencyImplementations
             _board = null;
 
             return Task.CompletedTask;
+        }
+
+        // Called when the connection drops without Disconnect() having been requested
+        // (eg the board went out of range or lost power). Attempts to re-establish the
+        // connection, mirroring the behaviour already implemented on iOS.
+        private void Reconnect()
+        {
+            BoardReconnecting?.Invoke();
+            _reconnecting = true;
+
+            if (_board?.NativePeripheral is BluetoothDevice device)
+            {
+                _gattCallback = new OWBLE_BluetoothGattCallback(this);
+                _bluetoothGatt = device.ConnectGatt(Xamarin.Essentials.Platform.CurrentActivity, false, _gattCallback);
+            }
         }
 
         public async void StartScanning()

@@ -17,6 +17,7 @@ namespace OWCE.Pages
     public partial class BoardPage : BaseContentPage
     {
         ConnectingAlert _reconnectingAlert;
+        bool _isTornDown = false;
 
 
         public OWBoard Board { get; private set; }
@@ -177,12 +178,33 @@ namespace OWCE.Pages
             await App.Current.OWBLE.Disconnect();
 
             Board.StopLogging();
+            TearDown();
 
             await Navigation.PopModalAsync();
 
             IWatch watchService = DependencyService.Get<IWatch>();
 
             watchService.StopListeningForWatchMessages();
+        }
+
+        // Removes this page's subscriptions on the (app-lifetime) OWBLE singleton, and
+        // the board's own subscriptions/timers. Without this, every connect/disconnect
+        // cycle would leak a full BoardPage + OWBoard instance and leave their handlers
+        // (and OWBoard's RSSI polling timer) running forever.
+        void TearDown()
+        {
+            if (_isTornDown)
+            {
+                return;
+            }
+
+            _isTornDown = true;
+
+            App.Current.OWBLE.BoardDisconnected -= OWBLE_BoardDisconnected;
+            App.Current.OWBLE.BoardReconnecting -= OWBLE_BoardReconnecting;
+            App.Current.OWBLE.BoardReconnected -= OWBLE_BoardReconnected;
+
+            Board.Teardown();
         }
 
 

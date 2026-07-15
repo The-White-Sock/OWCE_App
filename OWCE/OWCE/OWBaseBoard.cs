@@ -207,11 +207,21 @@ namespace OWCE
 
         public bool Equals(OWBaseBoard otherBaseBoard)
         {
+            if (otherBaseBoard is null)
+            {
+                return false;
+            }
+
             return otherBaseBoard.ID == ID;
         }
 
         public bool Equals(OWBoard otherBoard)
         {
+            if (otherBoard is null)
+            {
+                return false;
+            }
+
             return otherBoard.ID == ID;
         }
 

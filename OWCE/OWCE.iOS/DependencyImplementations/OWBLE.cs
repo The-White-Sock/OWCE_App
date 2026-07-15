@@ -262,7 +262,9 @@ namespace OWCE.MacOS.DependencyImplementations
                 }
             }
 
-            _connectionCompletionSource.SetResult(true);
+            // TrySetResult (not SetResult): a cancelled connect attempt may have already
+            // completed this TaskCompletionSource, and SetResult would throw in that race.
+            _connectionCompletionSource?.TrySetResult(true);
 
             //BoardConnected?.Invoke(null);
             //BoardConnected?.Invoke(new OWBoard(_board));
@@ -497,7 +499,8 @@ namespace OWCE.MacOS.DependencyImplementations
             _requestingDisconnect = false;
             _reconnecting = false;
 
-            _connectionCompletionSource = new TaskCompletionSource<bool>();
+            var connectionCompletionSource = new TaskCompletionSource<bool>();
+            _connectionCompletionSource = connectionCompletionSource;
 
             if (board.NativePeripheral is CBPeripheral peripheral)
             {
@@ -514,14 +517,28 @@ namespace OWCE.MacOS.DependencyImplementations
 #endif
                 };
 
+                if (cancellationToken.CanBeCanceled)
+                {
+                    cancellationToken.Register(() =>
+                    {
+                        // Was previously never observed at all - cancelling the
+                        // "connecting..." popup had no effect on the underlying BLE
+                        // connection attempt, which would complete/fail regardless.
+                        if (connectionCompletionSource.TrySetCanceled(cancellationToken))
+                        {
+                            _centralManager.CancelPeripheralConnection(peripheral);
+                        }
+                    });
+                }
+
                 _centralManager.ConnectPeripheral(peripheral, options);
             }
             else
             {
-                _connectionCompletionSource.SetResult(false);
+                connectionCompletionSource.TrySetResult(false);
             }
 
-            return _connectionCompletionSource.Task;
+            return connectionCompletionSource.Task;
         }
 
         void Reconnect()

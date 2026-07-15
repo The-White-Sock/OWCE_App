@@ -132,7 +132,7 @@ namespace OWCE.Pages
                         {
                             streamContent.Headers.ContentType = new MediaTypeHeaderValue("binary/octet-stream");
                             var request = new HttpRequestMessage(HttpMethod.Put, response.UploadUrl) { Content = streamContent };
-                            var putResponse = await httpClient.SendAsync(request, new CancellationToken());
+                            var putResponse = await httpClient.SendAsync(request, cancellationTokenSource.Token);
 
                             await PopupNavigation.Instance.PopAsync();
 
