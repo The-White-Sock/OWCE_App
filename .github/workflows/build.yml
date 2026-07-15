@@ -70,6 +70,16 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      # windows-2022's preinstalled JDK isn't new enough for Xamarin.Android's
+      # TargetFrameworkVersion v13.0 (Android 13), which requires JDK 11+
+      # (error XA0031 otherwise). Microsoft Build of OpenJDK is what Xamarin.Android's
+      # own error message points to.
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: '11'
+
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
@@ -82,4 +92,4 @@ jobs:
       # reference) rather than the whole .sln, so this job doesn't get tangled up in
       # the iOS/macOS/WatchOS projects it isn't meant to touch.
       - name: Restore and build
-        run: msbuild OWCE/OWCE.Android/OWCE.Android.csproj /t:Restore,Build /p:Configuration=Debug /p:Platform=AnyCPU /m /v:minimal
+        run: msbuild OWCE/OWCE.Android/OWCE.Android.csproj /t:Restore,Build /p:Configuration=Debug /p:Platform=AnyCPU /p:JavaSdkDirectory="${{ env.JAVA_HOME }}" /m /v:minimal
