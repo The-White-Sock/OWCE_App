@@ -31,7 +31,6 @@ namespace OWCE.Pages
             }
         }*/
 
-        private bool _initialSubscirbe = false;
         Grid _sideMenuItem = null;
 
         IAsyncCommand _startRecordRideCommand = null;

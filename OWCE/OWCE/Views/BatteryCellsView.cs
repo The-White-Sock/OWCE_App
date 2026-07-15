@@ -209,20 +209,6 @@ namespace OWCE.Views
             return new Color(1f, colorPercent, 1f);
 
 
-            /*
-            var color = voltage switch
-            {
-                var v when v <= 2.8 => new Color(1f, 201f / 255f, 1f),
-                var v when v > 2.8 => new Color(1f, 201f / 255f, 1f),
-
-            };
-
-            */
-
-            return Color.Magenta;
-
-
-
         }
     }
 }

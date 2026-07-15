@@ -24,12 +24,6 @@ namespace OWCE.Pages
     {
         public ObservableCollection<OWBaseBoard> Boards { get; private set; } = new ObservableCollection<OWBaseBoard>();
 
-        // Used to dertermine if the board is still found.
-        private List<OWBoard> _foundInLastScan = null;
-
-        private bool _isRefreshing = false;
-
-
         /*
         private bool _isScanning = false;
         public bool IsScanning
@@ -164,8 +158,6 @@ namespace OWCE.Pages
             */
         }
 
-        Thickness _safeInsets;
-
         bool _hasAppeared = false;
         Grid _sideMenuItem;
 
@@ -190,7 +182,11 @@ namespace OWCE.Pages
             //App.Current.OWBLE.BoardConnected += OWBLE_BoardConnected;
 
 
-            BackgroundLogoImage.Margin = new Thickness(0, (_safeInsets.Top + _safeInsets.Bottom), 0, 0);
+            // Was previously always zero: this page declared its own _safeInsets field
+            // that nothing ever assigned, shadowing the base class's SafeAreaInsets
+            // (which BaseContentPage keeps in sync with the platform's actual safe
+            // area on iOS).
+            BackgroundLogoImage.Margin = new Thickness(0, (SafeAreaInsets.Top + SafeAreaInsets.Bottom), 0, 0);
             //BackgroundImage
 
 
