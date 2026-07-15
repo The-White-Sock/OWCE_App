@@ -588,6 +588,7 @@ namespace OWCE
             _nativePeripheral = baseBoard.NativePeripheral;
             _owble.BoardValueChanged += OWBLE_BoardValueChanged;
             _owble.RSSIUpdated += OWBLE_RSSIUpdated;
+            _owble.BoardReconnected += OWBLE_BoardReconnected;
 
             // Subscribe to property changes to keep watch app in sync
             // (eg speed, battery percent changes)
@@ -612,6 +613,7 @@ namespace OWCE
 
             _owble.BoardValueChanged -= OWBLE_BoardValueChanged;
             _owble.RSSIUpdated -= OWBLE_RSSIUpdated;
+            _owble.BoardReconnected -= OWBLE_BoardReconnected;
 
             this.PropertyChanged -= WatchSyncEventHandler.HandlePropertyChanged;
 
@@ -720,6 +722,114 @@ namespace OWCE
             });
         }
 
+        // Read once at initial connect, and again after a reconnect to refresh the
+        // UI immediately rather than waiting on the next notification for each.
+        private static readonly List<string> CharacteristicsToReadNow = new List<string>()
+        {
+            SerialNumberUUID,
+            BatteryPercentUUID,
+            //BatteryLow5UUID,
+            //BatteryLow20UUID,
+            BatterySerialUUID,
+            //PitchUUID,
+            //RollUUID,
+            //YawUUID,
+            TripOdometerUUID,
+            RpmUUID,
+            LightModeUUID,
+            LightsFrontUUID,
+            LightsBackUUID,
+            //StatusErrorUUID,
+            TemperatureUUID,
+            //FirmwareRevisionUUID,
+            CurrentAmpsUUID,
+            TripAmpHoursUUID,
+            TripRegenAmpHoursUUID,
+            BatteryTemperatureUUID,
+            BatteryVoltageUUID,
+            //SafetyHeadroomUUID,
+            //HardwareRevisionUUID,
+            LifetimeOdometerUUID,
+            LifetimeAmpHoursUUID,
+            RideModeUUID,
+            //BatteryCellsUUID,
+            LastErrorCodeUUID,
+            //SerialRead,
+            //SerialWrite,
+            //UNKNOWN1UUID,
+            //UNKNOWN2UUID,
+            //UNKNOWN3UUID,
+            //UNKNOWN4UUID,
+        };
+
+        // Android can subscribe up to 15 things at once. Subscriptions are
+        // per-connection at the BLE level - a reconnect gets a brand new GATT
+        // session where none of these are armed anymore, so this list is also
+        // used to re-subscribe after a reconnect, not just on the initial connect.
+        private static readonly List<string> CharacteristicsToSubscribeTo = new List<string>()
+        {
+            //SerialNumberUUID,
+            BatteryPercentUUID,
+            //BatteryLow5UUID,
+            //BatteryLow20UUID,
+            //BatterySerialUUID,
+            //PitchUUID,
+            //RollUUID,
+            //YawUUID,
+            TripOdometerUUID,
+            RpmUUID,
+            //LightModeUUID,
+            //LightsFrontUUID,
+            //LightsBackUUID,
+            StatusErrorUUID,
+            TemperatureUUID,
+            //FirmwareRevisionUUID,
+            CurrentAmpsUUID,
+            TripAmpHoursUUID,
+            TripRegenAmpHoursUUID,
+            BatteryTemperatureUUID,
+            BatteryVoltageUUID,
+            //SafetyHeadroomUUID,
+            RideModeUUID,
+            //HardwareRevisionUUID,
+            //LifetimeOdometerUUID,
+            //LifetimeAmpHoursUUID,
+            BatteryCellsUUID,
+            //LastErrorCodeUUID,
+            //SerialRead,
+            //SerialWrite,
+            //UNKNOWN1UUID,
+            //UNKNOWN2UUID,
+            //UNKNOWN3UUID,
+            //UNKNOWN4UUID,
+        };
+
+        // Re-arms live-data notifications and refreshes current values. Used both
+        // for the initial connect (below) and after a reconnect (OWBLE_BoardReconnected)
+        // - deliberately does not redo the one-time hardware/firmware handshake or
+        // Jumpstart flow below, since re-triggering that popup on every reconnect
+        // would be its own bug, and the already-running KeepBoardAlive() keep-alive
+        // timer (started once below and never stopped across a reconnect) continues
+        // to re-assert the board's unlock state on its own.
+        private async Task RestoreLiveDataSync()
+        {
+            foreach (var characteristic in CharacteristicsToSubscribeTo)
+            {
+                await _owble.SubscribeValue(characteristic);
+            }
+
+            foreach (var characteristic in CharacteristicsToReadNow)
+            {
+                var data = await _owble.ReadValue(characteristic);
+                SetValue(characteristic, data, true);
+            }
+        }
+
+        private void OWBLE_BoardReconnected()
+        {
+            RestoreLiveDataSync().SafeFireAndForget();
+        }
+
         internal async Task SubscribeToBLE()
         {
 #if DEBUG
@@ -727,85 +837,6 @@ namespace OWCE
                 return;
 #endif
             RSSIMonitor();
-
-
-            var characteristicsToReadNow = new List<string>()
-            {
-                SerialNumberUUID,
-                BatteryPercentUUID,
-                //BatteryLow5UUID,
-                //BatteryLow20UUID,
-                BatterySerialUUID,
-                //PitchUUID,
-                //RollUUID,
-                //YawUUID,
-                TripOdometerUUID,
-                RpmUUID,
-                LightModeUUID,
-                LightsFrontUUID,
-                LightsBackUUID,
-                //StatusErrorUUID,
-                TemperatureUUID,
-                //FirmwareRevisionUUID,
-                CurrentAmpsUUID,
-                TripAmpHoursUUID,
-                TripRegenAmpHoursUUID,
-                BatteryTemperatureUUID,
-                BatteryVoltageUUID,
-                //SafetyHeadroomUUID,
-                //HardwareRevisionUUID,
-                LifetimeOdometerUUID,
-                LifetimeAmpHoursUUID,
-                RideModeUUID,
-                //BatteryCellsUUID,
-                LastErrorCodeUUID,
-                //SerialRead,
-                //SerialWrite,
-                //UNKNOWN1UUID,
-                //UNKNOWN2UUID,
-                //UNKNOWN3UUID,
-                //UNKNOWN4UUID,
-            };
-
-            // Android can subscribe up to 15 things at once.
-            var characteristicsToSubscribeTo = new List<string>()
-            {
-                //SerialNumberUUID,
-                BatteryPercentUUID,
-                //BatteryLow5UUID,
-                //BatteryLow20UUID,
-                //BatterySerialUUID,
-                //PitchUUID,
-                //RollUUID,
-                //YawUUID,
-                TripOdometerUUID,
-                RpmUUID,
-                //LightModeUUID,
-                //LightsFrontUUID,
-                //LightsBackUUID,
-                StatusErrorUUID,
-                TemperatureUUID,
-                //FirmwareRevisionUUID,
-                CurrentAmpsUUID,
-                TripAmpHoursUUID,
-                TripRegenAmpHoursUUID,
-                BatteryTemperatureUUID,
-                BatteryVoltageUUID,
-                //SafetyHeadroomUUID,
-                RideModeUUID,
-                //HardwareRevisionUUID,
-                //LifetimeOdometerUUID,
-                //LifetimeAmpHoursUUID,
-                BatteryCellsUUID,
-                //LastErrorCodeUUID,
-                //SerialRead,
-                //SerialWrite,
-                //UNKNOWN1UUID,
-                //UNKNOWN2UUID,
-                //UNKNOWN3UUID,
-                //UNKNOWN4UUID,
-            };
-
 
             var hardwareRevision = await _owble.ReadValue(HardwareRevisionUUID);
             SetValue(HardwareRevisionUUID, hardwareRevision, true);
@@ -877,17 +908,7 @@ namespace OWCE
                 }
             }
 
-            foreach (var characteristic in characteristicsToSubscribeTo)
-            {
-                await _owble.SubscribeValue(characteristic);
-            }
-
-            foreach (var characteristic in characteristicsToReadNow)
-            {
-                var data = await _owble.ReadValue(characteristic);
-                SetValue(characteristic, data, true);
-            }
-
+            await RestoreLiveDataSync();
         }
 
         // This should be called to keep the board in its unlocked state.

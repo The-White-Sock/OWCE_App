@@ -88,20 +88,33 @@ namespace OWCE.Pages
         private void OWBLE_BoardReconnecting()
         {
             System.Diagnostics.Debug.WriteLine("OWBLE_BoardReconnecting");
-            
-            _reconnectingAlert = new ConnectingAlert(Board.Name, new Command(() =>
-            {
-                // TODO Disconnect.
-                PopupNavigation.Instance.RemovePageAsync(_reconnectingAlert);
-                _reconnectingAlert = null;
-            }), "Reconnecting...");
-            
 
-            if (PopupNavigation.Instance.PopupStack.Contains(_reconnectingAlert) == false)
+            // This fires on every retry attempt (every couple of seconds while the
+            // board is unreachable), not just once. Previously this created and
+            // pushed a brand new popup instance every single time, stacking dozens
+            // of them on top of each other the longer a reconnect took - each with
+            // its own semi-transparent overlay, which is why the screen behind them
+            // would eventually read as solid black. Only show one at a time.
+            if (_reconnectingAlert != null)
             {
-                PopupNavigation.Instance.PushAsync(_reconnectingAlert, true);
+                return;
             }
 
+            _reconnectingAlert = new ConnectingAlert(Board.Name, new Command(async () =>
+            {
+                // Previously a no-op TODO - Cancel dismissed this popup's UI but
+                // never actually stopped the underlying auto-reconnect loop, which
+                // just kept retrying and re-showing a new popup a couple seconds
+                // later regardless. Give up on reconnecting for real instead.
+                if (PopupNavigation.Instance.PopupStack.Any())
+                {
+                    await PopupNavigation.Instance.PopAllAsync();
+                }
+                _reconnectingAlert = null;
+                await DisconnectAndPop();
+            }), "Reconnecting...");
+
+            PopupNavigation.Instance.PushAsync(_reconnectingAlert, true);
         }
 
 
