@@ -71,7 +71,7 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       # windows-2022's preinstalled JDK isn't new enough for Xamarin.Android's
-      # TargetFrameworkVersion v13.0 (Android 13), which requires JDK 11+
+      # TargetFrameworkVersion v14.0 (Android 14), which requires JDK 11+
       # (error XA0031 otherwise). Microsoft Build of OpenJDK is what Xamarin.Android's
       # own error message points to.
       - name: Setup JDK
