@@ -40,15 +40,15 @@ jobs:
     name: Build core library
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-core-${{ hashFiles('OWCE/OWCE/OWCE.csproj') }}
@@ -65,23 +65,23 @@ jobs:
     name: Build Android app
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
 
       # windows-2022's preinstalled JDK isn't new enough for Xamarin.Android's
       # TargetFrameworkVersion v13.0 (Android 13), which requires JDK 11+
       # (error XA0031 otherwise). Microsoft Build of OpenJDK is what Xamarin.Android's
       # own error message points to.
       - name: Setup JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: microsoft
           java-version: '11'
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-android-${{ hashFiles('OWCE/OWCE.Android/OWCE.Android.csproj', 'OWCE/OWCE/OWCE.csproj') }}
