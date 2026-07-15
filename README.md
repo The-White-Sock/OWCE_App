@@ -42,14 +42,17 @@ There's no CI job for iOS/macOS/WatchOS: those projects use classic Xamarin.iOS/
 
 [.github/workflows/release-android.yml](.github/workflows/release-android.yml) builds a signed, sideload-ready Android release APK and attaches it to a new GitHub Release. It does **not** publish to Google Play - there's no Play Store distribution set up for this project, this is for direct/manual distribution only. There's no equivalent release automation for iOS/macOS/WatchOS, for the same toolchain reasons CI doesn't cover them.
 
-To cut a release:
+To cut a release, either:
 
-```
-git tag v1.2.3
-git push origin v1.2.3
-```
+* **From the command line:**
+  ```
+  git tag v1.2.3
+  git push origin v1.2.3
+  ```
+* **From the GitHub web UI** (no local git needed): go to the repo's *Releases* page → *Draft a new release* → under "Choose a tag", type a new tag name (e.g. `v1.2.3`) and select *Create new tag: v1.2.3 on publish* → *Publish release*. This creates the tag and a release together; the workflow detects the release already exists and uploads the APK to it instead of creating a duplicate.
+* **Manually**, from the *Actions* tab, by running the workflow (`workflow_dispatch`) and entering a version number by hand.
 
-This builds `OWCE-1.2.3.apk`, signed with the repository's release keystore, and attaches it to a new GitHub Release named "OWCE 1.2.3". The workflow can also be run manually from the Actions tab (`workflow_dispatch`) by entering a version number by hand.
+Any of these builds `OWCE-1.2.3.apk`, signed with the repository's release keystore, and attaches it to the GitHub Release for that tag.
 
 **One-time setup required** before this works: add these repository secrets under *Settings → Secrets and variables → Actions*:
 

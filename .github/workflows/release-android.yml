@@ -13,7 +13,12 @@ name: Release Android APK
 #                                     PKCS12-format keystores, which is what modern
 #                                     `keytool` produces by default)
 #
-# To cut a release: git tag v1.2.3 && git push origin v1.2.3
+# To cut a release, either:
+#   - git tag v1.2.3 && git push origin v1.2.3, or
+#   - GitHub web UI: Releases -> "Draft a new release" -> type a new tag (eg
+#     v1.2.3) under "Choose a tag" -> Publish release. This creates the tag and a
+#     release in one step; the job below detects the pre-existing release and
+#     uploads the APK to it instead of trying to create a duplicate.
 #
 # Runner/toolchain choices here mirror build.yml - see that file's comments for why
 # windows-2022 (not windows-latest) and a manually-installed JDK 11 are required, and
@@ -143,13 +148,23 @@ jobs:
           cp "$APK" "$NEWNAME"
           echo "apk_path=$NEWNAME" >> "$GITHUB_OUTPUT"
 
-      - name: Create GitHub Release
+      - name: Create or update GitHub Release
         shell: bash
         run: |
-          gh release create "${{ steps.version.outputs.tag_name }}" \
-            "${{ steps.apk.outputs.apk_path }}" \
-            --title "OWCE ${{ steps.version.outputs.version_name }}" \
-            --generate-notes \
-            --target "${{ github.sha }}"
+          TAG="${{ steps.version.outputs.tag_name }}"
+          APK="${{ steps.apk.outputs.apk_path }}"
+          # The tag (and sometimes a release for it) may already exist - eg if it was
+          # created via the GitHub web UI's "Draft a new release" page, which creates
+          # the tag and the release together, rather than via `git push` (tag only).
+          # Upload to that release instead of trying to create a duplicate in that case.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists - uploading APK to it."
+            gh release upload "$TAG" "$APK" --clobber
+          else
+            gh release create "$TAG" "$APK" \
+              --title "OWCE ${{ steps.version.outputs.version_name }}" \
+              --generate-notes \
+              --target "${{ github.sha }}"
+          fi
         env:
           GH_TOKEN: ${{ github.token }}
