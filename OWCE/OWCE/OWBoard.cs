@@ -815,12 +815,28 @@ namespace OWCE
         {
             foreach (var characteristic in CharacteristicsToSubscribeTo)
             {
-                await _owble.SubscribeValue(characteristic);
+                // SubscribeValue returns null (rather than a Task) if the connection
+                // has already dropped again - eg a second disconnect landing while
+                // this loop is mid-flight after a reconnect. Awaiting null throws an
+                // NRE that SafeFireAndForget (see OWBLE_BoardReconnected below) would
+                // otherwise swallow silently, abandoning the rest of the resync.
+                // Bail out instead; the next reconnect will call this again.
+                var subscribeTask = _owble.SubscribeValue(characteristic);
+                if (subscribeTask == null)
+                {
+                    return;
+                }
+                await subscribeTask;
             }
 
             foreach (var characteristic in CharacteristicsToReadNow)
             {
-                var data = await _owble.ReadValue(characteristic);
+                var readTask = _owble.ReadValue(characteristic);
+                if (readTask == null)
+                {
+                    return;
+                }
+                var data = await readTask;
                 SetValue(characteristic, data, true);
             }
         }

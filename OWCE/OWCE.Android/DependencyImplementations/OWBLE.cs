@@ -315,7 +315,6 @@ namespace OWCE.Droid.DependencyImplementations
         // report via OnConnectionStateChange for a long time, if at all).
         private static readonly TimeSpan GattOperationTimeout = TimeSpan.FromSeconds(10);
         private int _operationGeneration = 0;
-        private int _consecutiveOperationTimeouts = 0;
 
 
         TaskCompletionSource<bool> _connectTaskCompletionSource = null;
@@ -568,8 +567,8 @@ namespace OWCE.Droid.DependencyImplementations
         // native callback already fired normally, either a new operation will have
         // bumped _operationGeneration past this one, or the queue will have gone
         // idle (_gattOperationQueueProcessing false) - either way this is a no-op.
-        // Otherwise the operation is presumed hung (eg the board went silent mid-op),
-        // and this fails it and moves the queue on instead of leaving it wedged.
+        // Otherwise the operation is presumed hung (eg the board went silent mid-op);
+        // this fails it and forces a disconnect rather than leaving the queue wedged.
         private void HandleOperationTimeout(OWBLE_QueueItem item, int operationGeneration)
         {
             if (operationGeneration != _operationGeneration || _gattOperationQueueProcessing == false)
@@ -619,24 +618,29 @@ namespace OWCE.Droid.DependencyImplementations
                     break;
             }
 
-            _gattOperationQueueProcessing = false;
-            _consecutiveOperationTimeouts++;
+            // Do NOT clear _gattOperationQueueProcessing or call ProcessQueue() here.
+            // Android's GATT callbacks carry no ID correlating them to a specific
+            // ReadCharacteristic()/WriteCharacteristic()/WriteDescriptor() call - if
+            // this timed-out op's native callback is merely late rather than truly
+            // lost, and we dispatched a new op for the same characteristic in the
+            // meantime, there would be no way to tell which op a subsequent callback
+            // belongs to (both report the same UUID). Force a disconnect instead:
+            // OnConnectionStateChange's Disconnected handling is what actually clears
+            // _gattOperationQueueProcessing and resumes the queue, and only once a
+            // fresh connection (and therefore an unambiguous callback stream) exists.
+            Debug.WriteLine("GATT operation timed out - treating the connection as dead and forcing a disconnect.");
 
-            if (_consecutiveOperationTimeouts >= 2)
+            if (_bluetoothGatt != null)
             {
-                // Two operations in a row never got a callback - the connection is
-                // almost certainly dead (eg the board was powered off) even though
-                // Android hasn't reported it via OnConnectionStateChange yet. Force a
-                // disconnect so that callback fires and the existing auto-reconnect
-                // logic (see OnConnectionStateChange) takes over, rather than sitting
-                // wedged indefinitely waiting for the OS to notice on its own.
-                _consecutiveOperationTimeouts = 0;
-                Debug.WriteLine("GATT connection appears dead after repeated operation timeouts - forcing a disconnect.");
-                _bluetoothGatt?.Disconnect();
-                return;
+                _bluetoothGatt.Disconnect();
             }
-
-            ProcessQueue();
+            else
+            {
+                // Already disconnected by the time this fired - nothing left to wait
+                // on, so unwedge the queue directly instead of leaving
+                // _gattOperationQueueProcessing stuck true forever.
+                FailAndClearPendingOperations();
+            }
         }
 
         // Fails and clears every pending/queued operation. Used both for a normal
@@ -672,7 +676,6 @@ namespace OWCE.Droid.DependencyImplementations
 
             _gattOperationQueue.Clear();
             _gattOperationQueueProcessing = false;
-            _consecutiveOperationTimeouts = 0;
         }
 
         // Pre-API 33 callback: the value isn't delivered directly, so GetValue() is
@@ -733,7 +736,6 @@ namespace OWCE.Droid.DependencyImplementations
             }
 
             _gattOperationQueueProcessing = false;
-            _consecutiveOperationTimeouts = 0;
             ProcessQueue();
         }
 
@@ -762,7 +764,6 @@ namespace OWCE.Droid.DependencyImplementations
             writeCharacteristicValueRequest.CompletionSource.SetResult(writeCharacteristicValueRequest.Data);
 
             _gattOperationQueueProcessing = false;
-            _consecutiveOperationTimeouts = 0;
             ProcessQueue();
         }
 
@@ -854,7 +855,6 @@ namespace OWCE.Droid.DependencyImplementations
             if (resolved)
             {
                 _gattOperationQueueProcessing = false;
-                _consecutiveOperationTimeouts = 0;
                 ProcessQueue();
             }
         }
@@ -1297,20 +1297,18 @@ namespace OWCE.Droid.DependencyImplementations
             }
 
             _updatingRSSI = true;
-            var requestedGatt = _bluetoothGatt;
             _bluetoothGatt?.ReadRemoteRssi();
 
             // OnReadRemoteRssi may never fire at all on a dead/dying connection,
             // which would otherwise permanently block every future RSSI poll via the
-            // guard above. Only reset the flag if a reconnect hasn't already swapped
-            // in a new BluetoothGatt (and with it, presumably a fresh in-flight
-            // request) in the meantime.
+            // guard above. Reset unconditionally - comparing against the
+            // BluetoothGatt that was current when this fired would leave the flag
+            // stuck true forever if a reconnect swapped in a new one before this
+            // timer ran, since the guard above would then block every subsequent
+            // request from ever reaching ReadRemoteRssi() again.
             Device.StartTimer(TimeSpan.FromSeconds(5), () =>
             {
-                if (_updatingRSSI && _bluetoothGatt == requestedGatt)
-                {
-                    _updatingRSSI = false;
-                }
+                _updatingRSSI = false;
                 return false;
             });
         }
