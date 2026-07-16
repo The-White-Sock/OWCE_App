@@ -41,6 +41,7 @@ jobs:
   release-android:
     name: Build, sign, and release Android APK
     runs-on: windows-2022
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
 

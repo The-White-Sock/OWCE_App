@@ -74,6 +74,12 @@ base64 -w0 owce-release.keystore > owce-release-keystore.base64.txt
 
 **Keep the keystore file and its passwords somewhere safe outside the repo** (e.g. a password manager) - anyone with them can sign an APK that impersonates this app to any device that's ever installed it, and losing them means no future release can be signed to match a previous one, breaking updates for anyone who sideloaded an earlier version.
 
+### Code style and conventions
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for commit message/PR conventions.
+Formatting and naming conventions live in [`.editorconfig`](.editorconfig),
+which most editors (Visual Studio, VS Code, Rider) pick up automatically.
+
 ### Regenerating the Protobuf classes
 
 If you change [Protobuf/OWBoardEvent.proto](Protobuf/OWBoardEvent.proto), run [Protobuf/build.sh](Protobuf/build.sh) (requires `protoc`) to regenerate the C# code. It writes straight into `OWCE/OWCE/Protobuf/`, which is what the app actually builds from, so no manual copy step is needed afterwards.

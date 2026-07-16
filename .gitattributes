@@ -1,0 +1,18 @@
+# Normalize line endings on checkin so a contributor on Windows (this project
+# is built with Visual Studio/MSBuild on windows-2022 in CI - see build.yml)
+# doesn't silently reintroduce CRLF into files that are LF in the repo today.
+* text=auto eol=lf
+
+# Visual Studio writes .sln files with CRLF; leave that alone rather than
+# fighting the IDE every time it re-saves the file.
+*.sln text eol=crlf
+
+# Binary assets - don't let git attempt text normalization/diffing on these.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.sketch binary
+*.keystore binary

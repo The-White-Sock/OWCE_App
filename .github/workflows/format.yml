@@ -1,0 +1,65 @@
+name: Format Code
+
+# Manually-triggered: runs `dotnet format` against the shared core library
+# using the rules in .editorconfig, and opens a PR with whatever changes
+# result, so a full-repo style pass can be reviewed rather than committed
+# blind.
+#
+# Scoped to OWCE/OWCE/OWCE.csproj only, the one SDK-style, platform-agnostic
+# project (see build.yml's comments) - `dotnet format` needs to load and
+# build a project to compute fixes, and the classic (non-SDK-style)
+# Xamarin.Android/.iOS/.Mac projects need their respective Windows/Mac
+# Xamarin toolchains for that, which this Ubuntu runner doesn't have.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  format:
+    name: Run dotnet format and open a PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Run dotnet format
+        run: dotnet format OWCE/OWCE/OWCE.csproj
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open PR with formatting changes
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH="chore/dotnet-format-${{ github.run_id }}"
+          git checkout -b "$BRANCH"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "🎨 Apply dotnet format to the shared core library"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "🎨 Apply dotnet format to the shared core library" \
+            --body "Automated formatting pass using \`dotnet format\` against the rules in \`.editorconfig\`, triggered manually via the \"Format Code\" workflow. Review the diff before merging - this only touches whitespace/style, not behavior, but it's a wide-reaching change." \
+            --base main --head "$BRANCH"
+
+      - name: No changes needed
+        if: steps.changes.outputs.changed == 'false'
+        run: echo "Already formatted - nothing to do."

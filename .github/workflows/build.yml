@@ -35,10 +35,18 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+# Cancel a still-running CI run for the same branch/PR once a newer commit is
+# pushed - otherwise every push queues a full extra run that gets superseded
+# anyway, wasting CI minutes and leaving stale results around.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-core:
     name: Build core library
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
@@ -61,9 +69,19 @@ jobs:
       - name: Build
         run: dotnet build OWCE/OWCE/OWCE.csproj --configuration Release --no-restore
 
+      # Report-only for now: this is a pre-existing codebase, not one that's
+      # already .editorconfig-clean, so this isn't wired up to fail the build
+      # yet. Once a `dotnet format` pass (see the manually-triggered "Format
+      # Code" workflow) has been run and merged, drop `continue-on-error` here
+      # to make style drift an actual CI failure going forward.
+      - name: Check code formatting
+        continue-on-error: true
+        run: dotnet format OWCE/OWCE/OWCE.csproj --verify-no-changes --severity info
+
   build-android:
     name: Build Android app
     runs-on: windows-2022
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
 
