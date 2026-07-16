@@ -1,26 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
-using System.Text.Json;
+using MvvmHelpers;
+using OWCE.DependencyInterfaces;
+using OWCE.Models;
+using OWCE.Network;
+using OWCE.PropertyChangeHandlers;
 using OWCE.Protobuf;
+using Rg.Plugins.Popup.Services;
 //using Plugin.Geolocator;
 //using Plugin.Geolocator.Abstractions;
 using Xamarin.Essentials;
 using Xamarin.Forms;
-using System.Collections.ObjectModel;
-using OWCE.Models;
-using OWCE.Network;
-using OWCE.DependencyInterfaces;
-using Rg.Plugins.Popup.Services;
-using MvvmHelpers;
-using OWCE.PropertyChangeHandlers;
 
 namespace OWCE
 {
@@ -1133,7 +1133,7 @@ namespace OWCE
             }
             catch (Exceptions.HandshakeException err)
             {
-                throw err;
+                throw;
             }
             catch (Exception err)
             {
@@ -1287,7 +1287,8 @@ namespace OWCE
                         break;
                     }
 
-                    var scaleFactor = _boardType switch {
+                    var scaleFactor = _boardType switch
+                    {
                         OWBoardType.V1 => 0.0009f,
                         OWBoardType.Plus => 0.0018f,
                         OWBoardType.XR => 0.002f,

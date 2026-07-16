@@ -58,8 +58,8 @@ namespace OWCE.Pages
         AsyncCommand<OWBaseBoard> _boardSelectedCommand;
         public AsyncCommand<OWBaseBoard> BoardSelectedCommand => _boardSelectedCommand ??= new AsyncCommand<OWBaseBoard>(BoardSelectedAsync, allowsMultipleExecutions: false);
 
-       
-        
+
+
 
         /*
 

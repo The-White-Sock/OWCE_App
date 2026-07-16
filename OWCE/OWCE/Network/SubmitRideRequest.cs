@@ -7,7 +7,7 @@ namespace OWCE.Network
     {
         [JsonPropertyName("ride_name")]
         public string RideName { get; set; } = String.Empty;
-        
+
         [JsonPropertyName("aftermarket_battery")]
         public bool AftermarketBattery { get; set; } = false;
 

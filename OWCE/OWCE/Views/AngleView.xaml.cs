@@ -15,7 +15,8 @@ namespace OWCE.Views
         public double Pitch
         {
             get { return (double)GetValue(PitchProperty); }
-            set {
+            set
+            {
                 SetValue(PitchProperty, value);
             }
         }
@@ -28,7 +29,8 @@ namespace OWCE.Views
         public double Yaw
         {
             get { return (double)GetValue(YawProperty); }
-            set {
+            set
+            {
                 SetValue(YawProperty, value);
             }
         }
@@ -41,7 +43,8 @@ namespace OWCE.Views
         public double Roll
         {
             get { return (double)GetValue(RollProperty); }
-            set {
+            set
+            {
                 SetValue(RollProperty, value);
             }
         }

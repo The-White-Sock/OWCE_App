@@ -20,13 +20,13 @@ using Xamarin.Forms;
 using static Xamarin.Essentials.AppleSignInAuthenticator;
 
 namespace OWCE.Pages
-{	
-	public partial class ViewRawRideDataPage : BaseContentPage
+{
+    public partial class ViewRawRideDataPage : BaseContentPage
     {
-     
+
         public ViewRawRideDataPage(SubmitRideRequest submitRideRequest, string dataFile)
-		{
-			InitializeComponent();
+        {
+            InitializeComponent();
 
             var model = new ViewRawRideDataModel(this)
             {
@@ -224,8 +224,8 @@ namespace OWCE.Pages
                                 var propertyName = uuidToNameConverter.Convert(boardEvent.Uuid, null, null, System.Globalization.CultureInfo.InvariantCulture);
                                 byte[] byteArray = ArrayPool<byte>.Shared.Rent(boardEvent.Data.Length);
                                 boardEvent.Data.CopyTo(byteArray, 0);
-                                streamWriter.WriteLine($"{boardEvent.Timestamp},{boardEvent.Uuid},\"{propertyName}\",{BitConverter.ToString(byteArray, 0, boardEvent.Data.Length)}");                                
-                                ArrayPool<byte>.Shared.Return(byteArray);                                
+                                streamWriter.WriteLine($"{boardEvent.Timestamp},{boardEvent.Uuid},\"{propertyName}\",{BitConverter.ToString(byteArray, 0, boardEvent.Data.Length)}");
+                                ArrayPool<byte>.Shared.Return(byteArray);
                             }
                         }
 
@@ -255,7 +255,7 @@ namespace OWCE.Pages
             return await taskCompletionSource.Task;
         }
 
-        
-	}
+
+    }
 }
 

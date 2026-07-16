@@ -1,14 +1,14 @@
 ﻿using System;
-using OWCE.Protobuf;
 using System.Collections.Generic;
-using System.Threading;
 using System.IO;
+using System.Threading;
 using OWCE.Network;
+using OWCE.Protobuf;
 using Xamarin.Forms;
 
 namespace OWCE.Pages
 {
-	public class ViewRawRideDataModel : Xamarin.CommunityToolkit.ObjectModel.ObservableObject
+    public class ViewRawRideDataModel : Xamarin.CommunityToolkit.ObjectModel.ObservableObject
     {
         string dataFile = String.Empty;
         public string DataFile
@@ -41,7 +41,8 @@ namespace OWCE.Pages
 
         internal void LoadData()
         {
-            ThreadPool.QueueUserWorkItem(delegate {
+            ThreadPool.QueueUserWorkItem(delegate
+            {
                 var boardEvents = new List<OWBoardEvent>();
                 using (var inputFile = new FileStream(DataFile, FileMode.Open, FileAccess.Read))
                 {

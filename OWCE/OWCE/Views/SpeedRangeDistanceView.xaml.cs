@@ -61,7 +61,7 @@ namespace OWCE.Views
             set { SetValue(TripOdometerProperty, value); }
         }
 
-        
+
 
 
 

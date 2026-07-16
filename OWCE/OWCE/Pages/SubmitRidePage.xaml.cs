@@ -173,7 +173,7 @@ namespace OWCE.Pages
             var tempFilename = Path.Combine(Path.GetTempPath(), Path.GetFileName(ride.DataFileName));
 
             var cancellationTokenSource = new CancellationTokenSource();
-            
+
             var preparingAlert = new ProgressAlert(new Command(async () =>
             {
                 if (cancellationTokenSource.IsCancellationRequested == false)
@@ -224,7 +224,7 @@ namespace OWCE.Pages
                         OWBoard.BatterySerialUUID,
                     };
 
-                   
+
                     using (var inputFile = new FileStream(originalData, FileMode.Open, FileAccess.Read))
                     {
                         using (var outputFile = new FileStream(outputData, FileMode.Create))
@@ -252,7 +252,7 @@ namespace OWCE.Pages
                         }
                     }
 
-                    
+
                 }
                 catch (Exception err)
                 {

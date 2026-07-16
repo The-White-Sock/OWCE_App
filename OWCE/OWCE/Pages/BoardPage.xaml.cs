@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+using OWCE.DependencyInterfaces;
+using OWCE.Pages.Popup;
+using OWCE.Views;
+using Rg.Plugins.Popup.Services;
+using Xamarin.CommunityToolkit.ObjectModel;
 using Xamarin.Essentials;
 using Xamarin.Forms;
-using System.Net;
-using System.IO;
-using System.Threading.Tasks;
-using OWCE.Pages.Popup;
-using Rg.Plugins.Popup.Services;
-using System.Linq;
-using OWCE.Views;
-using OWCE.DependencyInterfaces;
-using Xamarin.CommunityToolkit.ObjectModel;
 
 namespace OWCE.Pages
 {

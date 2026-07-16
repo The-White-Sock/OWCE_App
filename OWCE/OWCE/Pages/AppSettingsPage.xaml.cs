@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Xamarin.CommunityToolkit.ObjectModel;
 using OWCE.Views;
-using Xamarin.Forms;
+using Xamarin.CommunityToolkit.ObjectModel;
 using Xamarin.Essentials;
+using Xamarin.Forms;
 
 namespace OWCE.Pages
 {

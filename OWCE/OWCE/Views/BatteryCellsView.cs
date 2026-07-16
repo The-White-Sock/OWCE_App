@@ -1,11 +1,10 @@
 ﻿using System;
-
-using Xamarin.Forms;
-using OWCE.Views;
-using OWCE.Models;
-using System.Runtime.CompilerServices;
-using System.ComponentModel;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using OWCE.Models;
+using OWCE.Views;
+using Xamarin.Forms;
 
 namespace OWCE.Views
 {

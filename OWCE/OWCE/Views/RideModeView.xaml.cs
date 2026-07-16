@@ -172,7 +172,7 @@ namespace OWCE.Views
                 }
 
 
-               //VisualStateManager.GoToState(button, selectedRideMode.IsSelected ? "SelectedState" : "NormalState");
+                //VisualStateManager.GoToState(button, selectedRideMode.IsSelected ? "SelectedState" : "NormalState");
             }
         }
     }
