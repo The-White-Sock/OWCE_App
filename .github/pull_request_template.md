@@ -1,3 +1,5 @@
+<!-- Prefix the PR title with a gitmoji matching the change (e.g. "🐛 Fix ..."). See CONTRIBUTING.md / https://gitmoji.dev. -->
+
 ## Summary
 <!-- What does this PR change, and why? -->
 
