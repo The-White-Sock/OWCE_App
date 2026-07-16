@@ -28,6 +28,11 @@ BLE/board behavior generally can't be verified by CI alone, so call out
 anything that still needs a hardware test. Prefix the PR title with a
 gitmoji too, matching the commit convention above.
 
+PRs merge quickly once CI is green - that's intentional, not an oversight.
+CI (build success on both `build-core`/`build-android`, plus the
+format-check gate) is what protects `main`; there's no separate soak/review
+window layered on top of that.
+
 ## Code style
 
 Formatting and naming conventions live in `.editorconfig` - most editors
@@ -36,11 +41,12 @@ Formatting and naming conventions live in `.editorconfig` - most editors
 as build warnings; the classic Xamarin.Android/.iOS/.Mac projects don't
 support that MSBuild property, so it's only set there.
 
-CI checks `OWCE/OWCE/OWCE.csproj` against `.editorconfig` on every push
-(report-only for now - see the comment on that step in `build.yml`). To
-apply formatting fixes across that project, run the manually-triggered
-**Format Code** workflow from the Actions tab; it opens a PR with the result
-rather than committing directly.
+CI checks `OWCE/OWCE/OWCE.csproj` against `.editorconfig` on every push -
+scoped to the `whitespace`/`style` categories only, and blocking (see the
+comment on that step in `build.yml` for why `analyzers` is deliberately
+excluded). To apply formatting fixes across that project, run the
+manually-triggered **Format Code** workflow from the Actions tab; it opens
+a PR with the result rather than committing directly.
 
 ## Releases
 
