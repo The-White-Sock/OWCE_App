@@ -69,14 +69,22 @@ jobs:
       - name: Build
         run: dotnet build OWCE/OWCE/OWCE.csproj --configuration Release --no-restore
 
-      # Report-only for now: this is a pre-existing codebase, not one that's
-      # already .editorconfig-clean, so this isn't wired up to fail the build
-      # yet. Once a `dotnet format` pass (see the manually-triggered "Format
-      # Code" workflow) has been run and merged, drop `continue-on-error` here
-      # to make style drift an actual CI failure going forward.
+      # Blocking: the core library was brought into line with .editorconfig
+      # by the "Format Code" workflow (see #16), so drift there is now a
+      # real CI failure instead of a report-only warning.
+      #
+      # Scoped to the "whitespace" and "style" categories only - what
+      # .editorconfig actually governs, and what #16 fixed - not bare
+      # `dotnet format`, which also runs the "analyzers" category (the
+      # EnableNETAnalyzers CA-rules above). Some of those, like CA1310, have
+      # no automatic code fix, so `--verify-no-changes` fails on them
+      # unconditionally regardless of formatting state (confirmed the hard
+      # way on #18) - that's an "address it by hand eventually" warning-tier
+      # backlog, not something a formatter check should gate on.
       - name: Check code formatting
-        continue-on-error: true
-        run: dotnet format OWCE/OWCE/OWCE.csproj --verify-no-changes --severity info
+        run: |
+          dotnet format whitespace OWCE/OWCE/OWCE.csproj --verify-no-changes
+          dotnet format style OWCE/OWCE/OWCE.csproj --verify-no-changes
 
   build-android:
     name: Build Android app
