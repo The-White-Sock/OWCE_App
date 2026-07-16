@@ -1,0 +1,24 @@
+# Configures the auto-generated release notes used by the "Create or update
+# GitHub Release" step in .github/workflows/release-android.yml (the
+# `gh release create ... --generate-notes` / `gh release upload` call), and by
+# GitHub's own "Generate release notes" button when drafting a release
+# manually. Groups merged PRs by label instead of listing them in merge order.
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+  categories:
+    - title: Bug Fixes
+      labels:
+        - bug
+        - fix
+    - title: New Features
+      labels:
+        - enhancement
+        - feature
+    - title: Dependencies
+      labels:
+        - dependencies
+    - title: Other Changes
+      labels:
+        - "*"
