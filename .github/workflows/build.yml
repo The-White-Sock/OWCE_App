@@ -69,13 +69,11 @@ jobs:
       - name: Build
         run: dotnet build OWCE/OWCE/OWCE.csproj --configuration Release --no-restore
 
-      # Report-only for now: this is a pre-existing codebase, not one that's
-      # already .editorconfig-clean, so this isn't wired up to fail the build
-      # yet. Once a `dotnet format` pass (see the manually-triggered "Format
-      # Code" workflow) has been run and merged, drop `continue-on-error` here
-      # to make style drift an actual CI failure going forward.
+      # Blocking: the core library was brought fully into line with
+      # .editorconfig by the "Format Code" workflow (see #16), so any further
+      # drift is now a real CI failure instead of a report-only warning. Run
+      # the manually-triggered "Format Code" workflow to fix a failure here.
       - name: Check code formatting
-        continue-on-error: true
         run: dotnet format OWCE/OWCE/OWCE.csproj --verify-no-changes --severity info
 
   build-android:
