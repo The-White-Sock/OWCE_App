@@ -31,8 +31,14 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      # Scoped to "whitespace"/"style" (see build.yml's format-check step for
+      # why "analyzers" - bare `dotnet format` - is deliberately left out:
+      # some of those rules have no automatic fix and would need addressing
+      # by hand rather than by a formatter).
       - name: Run dotnet format
-        run: dotnet format OWCE/OWCE/OWCE.csproj
+        run: |
+          dotnet format whitespace OWCE/OWCE/OWCE.csproj
+          dotnet format style OWCE/OWCE/OWCE.csproj
 
       - name: Check for changes
         id: changes

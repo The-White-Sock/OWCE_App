@@ -69,18 +69,22 @@ jobs:
       - name: Build
         run: dotnet build OWCE/OWCE/OWCE.csproj --configuration Release --no-restore
 
-      # Blocking: the core library was brought into line with this exact
-      # command (no --severity flag, so the default "warn" threshold) by the
-      # "Format Code" workflow (see #16), so any further drift at that same
-      # threshold is now a real CI failure instead of a report-only warning.
+      # Blocking: the core library was brought into line with .editorconfig
+      # by the "Format Code" workflow (see #16), so drift there is now a
+      # real CI failure instead of a report-only warning.
       #
-      # Deliberately NOT --severity info: that also catches lower-priority
-      # IDE suggestions (readonly-field, naming-rule, var-usage, unnecessary-
-      # assignment) that were never part of the #16 pass and would fail this
-      # gate immediately (confirmed the hard way on #18) without a separate,
-      # more invasive pass to actually apply them first.
+      # Scoped to the "whitespace" and "style" categories only - what
+      # .editorconfig actually governs, and what #16 fixed - not bare
+      # `dotnet format`, which also runs the "analyzers" category (the
+      # EnableNETAnalyzers CA-rules above). Some of those, like CA1310, have
+      # no automatic code fix, so `--verify-no-changes` fails on them
+      # unconditionally regardless of formatting state (confirmed the hard
+      # way on #18) - that's an "address it by hand eventually" warning-tier
+      # backlog, not something a formatter check should gate on.
       - name: Check code formatting
-        run: dotnet format OWCE/OWCE/OWCE.csproj --verify-no-changes
+        run: |
+          dotnet format whitespace OWCE/OWCE/OWCE.csproj --verify-no-changes
+          dotnet format style OWCE/OWCE/OWCE.csproj --verify-no-changes
 
   build-android:
     name: Build Android app
