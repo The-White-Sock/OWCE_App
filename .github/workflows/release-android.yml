@@ -96,13 +96,21 @@ jobs:
           distribution: microsoft
           java-version: '11'
 
+      # Deliberately the same key build.yml's Android job uses (no "-release"
+      # suffix), not a separate namespace. NuGet restore resolves the same
+      # packages regardless of Debug vs Release configuration, and build.yml
+      # runs (and refreshes this exact cache) on every push to main, while
+      # this workflow only runs when cutting a release - so a separate
+      # "-release" cache was consistently stale (a restore-keys fallback
+      # match, not an exact hit) by the time any release actually happened,
+      # since the source commit had already moved past its last snapshot.
+      # Sharing the key lets releases ride on the cache CI already keeps warm.
       - name: Cache NuGet packages
         uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-android-release-${{ hashFiles('OWCE/OWCE.Android/OWCE.Android.csproj', 'OWCE/OWCE/OWCE.csproj') }}
+          key: ${{ runner.os }}-nuget-android-${{ hashFiles('OWCE/OWCE.Android/OWCE.Android.csproj', 'OWCE/OWCE/OWCE.csproj') }}
           restore-keys: |
-            ${{ runner.os }}-nuget-android-release-
             ${{ runner.os }}-nuget-android-
 
       - name: Restore
