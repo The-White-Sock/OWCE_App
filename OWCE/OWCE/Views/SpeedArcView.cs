@@ -129,11 +129,11 @@ namespace OWCE.Views
             {
                 UpdateTargetArcAngle();
             }
-            else if(propertyName == MinRPMProperty.PropertyName)
+            else if (propertyName == MinRPMProperty.PropertyName)
             {
                 UpdateTargetArcAngle();
             }
-            else if(propertyName == MaxRPMProperty.PropertyName)
+            else if (propertyName == MaxRPMProperty.PropertyName)
             {
                 UpdateTargetArcAngle();
             }

@@ -5,52 +5,52 @@ using Xamarin.Forms;
 
 namespace OWCE.Views
 {
-	public enum CustomToolbarItemPosition
-	{
-		Left,
-		Right,
-	}
-
-	public class CustomToolbarItem : ContentView
+    public enum CustomToolbarItemPosition
     {
-		public static readonly BindableProperty PositionProperty = BindableProperty.Create(
-			propertyName: nameof(Position),
-			returnType: typeof(CustomToolbarItemPosition),
-			declaringType: typeof(CustomToolbarItem),
-			defaultValue: CustomToolbarItemPosition.Right);
+        Left,
+        Right,
+    }
 
-		public CustomToolbarItemPosition Position
-		{
-			get { return (CustomToolbarItemPosition)GetValue(PositionProperty); }
-			set { SetValue(PositionProperty, value); }
-		}
+    public class CustomToolbarItem : ContentView
+    {
+        public static readonly BindableProperty PositionProperty = BindableProperty.Create(
+            propertyName: nameof(Position),
+            returnType: typeof(CustomToolbarItemPosition),
+            declaringType: typeof(CustomToolbarItem),
+            defaultValue: CustomToolbarItemPosition.Right);
 
-
-		public static readonly BindableProperty PriorityProperty = BindableProperty.Create(
-			propertyName: nameof(Priority),
-			returnType: typeof(int),
-			declaringType: typeof(CustomToolbarItem),
-			defaultValue: 1);
-
-		public int Priority
-		{
-			get { return (int)GetValue(PriorityProperty); }
-			set { SetValue(PriorityProperty, value); }
-		}
+        public CustomToolbarItemPosition Position
+        {
+            get { return (CustomToolbarItemPosition)GetValue(PositionProperty); }
+            set { SetValue(PositionProperty, value); }
+        }
 
 
-		public static readonly BindableProperty IconImageSourceProperty = BindableProperty.Create(
-			propertyName: nameof(IconImageSource),
-			returnType: typeof(ImageSource),
-			declaringType: typeof(CustomToolbarItem));
+        public static readonly BindableProperty PriorityProperty = BindableProperty.Create(
+            propertyName: nameof(Priority),
+            returnType: typeof(int),
+            declaringType: typeof(CustomToolbarItem),
+            defaultValue: 1);
 
-		public ImageSource IconImageSource
-		{
-			get { return (ImageSource)GetValue(IconImageSourceProperty); }
-			set { SetValue(IconImageSourceProperty, value); }
-		}
+        public int Priority
+        {
+            get { return (int)GetValue(PriorityProperty); }
+            set { SetValue(PriorityProperty, value); }
+        }
 
-        
+
+        public static readonly BindableProperty IconImageSourceProperty = BindableProperty.Create(
+            propertyName: nameof(IconImageSource),
+            returnType: typeof(ImageSource),
+            declaringType: typeof(CustomToolbarItem));
+
+        public ImageSource IconImageSource
+        {
+            get { return (ImageSource)GetValue(IconImageSourceProperty); }
+            set { SetValue(IconImageSourceProperty, value); }
+        }
+
+
         public static readonly BindableProperty TextProperty = BindableProperty.Create(
             propertyName: nameof(Text),
             returnType: typeof(string),
@@ -80,9 +80,9 @@ namespace OWCE.Views
         Image _image;
 
         public CustomToolbarItem()
-		{
-			MinimumWidthRequest = 30;
-			MinimumHeightRequest = 30;
+        {
+            MinimumWidthRequest = 30;
+            MinimumHeightRequest = 30;
             VerticalOptions = LayoutOptions.FillAndExpand;
 
             TapGestureRecognizer tapGestureRecognizer = new TapGestureRecognizer()
@@ -101,7 +101,7 @@ namespace OWCE.Views
             };
 
             GestureRecognizers.Add(tapGestureRecognizer);
-		}
+        }
 
         protected override void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {

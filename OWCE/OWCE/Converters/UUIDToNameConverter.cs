@@ -5,7 +5,7 @@ using Xamarin.Forms;
 
 namespace OWCE.Converters
 {
-	public class UUIDToNameConverter : IValueConverter
+    public class UUIDToNameConverter : IValueConverter
     {
         Dictionary<string, string> uuidLookup = new Dictionary<string, string>();
 

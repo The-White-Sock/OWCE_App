@@ -47,7 +47,7 @@ namespace OWCE
                 // Check a ride doens't exist in the database either.
                 dbRidesFound = Database.Connection.ExecuteScalar<int>("SELECT COUNT(*) FROM Ride WHERE id=?", newRideGuid);
             } while (File.Exists(newDataFilePath) == true || dbRidesFound > 0);
-           
+
 
             var newRide = new Ride()
             {

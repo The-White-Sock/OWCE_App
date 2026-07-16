@@ -53,7 +53,7 @@ namespace OWCE
 
                         if (previousEvent != null)
                         {
-                            long sleepDuration = currentEvent.Timestamp - previousEvent.Timestamp;                           
+                            long sleepDuration = currentEvent.Timestamp - previousEvent.Timestamp;
                             Thread.Sleep((int)sleepDuration);
                         }
 
@@ -104,7 +104,7 @@ namespace OWCE
             }
         }
 
-      
+
         protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
@@ -129,7 +129,7 @@ namespace OWCE
 
                 //board.BoardType = OWBoardType.Plus;
 
-                
+
                 return true;
             }
 

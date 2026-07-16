@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Xamarin.Forms;
-using OWCE.Views;
 using System.Runtime.CompilerServices;
 using OWCE.Extensions;
+using OWCE.Views;
+using Xamarin.Forms;
 
 namespace OWCE.Views
 {
@@ -48,7 +48,7 @@ namespace OWCE.Views
             });
         }
 
-        
+
 
         protected override void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {

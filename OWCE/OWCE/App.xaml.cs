@@ -1,14 +1,14 @@
 ﻿using System;
-using Xamarin.Forms;
-using Xamarin.Forms.Xaml;
-using Xamarin.Essentials;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using OWCE.DependencyInterfaces;
 using OWCE.Pages;
-using System.IO;
-using System.Threading.Tasks;
-using System.Threading;
-using System.Diagnostics;
-using System.Linq;
+using Xamarin.Essentials;
+using Xamarin.Forms;
+using Xamarin.Forms.Xaml;
 
 [assembly: ExportFont("SairaExtraCondensed-Black.ttf")]
 [assembly: ExportFont("SairaExtraCondensed-Bold.ttf")]
@@ -55,7 +55,7 @@ namespace OWCE
         {
 
             MetricDisplay = Preferences.Get("metric_display", System.Globalization.RegionInfo.CurrentRegion.IsMetric);
-            
+
             if (Directory.Exists(LogsDirectory) == false)
             {
                 Directory.CreateDirectory(LogsDirectory);

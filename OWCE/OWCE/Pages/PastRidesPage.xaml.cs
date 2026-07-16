@@ -20,7 +20,7 @@ namespace OWCE.Pages
 
         AsyncCommand<Ride> renameRideCommand;
         public AsyncCommand<Ride> RenameRideCommand => renameRideCommand ??= new AsyncCommand<Ride>(RenameRide, allowsMultipleExecutions: false);
-        
+
         public PastRidesPage()
         {
             InitializeComponent();

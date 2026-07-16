@@ -5,14 +5,14 @@ using Xamarin.Forms;
 
 namespace OWCE.Converters
 {
-	public class ByteToHexConverter : IValueConverter
+    public class ByteToHexConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is Google.Protobuf.ByteString byteString)
             {
                 //return byteString.ToString();
-                
+
                 byte[] byteArray = ArrayPool<byte>.Shared.Rent(byteString.Length);
                 try
                 {

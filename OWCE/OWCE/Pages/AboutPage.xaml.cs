@@ -35,7 +35,7 @@ namespace OWCE.Pages
 
         IAsyncCommand _facebookGroupCommand;
         public IAsyncCommand FacebookGroupCommand => _facebookGroupCommand ??= new AsyncCommand(async () => await OpenUrlAsync("https://www.facebook.com/groups/owceappgroup"), allowsMultipleExecutions: false);
-                  
+
 
 
         public AboutPage()
