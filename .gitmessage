@@ -1,0 +1,10 @@
+# <Imperative summary, ~50 chars> (e.g. "Fix ghost BLE connections by timing out hung GATT operations")
+#
+# Why is this change needed, and what would break/be missing without it?
+# Wrap body lines around 72 chars. Leave a blank line between summary and body.
+#
+# - Use the imperative mood ("Fix", "Add", "Modernize"), not past tense.
+# - Explain the *why*, not a line-by-line *what* - the diff already shows that.
+# - Reference an issue/PR number if one exists (e.g. "Fixes #42").
+#
+# Lines starting with '#' are stripped and won't appear in the commit message.

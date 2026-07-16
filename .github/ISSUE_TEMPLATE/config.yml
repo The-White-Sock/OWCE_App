@@ -1,0 +1,4 @@
+# Requires every new issue to go through one of the templates in this
+# directory (bug_report.md / feature_request.md) instead of allowing a
+# template-less blank issue.
+blank_issues_enabled: false
