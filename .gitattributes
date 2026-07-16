@@ -3,9 +3,13 @@
 # doesn't silently reintroduce CRLF into files that are LF in the repo today.
 * text=auto eol=lf
 
-# Visual Studio writes .sln files with CRLF; leave that alone rather than
-# fighting the IDE every time it re-saves the file.
-*.sln text eol=crlf
+# Visual Studio writes .sln files with CRLF. `-text` (not `text eol=crlf`)
+# is required to actually leave it alone: `eol=` still normalizes the
+# git-object storage to LF and only converts to the given eol on checkout,
+# which silently rewrote this file's stored form the first time anything
+# re-added it under this rule (see PR #16) even though the working-tree
+# bytes ended up the same either way.
+*.sln -text
 
 # Binary assets - don't let git attempt text normalization/diffing on these.
 *.png binary
