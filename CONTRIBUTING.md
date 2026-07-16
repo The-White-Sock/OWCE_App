@@ -28,6 +28,20 @@ BLE/board behavior generally can't be verified by CI alone, so call out
 anything that still needs a hardware test. Prefix the PR title with a
 gitmoji too, matching the commit convention above.
 
+## Code style
+
+Formatting and naming conventions live in `.editorconfig` - most editors
+(Visual Studio, VS Code, Rider) apply it automatically, no setup needed.
+`OWCE/OWCE/OWCE.csproj` (the shared core library) also runs Roslyn analyzers
+as build warnings; the classic Xamarin.Android/.iOS/.Mac projects don't
+support that MSBuild property, so it's only set there.
+
+CI checks `OWCE/OWCE/OWCE.csproj` against `.editorconfig` on every push
+(report-only for now - see the comment on that step in `build.yml`). To
+apply formatting fixes across that project, run the manually-triggered
+**Format Code** workflow from the Actions tab; it opens a PR with the result
+rather than committing directly.
+
 ## Releases
 
 See the comments at the top of `.github/workflows/release-android.yml` for

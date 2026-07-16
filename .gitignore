@@ -3,6 +3,7 @@ obj/
 .vs/
 .idea/
 .mfractor/
+*.user
 OWCE/OWCE/AppConstants.cs
 AppConstants.cs
 packages/
