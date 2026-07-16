@@ -1,0 +1,29 @@
+#!/bin/sh
+# Enforces the Gitmoji convention documented in .gitmessage/CONTRIBUTING.md:
+# the first line of every commit must start with a recognized gitmoji,
+# either the emoji itself or its :shortcode: form.
+#
+# Not active by default - git doesn't run hooks committed to a repo unless
+# pointed at this directory. Opt in once per clone:
+#   git config core.hooksPath .githooks
+
+commit_msg_file="$1"
+first_line=$(head -n1 "$commit_msg_file")
+
+# Merge commits, reverts, and fixups aren't hand-written to this convention.
+case "$first_line" in
+    "Merge "*|"Revert "*|"fixup! "*|"squash! "*)
+        exit 0
+        ;;
+esac
+
+# Matched without trailing variation-selector bytes (U+FE0F) so this still
+# matches regardless of whether the editor that typed the emoji included one.
+allowed='✨|🐛|🚑|♻|⚡|🔒|📝|✅|🎨|🔧|👷|⬆|🔖|⏪|🔥'
+allowed_codes=':sparkles:|:bug:|:ambulance:|:recycle:|:zap:|:lock:|:memo:|:white_check_mark:|:art:|:wrench:|:construction_worker:|:arrow_up:|:bookmark:|:rewind:|:fire:'
+
+if ! printf '%s' "$first_line" | grep -Eq "^($allowed|$allowed_codes)"; then
+    echo "error: commit message must start with a gitmoji (see .gitmessage or https://gitmoji.dev)" >&2
+    echo "  e.g. \"🐛 Fix ghost BLE connections by timing out hung GATT operations\"" >&2
+    exit 1
+fi
