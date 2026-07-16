@@ -85,6 +85,7 @@ namespace OWCE
         public Action BoardDisconnected { get; set; }
         public Action BoardReconnecting { get; set; }
         public Action BoardReconnected { get; set; }
+        public Action BoardReconnectFailed { get; set; }
 
 
         bool _isScanning = false;

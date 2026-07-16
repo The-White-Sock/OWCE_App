@@ -60,6 +60,7 @@ namespace OWCE.Pages
             App.Current.OWBLE.BoardDisconnected += OWBLE_BoardDisconnected;
             App.Current.OWBLE.BoardReconnecting += OWBLE_BoardReconnecting;
             App.Current.OWBLE.BoardReconnected += OWBLE_BoardReconnected;
+            App.Current.OWBLE.BoardReconnectFailed += OWBLE_BoardReconnectFailed;
 
             // Shift title to the right.
             var titleLabel = GetTitleLabel();
@@ -106,12 +107,7 @@ namespace OWCE.Pages
                 // never actually stopped the underlying auto-reconnect loop, which
                 // just kept retrying and re-showing a new popup a couple seconds
                 // later regardless. Give up on reconnecting for real instead.
-                if (PopupNavigation.Instance.PopupStack.Any())
-                {
-                    await PopupNavigation.Instance.PopAllAsync();
-                }
-                _reconnectingAlert = null;
-                await DisconnectAndPop();
+                await GiveUpAndDisconnect();
             }), "Reconnecting...");
 
             PopupNavigation.Instance.PushAsync(_reconnectingAlert, true);
@@ -127,6 +123,27 @@ namespace OWCE.Pages
                 PopupNavigation.Instance.RemovePageAsync(_reconnectingAlert);
                 _reconnectingAlert = null;
             }
+        }
+
+        // Fires once the OWBLE layer itself gives up retrying (see
+        // ReconnectGiveUpAfter) - previously the "Reconnecting..." popup would
+        // otherwise sit there forever if the user never pressed Cancel themselves,
+        // since the underlying retry loop had no automatic cutoff at all.
+        private async void OWBLE_BoardReconnectFailed()
+        {
+            System.Diagnostics.Debug.WriteLine("OWBLE_BoardReconnectFailed");
+
+            await GiveUpAndDisconnect();
+        }
+
+        private async Task GiveUpAndDisconnect()
+        {
+            if (PopupNavigation.Instance.PopupStack.Any())
+            {
+                await PopupNavigation.Instance.PopAllAsync();
+            }
+            _reconnectingAlert = null;
+            await DisconnectAndPop();
         }
 
         protected override void OnAppearing()
@@ -215,6 +232,7 @@ namespace OWCE.Pages
             App.Current.OWBLE.BoardDisconnected -= OWBLE_BoardDisconnected;
             App.Current.OWBLE.BoardReconnecting -= OWBLE_BoardReconnecting;
             App.Current.OWBLE.BoardReconnected -= OWBLE_BoardReconnected;
+            App.Current.OWBLE.BoardReconnectFailed -= OWBLE_BoardReconnectFailed;
 
             Board.Teardown();
         }

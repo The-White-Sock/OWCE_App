@@ -316,6 +316,14 @@ namespace OWCE.Droid.DependencyImplementations
         private static readonly TimeSpan GattOperationTimeout = TimeSpan.FromSeconds(10);
         private int _operationGeneration = 0;
 
+        // How long to keep automatically retrying a lost connection before giving up
+        // and telling the UI to treat it as a real disconnect (see
+        // GiveUpReconnecting/BoardReconnectFailed) - previously this retried every 2
+        // seconds forever with no way to stop short of the user manually cancelling
+        // the "Reconnecting..." popup.
+        private static readonly TimeSpan ReconnectGiveUpAfter = TimeSpan.FromSeconds(60);
+        private DateTime _reconnectDeadlineUtc;
+
 
         TaskCompletionSource<bool> _connectTaskCompletionSource = null;
         private OWBaseBoard _board = null;
@@ -370,6 +378,16 @@ namespace OWCE.Droid.DependencyImplementations
             {
                 if (status == GattStatus.Success)
                 {
+                    // Requests a shorter connection interval. Android's default is
+                    // fairly conservative, and since the OS's own supervision timeout
+                    // (how long it waits without a response before deciding the link
+                    // is dead) scales with the connection interval, a slower interval
+                    // means a slower-to-notice disconnect too - not just slower data
+                    // exchange. Not guaranteed to eliminate that delay (Android
+                    // doesn't expose direct control over the supervision timeout
+                    // itself), but this is the standard, low-risk lever available.
+                    gatt.RequestConnectionPriority(GattConnectionPriority.High);
+
                     // Re-discover services on a reconnect too (handled below in
                     // OnServicesDiscovered) - Android hands us a fresh BluetoothGatt on
                     // each ConnectGatt() call, so previously cached characteristics
@@ -450,6 +468,7 @@ namespace OWCE.Droid.DependencyImplementations
                     }
                     else
                     {
+                        _reconnectDeadlineUtc = DateTime.UtcNow + ReconnectGiveUpAfter;
                         Reconnect();
                     }
                 }
@@ -886,6 +905,7 @@ namespace OWCE.Droid.DependencyImplementations
         public Action BoardDisconnected { get; set; }
         public Action BoardReconnecting { get; set; }
         public Action BoardReconnected { get; set; }
+        public Action BoardReconnectFailed { get; set; }
         public Action<String> ErrorOccurred { get; set; }
 
 
@@ -996,12 +1016,29 @@ namespace OWCE.Droid.DependencyImplementations
         {
             Device.StartTimer(TimeSpan.FromSeconds(2), () =>
             {
-                if (_requestingDisconnect == false)
+                if (_requestingDisconnect)
                 {
-                    Reconnect();
+                    return false;
                 }
+
+                if (DateTime.UtcNow >= _reconnectDeadlineUtc)
+                {
+                    GiveUpReconnecting();
+                    return false;
+                }
+
+                Reconnect();
                 return false;
             });
+        }
+
+        // Stops retrying and tells the UI to treat this like a real disconnect,
+        // instead of leaving the "Reconnecting..." popup spinning forever if the
+        // board genuinely isn't coming back (eg it was left powered off).
+        private void GiveUpReconnecting()
+        {
+            _reconnecting = false;
+            BoardReconnectFailed?.Invoke();
         }
 
         public async void StartScanning()

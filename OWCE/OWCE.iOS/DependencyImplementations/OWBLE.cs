@@ -45,6 +45,11 @@ namespace OWCE.MacOS.DependencyImplementations
         public Action BoardDisconnected { get; set; }
         public Action BoardReconnecting { get; set; }
         public Action BoardReconnected { get; set; }
+        // Never invoked here - unlike Android, this implementation's Reconnect() has
+        // no automatic give-up timeout yet (see issue #20's tracked gap between the
+        // two platforms' reconnect handling), so there's currently no condition that
+        // would fire this. Declared anyway so this class still satisfies IOWBLE.
+        public Action BoardReconnectFailed { get; set; }
         Dictionary<CBUUID, TaskCompletionSource<byte[]>> _readQueue = new Dictionary<CBUUID, TaskCompletionSource<byte[]>>();
         List<CharacteristicValueRequest> _writeQueue = new List<CharacteristicValueRequest>();
         List<CBUUID> _notifyList = new List<CBUUID>();

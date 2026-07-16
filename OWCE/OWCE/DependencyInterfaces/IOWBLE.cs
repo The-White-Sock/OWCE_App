@@ -25,6 +25,7 @@ namespace OWCE.DependencyInterfaces
         Action BoardDisconnected { get; set; }
         Action BoardReconnecting { get; set; }
         Action BoardReconnected { get; set; }
+        Action BoardReconnectFailed { get; set; }
 
 
         Task<byte[]> ReadValue(string characteristicGuid, bool important = false);
