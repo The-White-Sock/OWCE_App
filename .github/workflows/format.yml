@@ -43,22 +43,33 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Open PR with formatting changes
+      - name: Push formatting changes to a branch
         if: steps.changes.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           BRANCH="chore/dotnet-format-${{ github.run_id }}"
+          echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
           git checkout -b "$BRANCH"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "🎨 Apply dotnet format to the shared core library"
           git push origin "$BRANCH"
+
+      # A separate, non-fatal step: some repos have "Allow GitHub Actions to
+      # create and approve pull requests" (Settings -> Actions -> General)
+      # turned off, which makes `gh pr create` fail here even though the
+      # branch above pushed fine. Don't fail the whole run over that - report
+      # the branch either way so it can be turned into a PR by hand.
+      - name: Open PR with formatting changes
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
           gh pr create \
             --title "🎨 Apply dotnet format to the shared core library" \
             --body "Automated formatting pass using \`dotnet format\` against the rules in \`.editorconfig\`, triggered manually via the \"Format Code\" workflow. Review the diff before merging - this only touches whitespace/style, not behavior, but it's a wide-reaching change." \
-            --base main --head "$BRANCH"
+            --base main --head "$BRANCH" \
+          || echo "::warning::Could not open a PR automatically (Actions may lack permission to create PRs - see Settings > Actions > General). The formatted changes were still pushed to '$BRANCH': open a PR from that branch manually."
 
       - name: No changes needed
         if: steps.changes.outputs.changed == 'false'
