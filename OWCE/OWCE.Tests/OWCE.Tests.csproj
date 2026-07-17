@@ -4,6 +4,14 @@
     <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <Nullable>disable</Nullable>
+    <!-- OWCE.csproj transitively pulls in SkiaSharp.Views.Forms, which carries
+         WinForms/WPF-flagged assets (eg OpenTK.GLControl). Without this, the SDK
+         refuses to build a bare "net8.0" (non "-windows") project that references
+         anything Windows-Desktop-flagged - NETSDK1136 - even though nothing here
+         actually exercises that code path. This is the documented escape hatch for
+         exactly that: reference such a package from a non-Windows TFM/OS without
+         needing an actual Windows target. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <ItemGroup>
