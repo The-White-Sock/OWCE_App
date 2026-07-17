@@ -14,21 +14,19 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
 
-    <!-- OWCE.csproj -> Xamarin.Forms.PancakeView has a "netcoreapp3.1" asset
-         group (nuget.org confirms this - its other groups, including the
-         netstandard2.1 one OWCE.csproj itself actually uses, do not) that
-         depends on Xamarin.Forms.Platform.WPF, unlike its netstandard groups.
-         NuGet picks that netcoreapp3.1 group for a net8.0 consumer specifically
-         (netcoreapp3.1 is compatible with and closer to net8.0 than
-         netstandard is), and Platform.WPF's own dependency chain is what
-         actually pulls in OpenTK.GLControl, which has no net8.0 assets at all
-         and trips NETSDK1136. Excluding OpenTK/OpenTK.GLControl directly
-         doesn't work (confirmed on PR #43 CI) - they're two hops away from
-         this project, and NuGet only lets a direct sibling reference override
-         an inherited one for the *same, immediately* re-declared package.
-         Xamarin.Forms.Platform.WPF is that immediate package, so exclude it
-         here instead. -->
-    <PackageReference Include="Xamarin.Forms.Platform.WPF" Version="4.8.0.1451" ExcludeAssets="all" />
+    <!-- OWCE.csproj -> SkiaSharp.Views.Forms 2.88.9 depends on
+         Xamarin.Forms.Platform.WPF >= 4.8.0.1821 (confirmed via the actual
+         NuGet restore graph on PR #43 CI, in an asset group NuGet picks for a
+         net8.0 consumer specifically - OWCE.csproj's own netstandard2.1 build
+         never touches it). Platform.WPF's own dependency chain is what pulls
+         in OpenTK.GLControl, which has no net8.0 assets at all and trips
+         NETSDK1136. Excluding OpenTK/OpenTK.GLControl directly doesn't work -
+         they're two hops away from this project, and NuGet only lets a direct
+         sibling reference override an inherited one for the *same,
+         immediately* re-declared package. Platform.WPF is that immediate
+         package, so exclude it here instead (version must match or exceed
+         4.8.0.1821, or NuGet treats this as a downgrade and errors). -->
+    <PackageReference Include="Xamarin.Forms.Platform.WPF" Version="4.8.0.1821" ExcludeAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
