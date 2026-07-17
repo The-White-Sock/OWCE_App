@@ -231,7 +231,14 @@ namespace OWCE.Droid.DependencyImplementations
                 // rediscovered - the previous connection's cached characteristics are
                 // no longer valid - before treating the board as usable again.
                 _reconnecting = false;
-                BoardReconnected?.Invoke();
+
+                // This callback runs on Android's Binder callback thread, not the
+                // main/UI thread, but subscribers (BoardPage.xaml.cs) call
+                // Rg.Plugins.Popup navigation APIs that expect the main thread.
+                Xamarin.Essentials.MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    BoardReconnected?.Invoke();
+                });
                 return;
             }
 
@@ -494,7 +501,15 @@ namespace OWCE.Droid.DependencyImplementations
                     return;
                 }
 
-                BoardDisconnected?.Invoke();
+                // This callback runs on Android's Binder callback thread, not the
+                // main/UI thread, but subscribers expect the main thread (see the
+                // identical note on BoardReconnected above). Only the event dispatch
+                // itself is marshaled - the reconnect-decision logic below doesn't
+                // touch any UI API, so it stays on this thread unchanged.
+                Xamarin.Essentials.MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    BoardDisconnected?.Invoke();
+                });
 
                 if (_requestingDisconnect == false)
                 {
@@ -1102,7 +1117,15 @@ namespace OWCE.Droid.DependencyImplementations
         // connection, mirroring the behaviour already implemented on iOS.
         private void Reconnect()
         {
-            BoardReconnecting?.Invoke();
+            // Called both from OnConnectionStateChange directly (Android's Binder
+            // callback thread, for the first disconnect) and from RetryReconnect()'s
+            // Device.StartTimer callback (the main thread, for subsequent retries) -
+            // marshal unconditionally so subscribers always see this on the main
+            // thread regardless of which path called Reconnect().
+            Xamarin.Essentials.MainThread.BeginInvokeOnMainThread(() =>
+            {
+                BoardReconnecting?.Invoke();
+            });
             _reconnecting = true;
 
             if (_board?.NativePeripheral is BluetoothDevice device)
