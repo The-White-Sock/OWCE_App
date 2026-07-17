@@ -597,7 +597,7 @@ namespace OWCE
 
             // Subscribe to property changes to keep watch app in sync
             // (eg speed, battery percent changes)
-            this.PropertyChanged += WatchSyncEventHandler.HandlePropertyChanged;
+            this.PropertyChanged += WatchSyncHandler.HandlePropertyChanged;
         }
 
         // Undoes everything done in the constructor/SubscribeToBLE, and stops any
@@ -620,7 +620,7 @@ namespace OWCE
             _owble.RSSIUpdated -= OWBLE_RSSIUpdated;
             _owble.BoardReconnected -= OWBLE_BoardReconnected;
 
-            this.PropertyChanged -= WatchSyncEventHandler.HandlePropertyChanged;
+            this.PropertyChanged -= WatchSyncHandler.HandlePropertyChanged;
 
             MessagingCenter.Unsubscribe<App>(this, App.UnitDisplayUpdatedKey);
         }
@@ -1346,7 +1346,7 @@ namespace OWCE
                         OWBoardType.Pint => 0.002f,
                         OWBoardType.PintX => 0.002f,
                         OWBoardType.GT => 0.002f,
-                        _ => throw new Exception("Unknown board type: " + _boardType),
+                        _ => throw new InvalidOperationException("Unknown board type: " + _boardType),
                     };
 
                     /// https://en.wikipedia.org/wiki/Two's_complement

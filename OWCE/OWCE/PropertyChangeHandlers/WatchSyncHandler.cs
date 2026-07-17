@@ -7,12 +7,12 @@ using Xamarin.Forms;
 
 namespace OWCE.PropertyChangeHandlers
 {
-    public class WatchSyncEventHandler
+    public class WatchSyncHandler
     {
         private static readonly HashSet<String> PropertiesToWatch =
             new HashSet<string> { "BatteryPercent", "BatteryVoltage", "RPM", "TripOdometer" };
 
-        public static readonly WatchSyncEventHandler Instance = new WatchSyncEventHandler();
+        public static readonly WatchSyncHandler Instance = new WatchSyncHandler();
 
         private Dictionary<WatchMessage, object> watchUpdates = new Dictionary<WatchMessage, object>();
 
