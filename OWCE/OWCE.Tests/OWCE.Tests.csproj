@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OWCE\OWCE.csproj" />
+  </ItemGroup>
+
+  <!-- OWCE.csproj transitively depends on Xamarin.Forms.Platform.WPF (via
+       SkiaSharp.Views.Forms and Xamarin.CommunityToolkit, in an asset group
+       NuGet picks for a net8.0 consumer specifically - never touched by
+       OWCE.csproj's own netstandard2.1 build). NuGet's ResolvePackageAssets
+       populates a TransitiveFrameworkReference item for it, and the SDK's
+       _CheckForTransitiveWindowsDesktopDependencies target (Microsoft.NET.Sdk.
+       DefaultItems.Shared.targets) raises NETSDK1136 for any such item
+       whenever TargetPlatformIdentifier isn't Windows - regardless of
+       PackageReference asset exclusions, which don't affect this item at
+       all (confirmed the hard way on PR #43 CI: excluding
+       Platform.WPF/OpenTK/OpenTK.GLControl's assets directly had zero
+       effect). Removing the item itself, before that check runs, is what
+       actually works. -->
+  <Target Name="RemoveTransitiveWindowsDesktopFrameworkReferences"
+          AfterTargets="ResolvePackageAssets"
+          BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies">
+    <ItemGroup>
+      <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App" />
+      <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WPF" />
+      <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WindowsForms" />
+    </ItemGroup>
+  </Target>
+
+</Project>
