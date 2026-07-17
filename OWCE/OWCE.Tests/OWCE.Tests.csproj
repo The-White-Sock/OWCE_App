@@ -13,40 +13,33 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-
-    <!-- Multiple packages OWCE.csproj references (SkiaSharp.Views.Forms,
-         Xamarin.CommunityToolkit) transitively depend on
-         Xamarin.Forms.Platform.WPF, in an asset group NuGet picks for a
-         net8.0 consumer specifically - OWCE.csproj's own netstandard2.1 build
-         never touches any of this. Platform.WPF's own dependency chain is
-         what pulls in OpenTK/OpenTK.GLControl, which have no net8.0 assets at
-         all.
-
-         This pin exists only to resolve the version-downgrade conflict
-         between the two different minimums those packages require
-         (4.8.0.1821 and 5.0.0.2291) - matched to OWCE.csproj's own
-         Xamarin.Forms version below, which Platform.WPF is published in
-         lockstep with. ExcludeAssets does NOT stop NETSDK1136 below - proved
-         on PR #43 CI across every combination of asset exclusion on this
-         package and on OpenTK/OpenTK.GLControl directly, all with identical
-         results. That check isn't driven by asset consumption at all. -->
-    <PackageReference Include="Xamarin.Forms.Platform.WPF" Version="5.0.0.2662" ExcludeAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OWCE\OWCE.csproj" />
   </ItemGroup>
 
-  <!-- The actual NETSDK1136 trigger: Platform.WPF being present in the
-       resolved graph at all (regardless of asset exclusion) makes the SDK
-       auto-inject a FrameworkReference to the Windows Desktop shared
-       framework, which is what the "-windows must be in TargetFramework"
-       check actually keys off - not UseWindowsForms/UseWPF as properties,
-       and not package asset flags. Removing the auto-injected item directly
-       is what actually stops it. -->
-  <ItemGroup>
-    <FrameworkReference Remove="Microsoft.WindowsDesktop.App.WindowsForms" />
-    <FrameworkReference Remove="Microsoft.WindowsDesktop.App.WPF" />
-  </ItemGroup>
+  <!-- OWCE.csproj transitively depends on Xamarin.Forms.Platform.WPF (via
+       SkiaSharp.Views.Forms and Xamarin.CommunityToolkit, in an asset group
+       NuGet picks for a net8.0 consumer specifically - never touched by
+       OWCE.csproj's own netstandard2.1 build). NuGet's ResolvePackageAssets
+       populates a TransitiveFrameworkReference item for it, and the SDK's
+       _CheckForTransitiveWindowsDesktopDependencies target (Microsoft.NET.Sdk.
+       DefaultItems.Shared.targets) raises NETSDK1136 for any such item
+       whenever TargetPlatformIdentifier isn't Windows - regardless of
+       PackageReference asset exclusions, which don't affect this item at
+       all (confirmed the hard way on PR #43 CI: excluding
+       Platform.WPF/OpenTK/OpenTK.GLControl's assets directly had zero
+       effect). Removing the item itself, before that check runs, is what
+       actually works. -->
+  <Target Name="RemoveTransitiveWindowsDesktopFrameworkReferences"
+          AfterTargets="ResolvePackageAssets"
+          BeforeTargets="_CheckForTransitiveWindowsDesktopDependencies">
+    <ItemGroup>
+      <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App" />
+      <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WPF" />
+      <TransitiveFrameworkReference Remove="Microsoft.WindowsDesktop.App.WindowsForms" />
+    </ItemGroup>
+  </Target>
 
 </Project>
