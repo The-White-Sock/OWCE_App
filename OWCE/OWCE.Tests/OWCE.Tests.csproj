@@ -1,5 +1,4 @@
-<Project>
-  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -14,27 +13,22 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+
+    <!-- OWCE.csproj -> SkiaSharp.Views.Forms transitively pulls in OpenTK/
+         OpenTK.GLControl (a WinForms control, version pinned per CI's NU1701
+         warning). It has no net8.0 assets at all, so NuGet falls back to its
+         .NET Framework build, which trips the SDK's "must target -windows"
+         check (NETSDK1136) even though nothing here uses WinForms. Neither
+         package is actually needed to call into OWBoard/OWBaseBoard, so
+         exclude both outright rather than fight the SDK's Windows-Forms
+         detection - this is scoped to this project only, OWCE.csproj (and the
+         Android/iOS/Mac apps that reference it) are untouched. -->
+    <PackageReference Include="OpenTK" Version="3.0.1" ExcludeAssets="all" />
+    <PackageReference Include="OpenTK.GLControl" Version="3.0.1" ExcludeAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OWCE\OWCE.csproj" />
   </ItemGroup>
 
-  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
-
-  <!-- Placed after the Sdk.targets import (using the explicit two-Import form
-       above instead of the usual <Project Sdk="..."> shorthand specifically so
-       this can go last) so it wins no matter what a transitively pulled-in
-       package sets via its own build targets. OWCE.csproj -> SkiaSharp.Views.Forms
-       -> OpenTK.GLControl, and OpenTK.GLControl (a WinForms control) has no
-       net8.0 assets at all - NuGet falls back to its .NET Framework build (see
-       the NU1701 warning in CI) - which implicitly flips UseWindowsForms/UseWPF
-       on and trips the SDK's "must target -windows" check (NETSDK1136), even
-       though nothing here actually uses WinForms/WPF. A plain PropertyGroup
-       earlier in this file isn't enough: package .targets imports run after it
-       and would just flip the flags back on. -->
-  <PropertyGroup>
-    <UseWindowsForms>false</UseWindowsForms>
-    <UseWPF>false</UseWPF>
-  </PropertyGroup>
 </Project>
