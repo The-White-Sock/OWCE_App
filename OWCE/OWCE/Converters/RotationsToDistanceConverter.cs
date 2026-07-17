@@ -30,11 +30,11 @@ namespace OWCE.Converters
 
             if (App.Current.MetricDisplay)
             {
-                return $"{kilometers.ToString("N1")} km"; // kmph
+                return $"{kilometers.ToString("N1", CultureInfo.CurrentCulture)} km"; // kmph
             }
             else
             {
-                return $"{UnitConverters.KilometersToMiles(kilometers).ToString("N1")} mi";
+                return $"{UnitConverters.KilometersToMiles(kilometers).ToString("N1", CultureInfo.CurrentCulture)} mi";
             }
 
         }

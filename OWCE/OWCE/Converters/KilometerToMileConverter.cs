@@ -19,21 +19,21 @@ namespace OWCE.Converters
             {
                 if (App.Current.MetricDisplay)
                 {
-                    return $"{distanceInKilometersAsFloat.ToString(format)} km";
+                    return $"{distanceInKilometersAsFloat.ToString(format, culture)} km";
                 }
 
                 var distanceInMiles = distanceInKilometersAsFloat * 0.621371f;
-                return $"{distanceInMiles.ToString(format)} mi";
+                return $"{distanceInMiles.ToString(format, culture)} mi";
             }
             else if (value is int distanceInKilometersAsInt)
             {
                 if (App.Current.MetricDisplay)
                 {
-                    return $"{distanceInKilometersAsInt.ToString(format)} km";
+                    return $"{distanceInKilometersAsInt.ToString(format, culture)} km";
                 }
 
                 var distanceInMiles = (float)distanceInKilometersAsInt * 0.621371f;
-                return $"{distanceInMiles.ToString(format)} mi";
+                return $"{distanceInMiles.ToString(format, culture)} mi";
 
             }
 

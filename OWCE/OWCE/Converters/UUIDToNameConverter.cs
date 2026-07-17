@@ -18,7 +18,7 @@ namespace OWCE.Converters
                     return uuidLookup[stringValue];
                 }
 
-                var actualName = stringValue.ToUpper() switch
+                var actualName = stringValue.ToUpperInvariant() switch
                 {
                     OWBoard.SerialNumberUUID => "SerialNumber",
                     OWBoard.RideModeUUID => "RideMode",

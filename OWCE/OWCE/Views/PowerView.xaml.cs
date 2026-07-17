@@ -74,7 +74,7 @@ namespace OWCE.Views
         {
             base.OnPropertyChanged(propertyName);
 
-            if (CurrentAmpsProperty.PropertyName.Equals(propertyName))
+            if (CurrentAmpsProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 // TODO: Animate this.
                 BackgroundBar.WidthRequest = (CurrentAmps / 20.0) * this.Width;
