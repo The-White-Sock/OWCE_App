@@ -32,18 +32,6 @@
     <PackageReference Include="Refractored.MvvmHelpers" Version="1.6.2" />
     <PackageReference Include="SkiaSharp" Version="2.88.9" />
     <PackageReference Include="SkiaSharp.Views.Forms" Version="2.88.9" />
-    <!-- SkiaSharp.Views.Forms's net461/WPF-flavored dependency group pulls in
-         OpenTK/OpenTK.GLControl (a WinForms desktop GL control) for its
-         WPF/WinForms host support - never used by this app, which only ships
-         Android/iOS/Mac/WatchOS. Pinning them here with ExcludeAssets="all"
-         overrides the transitive resolution (an explicit PackageReference for
-         an already-transitive package wins over the inherited one, within this
-         project). Needed so OWCE.Tests (net8.0) can reference this project
-         without tripping NETSDK1136: OpenTK.GLControl has no net8.0 assets at
-         all, so NuGet falls back to its .NET Framework/WinForms build, which
-         otherwise flows through to any project referencing this one. -->
-    <PackageReference Include="OpenTK" Version="3.0.1" ExcludeAssets="all" />
-    <PackageReference Include="OpenTK.GLControl" Version="3.0.1" ExcludeAssets="all" />
     <PackageReference Include="Xamarin.CommunityToolkit" Version="2.0.6" />
     <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
