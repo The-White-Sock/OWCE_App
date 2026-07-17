@@ -859,14 +859,34 @@ namespace OWCE
 #endif
             RSSIMonitor();
 
-            var hardwareRevision = await _owble.ReadValue(HardwareRevisionUUID);
-            SetValue(HardwareRevisionUUID, hardwareRevision, true);
-            var firmwareRevision = await _owble.ReadValue(FirmwareRevisionUUID);
-            SetValue(FirmwareRevisionUUID, firmwareRevision, true);
+            // ReadValue returns null (rather than a Task) if the connection has
+            // already dropped - see the identical guard in RestoreLiveDataSync.
+            // Awaiting null throws an NRE that would otherwise abort this method
+            // (and, since it's invoked fire-and-forget, become an unobserved task
+            // fault instead of a reported error). Bail out instead; a reconnect
+            // will pick the resync back up via RestoreLiveDataSync.
+            var hardwareRevisionTask = _owble.ReadValue(HardwareRevisionUUID);
+            if (hardwareRevisionTask == null)
+            {
+                return;
+            }
+            SetValue(HardwareRevisionUUID, await hardwareRevisionTask, true);
+
+            var firmwareRevisionTask = _owble.ReadValue(FirmwareRevisionUUID);
+            if (firmwareRevisionTask == null)
+            {
+                return;
+            }
+            SetValue(FirmwareRevisionUUID, await firmwareRevisionTask, true);
 
             if (HardwareRevision > 3000 && FirmwareRevision > 4000) // Requires Gemini handshake
             {
-                var rideMode = await _owble.ReadValue(RideModeUUID);
+                var rideModeTask = _owble.ReadValue(RideModeUUID);
+                if (rideModeTask == null)
+                {
+                    return;
+                }
+                var rideMode = await rideModeTask;
                 var rideModeInt = BitConverter.ToUInt16(rideMode, 0);
 
                 if (rideModeInt > 0)
@@ -954,12 +974,30 @@ namespace OWCE
             _handshakeTaskCompletionSource = new TaskCompletionSource<byte[]>();
             _handshakeBuffer = new List<byte>();
 
-            await _owble.SubscribeValue(OWBoard.SerialReadUUID, true);
+            // SubscribeValue/WriteValue return null (rather than a Task) if the
+            // connection has already dropped - same guard as SubscribeToBLE and
+            // RestoreLiveDataSync. Treat it the same as the timeout guard below:
+            // the board went away mid-handshake, so surface it via the same
+            // HandshakeException path SubscribeToBLE already catches, instead of
+            // an uncaught NRE from awaiting null.
+            var subscribeTask = _owble.SubscribeValue(OWBoard.SerialReadUUID, true);
+            if (subscribeTask == null)
+            {
+                _isHandshaking = false;
+                throw new Exceptions.HandshakeException("Board disconnected before the handshake could start.", true);
+            }
+            await subscribeTask;
 
-            // Data does not send until this is triggered. 
+            // Data does not send until this is triggered.
             byte[] firmwareRevision = GetBytesForBoardFromUInt16((UInt16)FirmwareRevision, FirmwareRevisionUUID);
 
-            var didWrite = await _owble.WriteValue(OWBoard.FirmwareRevisionUUID, firmwareRevision, true);
+            var writeTask = _owble.WriteValue(OWBoard.FirmwareRevisionUUID, firmwareRevision, true);
+            if (writeTask == null)
+            {
+                _isHandshaking = false;
+                throw new Exceptions.HandshakeException("Board disconnected before the handshake could start.", true);
+            }
+            var didWrite = await writeTask;
 
             // Guard against the board never sending the full handshake response (eg it
             // disconnected mid-handshake) which would otherwise hang this task forever.
