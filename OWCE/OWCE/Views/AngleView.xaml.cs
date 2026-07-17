@@ -59,15 +59,15 @@ namespace OWCE.Views
         {
             base.OnPropertyChanged(propertyName);
 
-            if (PitchProperty.PropertyName.Equals(propertyName))
+            if (PitchProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 PitchView.RotateTo(Pitch, 100, Easing.CubicInOut);
             }
-            else if (YawProperty.PropertyName.Equals(propertyName))
+            else if (YawProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 YawView.RotateTo(Yaw, 100, Easing.CubicInOut);
             }
-            else if (RollProperty.PropertyName.Equals(propertyName))
+            else if (RollProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 RollView.RotateTo(Roll, 100, Easing.CubicInOut);
             }

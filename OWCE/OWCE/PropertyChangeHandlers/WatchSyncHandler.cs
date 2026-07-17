@@ -20,7 +20,7 @@ namespace OWCE.PropertyChangeHandlers
         // - propertyName: null if updating all properties
         private void UpdateProperty(string propertyName, OWBoard board)
         {
-            if (propertyName == null || propertyName.Equals("BatteryVoltage"))
+            if (propertyName == null || propertyName.Equals("BatteryVoltage", StringComparison.Ordinal))
             {
                 float voltage = board.BatteryVoltage;
                 watchUpdates[WatchMessage.Voltage] = voltage;
@@ -28,20 +28,20 @@ namespace OWCE.PropertyChangeHandlers
                 // For Quart, should add battery percent here
             }
 
-            if (propertyName == null || propertyName.Equals("RPM"))
+            if (propertyName == null || propertyName.Equals("RPM", StringComparison.Ordinal))
             {
                 int rpm = board.RPM;
                 int speed = (int)RpmToSpeedConverter.ConvertFromRpm(rpm, board.WheelCircumference);
                 watchUpdates[WatchMessage.Speed] = speed;
             }
 
-            if (propertyName == null || propertyName.Equals("BatteryPercent"))
+            if (propertyName == null || propertyName.Equals("BatteryPercent", StringComparison.Ordinal))
             {
                 int batteryPercent = board.BatteryPercent;
                 watchUpdates[WatchMessage.BatteryPercent] = batteryPercent;
             }
 
-            if (propertyName == null || propertyName.Equals("TripOdometer"))
+            if (propertyName == null || propertyName.Equals("TripOdometer", StringComparison.Ordinal))
             {
                 ushort tripOdometer = board.TripOdometer;
                 string tripDescription = RotationsToDistanceConverter.ConvertRotationsToDistance(tripOdometer, board.WheelCircumference);

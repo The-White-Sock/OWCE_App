@@ -41,7 +41,7 @@ namespace OWCE
             do
             {
                 newRideGuid = Guid.NewGuid();
-                newDataFileName = $"{newRideGuid.ToString().ToUpper()}.bin";
+                newDataFileName = $"{newRideGuid.ToString().ToUpperInvariant()}.bin";
                 newDataFilePath = Path.Combine(App.Current.LogsDirectory, newDataFileName);
 
                 // Check a ride doens't exist in the database either.

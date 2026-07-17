@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -191,13 +192,13 @@ namespace OWCE
                             var shrunkHashNumber = BitConverter.ToInt32(shrunkHash);
 
                             var random = new Random(shrunkHashNumber);
-                            fakeDeviceID = random.Next(0, 999999).ToString("D6");
+                            fakeDeviceID = random.Next(0, 999999).ToString("D6", CultureInfo.InvariantCulture);
                         }
 
                         // Fallback incase something bad happened.
                         if (String.IsNullOrEmpty(fakeDeviceID))
                         {
-                            fakeDeviceID = rand.Next(0, 999999).ToString("D6");
+                            fakeDeviceID = rand.Next(0, 999999).ToString("D6", CultureInfo.InvariantCulture);
                         }
 
                         BoardDiscovered?.Invoke(new OWBaseBoard()

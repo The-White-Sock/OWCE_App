@@ -86,7 +86,7 @@ namespace OWCE.Views
 
         void ExpanderView_PropertyChanged(System.Object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (Expander.IsExpandedProperty.PropertyName.Equals(e.PropertyName))
+            if (Expander.IsExpandedProperty.PropertyName.Equals(e.PropertyName, StringComparison.Ordinal))
             {
                 if (ExpanderView.IsExpanded)
                 {
@@ -121,7 +121,7 @@ namespace OWCE.Views
         {
             base.OnPropertyChanged(propertyName);
 
-            if (propertyName.Equals(BoardTypeProperty.PropertyName))
+            if (propertyName.Equals(BoardTypeProperty.PropertyName, StringComparison.Ordinal))
             {
                 if (BindingContext is OWBoard board)
                 {

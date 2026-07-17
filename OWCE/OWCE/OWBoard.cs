@@ -680,7 +680,7 @@ namespace OWCE
             }
 
 
-            if (_isHandshaking && characteristicGuid.Equals(SerialReadUUID, StringComparison.CurrentCultureIgnoreCase))
+            if (_isHandshaking && characteristicGuid.Equals(SerialReadUUID, StringComparison.OrdinalIgnoreCase))
             {
                 _handshakeBuffer.AddRange(data);
                 if (_handshakeBuffer.Count == 20)
@@ -1094,8 +1094,8 @@ namespace OWCE
                         outputArray[19] = ((byte)(outputArray[i] ^ outputArray[19]));
                     }
 
-                    var inputString = BitConverter.ToString(byteArray).Replace("-", ":").ToLower();
-                    var outputString = BitConverter.ToString(outputArray).Replace("-", ":").ToLower();
+                    var inputString = BitConverter.ToString(byteArray).Replace("-", ":").ToLowerInvariant();
+                    var outputString = BitConverter.ToString(outputArray).Replace("-", ":").ToLowerInvariant();
 
                     Debug.WriteLine($"Input: {inputString}");
                     Debug.WriteLine($"Output: {outputString}");
@@ -1112,7 +1112,7 @@ namespace OWCE
             {
                 return null;
             }
-            var deviceName = _name.ToLower();
+            var deviceName = _name.ToLowerInvariant();
             deviceName = deviceName.Replace("ow", String.Empty);
 
 
@@ -1219,7 +1219,7 @@ namespace OWCE
             if (data == null)
                 return;
 
-            uuid = uuid.ToUpper();
+            uuid = uuid.ToUpperInvariant();
 
             if (initialData)
             {
@@ -1661,7 +1661,7 @@ namespace OWCE
 
         public static string GetNameFromUUID(string uuid)
         {
-            uuid = uuid.ToUpper();
+            uuid = uuid.ToUpperInvariant();
 
             switch (uuid)
             {

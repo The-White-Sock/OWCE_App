@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -136,7 +137,7 @@ namespace OWCE.Models
                 return;
             }
 
-            var voltageString = voltage.ToString(format) + "V";
+            var voltageString = voltage.ToString(format, CultureInfo.CurrentCulture) + "V";
             SetCellVoltageString(cellID, voltageString);
         }
 

@@ -107,15 +107,15 @@ namespace OWCE.Views
         {
             base.OnPropertyChanged(propertyName);
 
-            if (IsEnabledProperty.PropertyName.Equals(propertyName))
+            if (IsEnabledProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 UpdateIsEnabled();
             }
-            else if (IconImageSourceProperty.PropertyName.Equals(propertyName))
+            else if (IconImageSourceProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 UpdateIconImage();
             }
-            else if (TextProperty.PropertyName.Equals(propertyName))
+            else if (TextProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 UpdateText();
             }
