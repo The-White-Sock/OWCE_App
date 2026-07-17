@@ -143,9 +143,9 @@ namespace OWCE.Models
 
         public float GetCell(uint id)
         {
-            if (_cells.ContainsKey(id))
+            if (_cells.TryGetValue(id, out var voltage))
             {
-                return _cells[id];
+                return voltage;
             }
 
             return 0;

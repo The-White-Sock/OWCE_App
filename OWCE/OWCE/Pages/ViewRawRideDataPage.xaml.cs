@@ -23,6 +23,18 @@ namespace OWCE.Pages
 {
     public partial class ViewRawRideDataPage : BaseContentPage
     {
+        static readonly string[] FilenameCharactersToRemove = new string[] {
+            "|",
+            "?",
+            "*",
+            "<",
+            ">",
+            "+",
+            "[",
+            "]",
+            "'",
+            "\"",
+        };
 
         public ViewRawRideDataPage(SubmitRideRequest submitRideRequest, string dataFile)
         {
@@ -131,19 +143,7 @@ namespace OWCE.Pages
                         newBaseFilename = newBaseFilename.Replace(":", "-");
 
 
-                        var listOfCharactersToRemove = new string[] {
-                            "|",
-                            "?",
-                            "*",
-                            "<",
-                            ">",
-                            "+",
-                            "[",
-                            "]",
-                            "'",
-                            "\"",
-                        };
-                        foreach (var characterToRemove in listOfCharactersToRemove)
+                        foreach (var characterToRemove in FilenameCharactersToRemove)
                         {
                             newBaseFilename = newBaseFilename.Replace(characterToRemove, String.Empty);
                         }

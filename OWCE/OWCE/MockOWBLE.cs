@@ -178,6 +178,8 @@ namespace OWCE
                         // While we don't use the hash itself, we use this to seed our random number generator which should give the same
                         // number every time.
                         var fakeDeviceID = String.Empty;
+                        // Non-cryptographic use - only the hash's bit pattern is used as a Random seed, see above.
+#pragma warning disable CA5351
                         using (var md5 = System.Security.Cryptography.MD5.Create())
                         {
                             // Hash will be 16 bytes. Seed is an int which is 4 bytes. So we will instead take the average of every 4
@@ -194,6 +196,7 @@ namespace OWCE
                             var random = new Random(shrunkHashNumber);
                             fakeDeviceID = random.Next(0, 999999).ToString("D6", CultureInfo.InvariantCulture);
                         }
+#pragma warning restore CA5351
 
                         // Fallback incase something bad happened.
                         if (String.IsNullOrEmpty(fakeDeviceID))
