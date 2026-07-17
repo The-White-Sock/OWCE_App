@@ -332,7 +332,7 @@ namespace OWCE
         public ushort RideMode
         {
             get { return _rideMode; }
-            set { if (_rideMode != value) { _rideMode = value; OnPropertyChanged(); OnPropertyChanged("RideModeString"); } }
+            set { if (_rideMode != value) { _rideMode = value; OnPropertyChanged(); OnPropertyChanged(nameof(RideModeString)); } }
         }
 
         private ushort _incomingRideMode;
@@ -1402,7 +1402,7 @@ namespace OWCE
 
                         BatteryCells.CellCount = 15;
                         BatteryCells.IgnoreCell(15);
-                        OnPropertyChanged("BatteryCells");
+                        OnPropertyChanged(nameof(BatteryCells));
                     }
                     else if (value >= 5000 && value <= 5999)
                     {
@@ -1414,7 +1414,7 @@ namespace OWCE
 
                         BatteryCells.CellCount = 15;
                         BatteryCells.IgnoreCell(15);
-                        OnPropertyChanged("BatteryCells");
+                        OnPropertyChanged(nameof(BatteryCells));
                     }
                     else if (value >= 7000 && value <= 7999)
                     {
@@ -1426,7 +1426,7 @@ namespace OWCE
 
                         BatteryCells.CellCount = 15;
                         BatteryCells.IgnoreCell(15);
-                        OnPropertyChanged("BatteryCells");
+                        OnPropertyChanged(nameof(BatteryCells));
                     }
                     else if (value >= 6000 && value <= 6999)
                     {
@@ -1437,7 +1437,7 @@ namespace OWCE
                         }
 
                         BatteryCells.CellCount = 18;
-                        OnPropertyChanged("BatteryCells");
+                        OnPropertyChanged(nameof(BatteryCells));
                     }
                     break;
                 case LifetimeOdometerUUID:
@@ -1462,7 +1462,7 @@ namespace OWCE
                         BatteryCells.SetCell(cellID, batteryVoltage);
                     }
 
-                    OnPropertyChanged("BatteryCells");
+                    OnPropertyChanged(nameof(BatteryCells));
 
                     break;
                 case LastErrorCodeUUID:

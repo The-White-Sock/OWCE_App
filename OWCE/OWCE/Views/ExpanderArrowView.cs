@@ -9,7 +9,7 @@ namespace OWCE.Views
     {
 
         public static readonly BindableProperty ArrowColorProperty = BindableProperty.Create(
-          "ArrowColor",
+          nameof(ArrowColor),
           typeof(Color),
           typeof(ExpanderArrowView),
           Color.White);
