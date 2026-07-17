@@ -42,7 +42,7 @@ namespace OWCE.Network
                     break;
                 }
 
-                var length = await fileStream.ReadAsync(buffer, 0, bufferSize).ConfigureAwait(false);
+                var length = await fileStream.ReadAsync(buffer.AsMemory(0, bufferSize), cancellationToken).ConfigureAwait(false);
 
                 if (length <= 0)
                 {
@@ -51,7 +51,7 @@ namespace OWCE.Network
 
                 uploaded += length;
 
-                await stream.WriteAsync(buffer, 0, length).ConfigureAwait(false);
+                await stream.WriteAsync(buffer.AsMemory(0, length), cancellationToken).ConfigureAwait(false);
 
 
 

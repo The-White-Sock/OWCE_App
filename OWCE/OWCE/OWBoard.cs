@@ -904,7 +904,7 @@ namespace OWCE
                     var jumpstartAlert = new Pages.Popup.JumpstartAlert(new Command(async () =>
                     {
                         await PopupNavigation.Instance.PopAllAsync();
-                        if (App.Current.MainPage.Navigation.ModalStack.Count == 1 && App.Current.MainPage.Navigation.ModalStack.FirstOrDefault() is NavigationPage modalNavigationPage && modalNavigationPage.CurrentPage is Pages.BoardPage boardPage)
+                        if (App.Current.MainPage.Navigation.ModalStack.Count == 1 && App.Current.MainPage.Navigation.ModalStack[0] is NavigationPage modalNavigationPage && modalNavigationPage.CurrentPage is Pages.BoardPage boardPage)
                         {
                             await boardPage.DisconnectAndPop();
                             return;
@@ -924,7 +924,7 @@ namespace OWCE
                         await App.Current.MainPage.DisplayAlert("Error", handshakeException.Message, "Ok");
                         if (handshakeException.ShouldDisconnect)
                         {
-                            if (App.Current.MainPage.Navigation.ModalStack.Count == 1 && App.Current.MainPage.Navigation.ModalStack.FirstOrDefault() is Pages.CustomNavigationPage modalNavigationPage && modalNavigationPage.CurrentPage is Pages.BoardPage boardPage)
+                            if (App.Current.MainPage.Navigation.ModalStack.Count == 1 && App.Current.MainPage.Navigation.ModalStack[0] is Pages.CustomNavigationPage modalNavigationPage && modalNavigationPage.CurrentPage is Pages.BoardPage boardPage)
                             {
                                 await boardPage.DisconnectAndPop();
                             }

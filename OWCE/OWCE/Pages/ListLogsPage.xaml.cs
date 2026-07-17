@@ -85,8 +85,8 @@ namespace OWCE.Pages
         {
             if (sender is CollectionView collectionView)
             {
-                var previous = (e.PreviousSelection.FirstOrDefault() as LogSummary);
-                var current = (e.CurrentSelection.FirstOrDefault() as LogSummary);
+                var previous = (e.PreviousSelection.Count > 0 ? e.PreviousSelection[0] : null) as LogSummary;
+                var current = (e.CurrentSelection.Count > 0 ? e.CurrentSelection[0] : null) as LogSummary;
 
                 collectionView.SelectedItem = null;
 

@@ -171,10 +171,9 @@ namespace OWCE.Views
 
         void UpdateCell(uint cellID)
         {
-            if (BindingContext is BatteryCells batteryCells && _cellLables.ContainsKey(cellID))
+            if (BindingContext is BatteryCells batteryCells && _cellLables.TryGetValue(cellID, out var label))
             {
                 var value = batteryCells.GetCell(cellID);
-                var label = _cellLables[cellID];
                 var color = GetColor(value);
 
                 Xamarin.Essentials.MainThread.BeginInvokeOnMainThread(() =>
