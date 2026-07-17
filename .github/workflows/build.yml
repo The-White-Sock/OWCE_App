@@ -27,6 +27,14 @@ name: Build
 #   rather than catch real bugs. Building those targets still requires a Mac with the
 #   legacy Xamarin SDK installed by hand (eg Visual Studio for Mac, or a self-hosted
 #   runner set up the same way), as described in the main README.
+#
+# - `test-core` runs OWCE.Tests, a plain net8.0 xUnit project that references
+#   OWCE.csproj directly. It's split from build-core (rather than a `dotnet test`
+#   step tacked on there) so a test failure is reported against its own job name
+#   instead of being lumped in with "did the core library build". See #24 for why
+#   this exists at all: BLE/GATT behavior can't be unit tested without real
+#   hardware, but OWBoard's byte-parsing/state logic (SetValue, RideModeString,
+#   board-type inference, etc.) is plain C# and has no such excuse.
 
 on:
   push:
@@ -85,6 +93,32 @@ jobs:
         run: |
           dotnet format whitespace OWCE/OWCE/OWCE.csproj --verify-no-changes
           dotnet format style OWCE/OWCE/OWCE.csproj --verify-no-changes
+
+  test-core:
+    name: Test core library
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-tests-${{ hashFiles('OWCE/OWCE.Tests/OWCE.Tests.csproj', 'OWCE/OWCE/OWCE.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-tests-
+
+      - name: Restore
+        run: dotnet restore OWCE/OWCE.Tests/OWCE.Tests.csproj
+
+      - name: Test
+        run: dotnet test OWCE/OWCE.Tests/OWCE.Tests.csproj --configuration Release --no-restore
 
   build-android:
     name: Build Android app
