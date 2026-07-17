@@ -32,6 +32,10 @@ namespace OWCE.Droid.DependencyImplementations
 
         private Queue<OWBLE_QueueItem> _gattOperationQueue = new Queue<OWBLE_QueueItem>();
         private bool _gattOperationQueueProcessing = false;
+        // Guards _gattOperationQueue/_gattOperationQueueProcessing/_operationGeneration -
+        // touched both from caller-thread code and from native GATT callbacks running
+        // on Android's Binder callback thread. See ProcessQueue().
+        private readonly object _gattOperationQueueLock = new object();
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -227,7 +231,14 @@ namespace OWCE.Droid.DependencyImplementations
                 // rediscovered - the previous connection's cached characteristics are
                 // no longer valid - before treating the board as usable again.
                 _reconnecting = false;
-                BoardReconnected?.Invoke();
+
+                // This callback runs on Android's Binder callback thread, not the
+                // main/UI thread, but subscribers (BoardPage.xaml.cs) call
+                // Rg.Plugins.Popup navigation APIs that expect the main thread.
+                Xamarin.Essentials.MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    BoardReconnected?.Invoke();
+                });
                 return;
             }
 
@@ -324,6 +335,15 @@ namespace OWCE.Droid.DependencyImplementations
         private static readonly TimeSpan ReconnectGiveUpAfter = TimeSpan.FromSeconds(30);
         private DateTime _reconnectDeadlineUtc;
 
+        // How long to wait for a fresh, first-time connection attempt (ConnectGatt()
+        // through DiscoverServices()) before giving up automatically. Needed for the
+        // same reason as ReconnectGiveUpAfter above: a fresh ConnectGatt() isn't
+        // guaranteed to ever invoke OnConnectionStateChange if the peripheral is
+        // unreachable, so without an independent timer here, a first-time connect to
+        // a silent/unreachable board would leave the "Connecting..." popup spinning
+        // forever with no automatic recovery - only manual user cancellation.
+        private static readonly TimeSpan ConnectGiveUpAfter = TimeSpan.FromSeconds(30);
+
 
         TaskCompletionSource<bool> _connectTaskCompletionSource = null;
         private OWBaseBoard _board = null;
@@ -403,11 +423,20 @@ namespace OWCE.Droid.DependencyImplementations
                     // _bluetoothGatt with a new one via ConnectGatt(), so without this the
                     // failed client would never get closed.
                     gatt.Close();
-                    if (gatt == _bluetoothGatt)
+
+                    if (gatt != _bluetoothGatt)
                     {
-                        _bluetoothGatt = null;
-                        _gattCallback = null;
+                        // A stale/duplicate callback for a GATT client that's already been
+                        // superseded (eg Reconnect() already moved on, or GiveUpReconnecting
+                        // already ran) - Android's BLE stack can deliver a late or repeated
+                        // callback for an old client. The current connection attempt (if any)
+                        // is unaffected, so don't touch shared state or restart the retry
+                        // cycle for it.
+                        return;
                     }
+
+                    _bluetoothGatt = null;
+                    _gattCallback = null;
 
                     FailAndClearPendingOperations();
                     RetryReconnect();
@@ -417,26 +446,44 @@ namespace OWCE.Droid.DependencyImplementations
                 // TrySetResult (not SetResult): cancelling the "connecting..." popup can
                 // race with this callback landing on the GATT thread, and SetResult
                 // throws if the task was already cancelled in that window.
-                _connectTaskCompletionSource?.TrySetResult(false);
-                return;
-            }
-
-            if (newState == ProfileState.Disconnected)
-            {
-                var wasStillConnecting = _reconnecting == false && _connectTaskCompletionSource != null &&
-                    _connectTaskCompletionSource.Task.IsCanceled == false && _connectTaskCompletionSource.Task.IsCompleted == false;
-                var wasReconnecting = _reconnecting;
-
-                // Release the native GATT client now that the disconnect is confirmed by
-                // the OS. This was previously never called anywhere, leaking Android's
-                // limited pool of concurrent GATT client registrations on every
-                // connect/disconnect cycle.
+                //
+                // Initial (non-reconnecting) connect attempt failed at the connection
+                // level - close the failed GATT client rather than leaking one of
+                // Android's limited pool of concurrent GATT client registrations.
                 gatt.Close();
                 if (gatt == _bluetoothGatt)
                 {
                     _bluetoothGatt = null;
                     _gattCallback = null;
                 }
+
+                _connectTaskCompletionSource?.TrySetResult(false);
+                return;
+            }
+
+            if (newState == ProfileState.Disconnected)
+            {
+                // Release the native GATT client now that the disconnect is confirmed by
+                // the OS. This was previously never called anywhere, leaking Android's
+                // limited pool of concurrent GATT client registrations on every
+                // connect/disconnect cycle.
+                gatt.Close();
+
+                if (gatt != _bluetoothGatt)
+                {
+                    // Stale/duplicate callback for an already-superseded GATT client (see
+                    // the identical check above) - a reconnect or fresh connect has
+                    // already replaced it, so don't tear down or restart anything for the
+                    // connection that's actually current.
+                    return;
+                }
+
+                var wasStillConnecting = _reconnecting == false && _connectTaskCompletionSource != null &&
+                    _connectTaskCompletionSource.Task.IsCanceled == false && _connectTaskCompletionSource.Task.IsCompleted == false;
+                var wasReconnecting = _reconnecting;
+
+                _bluetoothGatt = null;
+                _gattCallback = null;
 
                 // Any queued/in-flight operations belong to this now-dead connection -
                 // their BluetoothGattCharacteristic references become invalid once it's
@@ -454,7 +501,15 @@ namespace OWCE.Droid.DependencyImplementations
                     return;
                 }
 
-                BoardDisconnected?.Invoke();
+                // This callback runs on Android's Binder callback thread, not the
+                // main/UI thread, but subscribers expect the main thread (see the
+                // identical note on BoardReconnected above). Only the event dispatch
+                // itself is marshaled - the reconnect-decision logic below doesn't
+                // touch any UI API, so it stays on this thread unchanged.
+                Xamarin.Essentials.MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    BoardDisconnected?.Invoke();
+                });
 
                 if (_requestingDisconnect == false)
                 {
@@ -502,22 +557,37 @@ namespace OWCE.Droid.DependencyImplementations
             ++_queueNumber;
 
             Debug.WriteLine($"ProcessQueue {queueNumber}: {_gattOperationQueue.Count}");
-            if (_gattOperationQueue.Count == 0)
+
+            OWBLE_QueueItem item;
+            int operationGeneration;
+
+            // ProcessQueue() is called both from caller-thread code (ReadValue/
+            // WriteValue/etc, right after enqueueing) and from native GATT callback
+            // completions (which run on Android's Binder callback thread, not the
+            // caller's thread). Without a lock, both could observe
+            // _gattOperationQueueProcessing as false at the same time and both
+            // dequeue/dispatch a native GATT operation concurrently - Android's BLE
+            // stack generally expects one outstanding operation at a time.
+            lock (_gattOperationQueueLock)
             {
-                return;
+                if (_gattOperationQueue.Count == 0)
+                {
+                    return;
+                }
+
+                if (_gattOperationQueueProcessing)
+                {
+                    return;
+                }
+
+                _gattOperationQueueProcessing = true;
+                item = _gattOperationQueue.Dequeue();
+                operationGeneration = ++_operationGeneration;
             }
-
-            if (_gattOperationQueueProcessing)
-                return;
-
-            _gattOperationQueueProcessing = true;
-
-            var item = _gattOperationQueue.Dequeue();
 
             // If this operation's native callback never fires (eg the board was
             // powered off and Android hasn't noticed the link is dead yet), this is
             // what keeps the queue from being wedged forever.
-            var operationGeneration = ++_operationGeneration;
             Device.StartTimer(GattOperationTimeout, () =>
             {
                 HandleOperationTimeout(item, operationGeneration);
@@ -712,8 +782,11 @@ namespace OWCE.Droid.DependencyImplementations
             }
             _unsubscribeQueue.Clear();
 
-            _gattOperationQueue.Clear();
-            _gattOperationQueueProcessing = false;
+            lock (_gattOperationQueueLock)
+            {
+                _gattOperationQueue.Clear();
+                _gattOperationQueueProcessing = false;
+            }
         }
 
         // Pre-API 33 callback: the value isn't delivered directly, so GetValue() is
@@ -773,7 +846,10 @@ namespace OWCE.Droid.DependencyImplementations
                 readItem.SetResult(dataBytes);
             }
 
-            _gattOperationQueueProcessing = false;
+            lock (_gattOperationQueueLock)
+            {
+                _gattOperationQueueProcessing = false;
+            }
             ProcessQueue();
         }
 
@@ -801,7 +877,10 @@ namespace OWCE.Droid.DependencyImplementations
             // to round-trip through native state to reconstruct it.
             writeCharacteristicValueRequest.CompletionSource.SetResult(writeCharacteristicValueRequest.Data);
 
-            _gattOperationQueueProcessing = false;
+            lock (_gattOperationQueueLock)
+            {
+                _gattOperationQueueProcessing = false;
+            }
             ProcessQueue();
         }
 
@@ -837,7 +916,7 @@ namespace OWCE.Droid.DependencyImplementations
                     }
                 }
 
-                BoardValueChanged.Invoke(uuid, dataBytes);
+                BoardValueChanged?.Invoke(uuid, dataBytes);
             }
         }
 
@@ -892,7 +971,10 @@ namespace OWCE.Droid.DependencyImplementations
 
             if (resolved)
             {
-                _gattOperationQueueProcessing = false;
+                lock (_gattOperationQueueLock)
+                {
+                    _gattOperationQueueProcessing = false;
+                }
                 ProcessQueue();
             }
         }
@@ -957,7 +1039,10 @@ namespace OWCE.Droid.DependencyImplementations
             _board = board;
             _requestingDisconnect = false;
             _reconnecting = false;
-            _gattOperationQueueProcessing = false;
+            lock (_gattOperationQueueLock)
+            {
+                _gattOperationQueueProcessing = false;
+            }
 
             var connectTaskCompletionSource = new TaskCompletionSource<bool>();
             _connectTaskCompletionSource = connectTaskCompletionSource;
@@ -980,6 +1065,20 @@ namespace OWCE.Droid.DependencyImplementations
                         }
                     });
                 }
+
+                // See ConnectGiveUpAfter above - this covers the whole first-time
+                // connect (ConnectGatt() through DiscoverServices()), since both can
+                // silently never call back and this timer only cares whether
+                // connectTaskCompletionSource has resolved by the deadline, regardless
+                // of which phase is stuck.
+                Device.StartTimer(ConnectGiveUpAfter, () =>
+                {
+                    if (connectTaskCompletionSource.TrySetResult(false))
+                    {
+                        _bluetoothGatt?.Disconnect();
+                    }
+                    return false;
+                });
             }
 
             return connectTaskCompletionSource.Task;
@@ -1018,7 +1117,15 @@ namespace OWCE.Droid.DependencyImplementations
         // connection, mirroring the behaviour already implemented on iOS.
         private void Reconnect()
         {
-            BoardReconnecting?.Invoke();
+            // Called both from OnConnectionStateChange directly (Android's Binder
+            // callback thread, for the first disconnect) and from RetryReconnect()'s
+            // Device.StartTimer callback (the main thread, for subsequent retries) -
+            // marshal unconditionally so subscribers always see this on the main
+            // thread regardless of which path called Reconnect().
+            Xamarin.Essentials.MainThread.BeginInvokeOnMainThread(() =>
+            {
+                BoardReconnecting?.Invoke();
+            });
             _reconnecting = true;
 
             if (_board?.NativePeripheral is BluetoothDevice device)
@@ -1155,16 +1262,7 @@ namespace OWCE.Droid.DependencyImplementations
             }
 
             var taskCompletionSource = new TaskCompletionSource<byte[]>();
-
-            if (important)
-            {
-                // TODO: Put this at the start of the queue.
-                _readQueue.Add(uuid, taskCompletionSource);
-            }
-            else
-            {
-                _readQueue.Add(uuid, taskCompletionSource);
-            }
+            _readQueue.Add(uuid, taskCompletionSource);
 
             _gattOperationQueue.Enqueue(new OWBLE_QueueItem(_characteristics[uuid], OWBLE_QueueItemOperationType.Read));
 
@@ -1254,19 +1352,20 @@ namespace OWCE.Droid.DependencyImplementations
                 return null;
             }
 
+            // Already awaiting it - eg RestoreLiveDataSync re-subscribing the same
+            // fixed characteristic list on a second reconnect that lands while the
+            // first one's subscribe calls are still pending. Without this,
+            // _subscribeQueue.Add below throws ArgumentException on the duplicate
+            // key and aborts the resync.
+            if (_subscribeQueue.ContainsKey(uuid))
+            {
+                return _subscribeQueue[uuid].Task;
+            }
+
             _notifyList.Add(uuid);
 
             var taskCompletionSource = new TaskCompletionSource<byte[]>();
-
-            if (important)
-            {
-                // TODO: Put this at the start of the queue.
-                _subscribeQueue.Add(uuid, taskCompletionSource);
-            }
-            else
-            {
-                _subscribeQueue.Add(uuid, taskCompletionSource);
-            }
+            _subscribeQueue.Add(uuid, taskCompletionSource);
 
             _gattOperationQueue.Enqueue(new OWBLE_QueueItem(_characteristics[uuid], OWBLE_QueueItemOperationType.Subscribe));
 
@@ -1290,19 +1389,16 @@ namespace OWCE.Droid.DependencyImplementations
                 return null;
             }
 
+            // Already awaiting it - see the identical guard in SubscribeValue.
+            if (_unsubscribeQueue.ContainsKey(uuid))
+            {
+                return _unsubscribeQueue[uuid].Task;
+            }
+
             _notifyList.RemoveAll(x => x == uuid);
 
             var taskCompletionSource = new TaskCompletionSource<byte[]>();
-
-            if (important)
-            {
-                // TODO: Put this at the start of the queue.
-                _unsubscribeQueue.Add(uuid, taskCompletionSource);
-            }
-            else
-            {
-                _unsubscribeQueue.Add(uuid, taskCompletionSource);
-            }
+            _unsubscribeQueue.Add(uuid, taskCompletionSource);
 
             _gattOperationQueue.Enqueue(new OWBLE_QueueItem(_characteristics[uuid], OWBLE_QueueItemOperationType.Unsubscribe));
 

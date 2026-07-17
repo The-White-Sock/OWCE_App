@@ -202,8 +202,21 @@ namespace OWCE.Pages
             }
         }
 
+        bool _isDisconnecting = false;
+
         public async Task DisconnectAndPop()
         {
+            if (_isDisconnecting)
+            {
+                // Already in progress - reachable concurrently from the user's
+                // Disconnect action, the reconnect popup's own Cancel command, and
+                // OWBLE's independent reconnect-give-up watchdog (BoardReconnectFailed)
+                // landing at nearly the same time. Without this guard, a second call
+                // here would call Navigation.PopModalAsync() twice on the same modal.
+                return;
+            }
+            _isDisconnecting = true;
+
             await App.Current.OWBLE.Disconnect();
 
             Board.StopLogging();
