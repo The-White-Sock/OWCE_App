@@ -1205,16 +1205,7 @@ namespace OWCE.Droid.DependencyImplementations
             }
 
             var taskCompletionSource = new TaskCompletionSource<byte[]>();
-
-            if (important)
-            {
-                // TODO: Put this at the start of the queue.
-                _readQueue.Add(uuid, taskCompletionSource);
-            }
-            else
-            {
-                _readQueue.Add(uuid, taskCompletionSource);
-            }
+            _readQueue.Add(uuid, taskCompletionSource);
 
             _gattOperationQueue.Enqueue(new OWBLE_QueueItem(_characteristics[uuid], OWBLE_QueueItemOperationType.Read));
 
@@ -1304,19 +1295,20 @@ namespace OWCE.Droid.DependencyImplementations
                 return null;
             }
 
+            // Already awaiting it - eg RestoreLiveDataSync re-subscribing the same
+            // fixed characteristic list on a second reconnect that lands while the
+            // first one's subscribe calls are still pending. Without this,
+            // _subscribeQueue.Add below throws ArgumentException on the duplicate
+            // key and aborts the resync.
+            if (_subscribeQueue.ContainsKey(uuid))
+            {
+                return _subscribeQueue[uuid].Task;
+            }
+
             _notifyList.Add(uuid);
 
             var taskCompletionSource = new TaskCompletionSource<byte[]>();
-
-            if (important)
-            {
-                // TODO: Put this at the start of the queue.
-                _subscribeQueue.Add(uuid, taskCompletionSource);
-            }
-            else
-            {
-                _subscribeQueue.Add(uuid, taskCompletionSource);
-            }
+            _subscribeQueue.Add(uuid, taskCompletionSource);
 
             _gattOperationQueue.Enqueue(new OWBLE_QueueItem(_characteristics[uuid], OWBLE_QueueItemOperationType.Subscribe));
 
@@ -1340,19 +1332,16 @@ namespace OWCE.Droid.DependencyImplementations
                 return null;
             }
 
+            // Already awaiting it - see the identical guard in SubscribeValue.
+            if (_unsubscribeQueue.ContainsKey(uuid))
+            {
+                return _unsubscribeQueue[uuid].Task;
+            }
+
             _notifyList.RemoveAll(x => x == uuid);
 
             var taskCompletionSource = new TaskCompletionSource<byte[]>();
-
-            if (important)
-            {
-                // TODO: Put this at the start of the queue.
-                _unsubscribeQueue.Add(uuid, taskCompletionSource);
-            }
-            else
-            {
-                _unsubscribeQueue.Add(uuid, taskCompletionSource);
-            }
+            _unsubscribeQueue.Add(uuid, taskCompletionSource);
 
             _gattOperationQueue.Enqueue(new OWBLE_QueueItem(_characteristics[uuid], OWBLE_QueueItemOperationType.Unsubscribe));
 
