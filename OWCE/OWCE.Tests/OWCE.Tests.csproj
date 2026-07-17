@@ -1,17 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <Nullable>disable</Nullable>
-    <!-- OWCE.csproj transitively pulls in SkiaSharp.Views.Forms, which carries
-         WinForms/WPF-flagged assets (eg OpenTK.GLControl). Without this, the SDK
-         refuses to build a bare "net8.0" (non "-windows") project that references
-         anything Windows-Desktop-flagged - NETSDK1136 - even though nothing here
-         actually exercises that code path. This is the documented escape hatch for
-         exactly that: reference such a package from a non-Windows TFM/OS without
-         needing an actual Windows target. -->
-    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,4 +20,21 @@
     <ProjectReference Include="..\OWCE\OWCE.csproj" />
   </ItemGroup>
 
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <!-- Placed after the Sdk.targets import (using the explicit two-Import form
+       above instead of the usual <Project Sdk="..."> shorthand specifically so
+       this can go last) so it wins no matter what a transitively pulled-in
+       package sets via its own build targets. OWCE.csproj -> SkiaSharp.Views.Forms
+       -> OpenTK.GLControl, and OpenTK.GLControl (a WinForms control) has no
+       net8.0 assets at all - NuGet falls back to its .NET Framework build (see
+       the NU1701 warning in CI) - which implicitly flips UseWindowsForms/UseWPF
+       on and trips the SDK's "must target -windows" check (NETSDK1136), even
+       though nothing here actually uses WinForms/WPF. A plain PropertyGroup
+       earlier in this file isn't enough: package .targets imports run after it
+       and would just flip the flags back on. -->
+  <PropertyGroup>
+    <UseWindowsForms>false</UseWindowsForms>
+    <UseWPF>false</UseWPF>
+  </PropertyGroup>
 </Project>
