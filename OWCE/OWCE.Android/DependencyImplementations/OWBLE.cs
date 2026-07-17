@@ -32,6 +32,10 @@ namespace OWCE.Droid.DependencyImplementations
 
         private Queue<OWBLE_QueueItem> _gattOperationQueue = new Queue<OWBLE_QueueItem>();
         private bool _gattOperationQueueProcessing = false;
+        // Guards _gattOperationQueue/_gattOperationQueueProcessing/_operationGeneration -
+        // touched both from caller-thread code and from native GATT callbacks running
+        // on Android's Binder callback thread. See ProcessQueue().
+        private readonly object _gattOperationQueueLock = new object();
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -538,22 +542,37 @@ namespace OWCE.Droid.DependencyImplementations
             ++_queueNumber;
 
             Debug.WriteLine($"ProcessQueue {queueNumber}: {_gattOperationQueue.Count}");
-            if (_gattOperationQueue.Count == 0)
+
+            OWBLE_QueueItem item;
+            int operationGeneration;
+
+            // ProcessQueue() is called both from caller-thread code (ReadValue/
+            // WriteValue/etc, right after enqueueing) and from native GATT callback
+            // completions (which run on Android's Binder callback thread, not the
+            // caller's thread). Without a lock, both could observe
+            // _gattOperationQueueProcessing as false at the same time and both
+            // dequeue/dispatch a native GATT operation concurrently - Android's BLE
+            // stack generally expects one outstanding operation at a time.
+            lock (_gattOperationQueueLock)
             {
-                return;
+                if (_gattOperationQueue.Count == 0)
+                {
+                    return;
+                }
+
+                if (_gattOperationQueueProcessing)
+                {
+                    return;
+                }
+
+                _gattOperationQueueProcessing = true;
+                item = _gattOperationQueue.Dequeue();
+                operationGeneration = ++_operationGeneration;
             }
-
-            if (_gattOperationQueueProcessing)
-                return;
-
-            _gattOperationQueueProcessing = true;
-
-            var item = _gattOperationQueue.Dequeue();
 
             // If this operation's native callback never fires (eg the board was
             // powered off and Android hasn't noticed the link is dead yet), this is
             // what keeps the queue from being wedged forever.
-            var operationGeneration = ++_operationGeneration;
             Device.StartTimer(GattOperationTimeout, () =>
             {
                 HandleOperationTimeout(item, operationGeneration);
@@ -748,8 +767,11 @@ namespace OWCE.Droid.DependencyImplementations
             }
             _unsubscribeQueue.Clear();
 
-            _gattOperationQueue.Clear();
-            _gattOperationQueueProcessing = false;
+            lock (_gattOperationQueueLock)
+            {
+                _gattOperationQueue.Clear();
+                _gattOperationQueueProcessing = false;
+            }
         }
 
         // Pre-API 33 callback: the value isn't delivered directly, so GetValue() is
@@ -809,7 +831,10 @@ namespace OWCE.Droid.DependencyImplementations
                 readItem.SetResult(dataBytes);
             }
 
-            _gattOperationQueueProcessing = false;
+            lock (_gattOperationQueueLock)
+            {
+                _gattOperationQueueProcessing = false;
+            }
             ProcessQueue();
         }
 
@@ -837,7 +862,10 @@ namespace OWCE.Droid.DependencyImplementations
             // to round-trip through native state to reconstruct it.
             writeCharacteristicValueRequest.CompletionSource.SetResult(writeCharacteristicValueRequest.Data);
 
-            _gattOperationQueueProcessing = false;
+            lock (_gattOperationQueueLock)
+            {
+                _gattOperationQueueProcessing = false;
+            }
             ProcessQueue();
         }
 
@@ -873,7 +901,7 @@ namespace OWCE.Droid.DependencyImplementations
                     }
                 }
 
-                BoardValueChanged.Invoke(uuid, dataBytes);
+                BoardValueChanged?.Invoke(uuid, dataBytes);
             }
         }
 
@@ -928,7 +956,10 @@ namespace OWCE.Droid.DependencyImplementations
 
             if (resolved)
             {
-                _gattOperationQueueProcessing = false;
+                lock (_gattOperationQueueLock)
+                {
+                    _gattOperationQueueProcessing = false;
+                }
                 ProcessQueue();
             }
         }
@@ -993,7 +1024,10 @@ namespace OWCE.Droid.DependencyImplementations
             _board = board;
             _requestingDisconnect = false;
             _reconnecting = false;
-            _gattOperationQueueProcessing = false;
+            lock (_gattOperationQueueLock)
+            {
+                _gattOperationQueueProcessing = false;
+            }
 
             var connectTaskCompletionSource = new TaskCompletionSource<bool>();
             _connectTaskCompletionSource = connectTaskCompletionSource;
