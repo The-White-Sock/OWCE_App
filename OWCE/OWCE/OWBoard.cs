@@ -1070,11 +1070,19 @@ namespace OWCE
                     arrayToMD5_part2.CopyTo(arrayToMD5, arrayToMD5_part1.Length);
 
                     // Start prepping the MD5 hash
+                    //
+                    // MD5 is required here, not a choice we get to make: this reproduces the
+                    // Onewheel board's own (reverse-engineered, undocumented) firmware
+                    // handshake, which the board itself computes with MD5. Swapping the
+                    // algorithm would make the response no longer match what the board expects
+                    // and break handshaking with real hardware.
+#pragma warning disable CA5351 // Do Not Use Broken Cryptographic Algorithms
                     byte[] md5Hash = null;
                     using (var md5 = System.Security.Cryptography.MD5.Create())
                     {
                         md5Hash = md5.ComputeHash(arrayToMD5);
                     }
+#pragma warning restore CA5351
 
                     // Add it to the 3 bytes we already have.
                     Array.Copy(md5Hash, 0, outputArray, 3, md5Hash.Length);

@@ -167,7 +167,7 @@ namespace OWCE
                     {
 
                         // Can't use real board serial for this as multiple test data of the same board would all appear as the same board,
-                        // which means it would not show. Instead we generate a 6 digit number based on the MD5 hash of the file. It isn't
+                        // which means it would not show. Instead we generate a 6 digit number based on the SHA256 hash of the file. It isn't
                         // perfect (potential collisions, etc) but it should work fine for what we are doing.
                         //
                         // The reason we want unique rather than random is because when you come back to the board list page you will see
@@ -177,11 +177,11 @@ namespace OWCE
                         // While we don't use the hash itself, we use this to seed our random number generator which should give the same
                         // number every time.
                         var fakeDeviceID = String.Empty;
-                        using (var md5 = System.Security.Cryptography.MD5.Create())
+                        using (var sha256 = System.Security.Cryptography.SHA256.Create())
                         {
-                            // Hash will be 16 bytes. Seed is an int which is 4 bytes. So we will instead take the average of every 4
-                            // bytes of the hash.
-                            var hash = md5.ComputeHash(resourceStream);
+                            // Hash is at least 16 bytes. Seed is an int which is 4 bytes. So we will instead take the average of every 4
+                            // bytes of the first 16 bytes of the hash.
+                            var hash = sha256.ComputeHash(resourceStream);
                             var shrunkHash = new byte[4];
                             for (int startIndex = 0, outIndex = 0; startIndex < 16; startIndex += 4, outIndex += 1)
                             {

@@ -6,7 +6,7 @@ using Xamarin.Forms;
 
 namespace OWCE.Views
 {
-    public class SpeedArcView : SKCanvasView
+    public class SpeedArcView : SKCanvasView, IDisposable
     {
         SKPaint _backgroundPaint;
         SKPaint _circlePaint;
@@ -201,6 +201,30 @@ namespace OWCE.Views
                 //System.Diagnostics.Debug.WriteLine($"Finished: {animationNumber}");
             });
 
+        }
+
+        bool _isDisposed;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isDisposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                _backgroundPaint?.Dispose();
+                _circlePaint?.Dispose();
+                _arcPaint?.Dispose();
+            }
+
+            _isDisposed = true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }
