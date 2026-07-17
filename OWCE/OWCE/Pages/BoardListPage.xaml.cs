@@ -158,7 +158,7 @@ namespace OWCE.Pages
             */
         }
 
-        bool _hasAppeared = false;
+        bool _hasAppeared;
         Grid _sideMenuItem;
 
         protected override async void OnAppearing()

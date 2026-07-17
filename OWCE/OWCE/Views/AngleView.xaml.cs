@@ -8,7 +8,7 @@ namespace OWCE.Views
     public partial class AngleView : ContentView
     {
         public static readonly BindableProperty PitchProperty = BindableProperty.Create(
-            "Pitch",
+            nameof(Pitch),
             typeof(double),
             typeof(AngleView));
 
@@ -22,7 +22,7 @@ namespace OWCE.Views
         }
 
         public static readonly BindableProperty YawProperty = BindableProperty.Create(
-            "Yaw",
+            nameof(Yaw),
             typeof(double),
             typeof(AngleView));
 
@@ -36,7 +36,7 @@ namespace OWCE.Views
         }
 
         public static readonly BindableProperty RollProperty = BindableProperty.Create(
-            "Roll",
+            nameof(Roll),
             typeof(double),
             typeof(AngleView));
 

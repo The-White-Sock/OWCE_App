@@ -8,7 +8,7 @@ namespace OWCE.Views
     public partial class PowerView : ContentView
     {
         public static readonly BindableProperty CurrentAmpsProperty = BindableProperty.Create(
-            "CurrentAmps",
+            nameof(CurrentAmps),
             typeof(double),
             typeof(PowerView));
 
@@ -22,7 +22,7 @@ namespace OWCE.Views
         }
 
         public static readonly BindableProperty IsRegenProperty = BindableProperty.Create(
-            "IsRegen",
+            nameof(IsRegen),
             typeof(bool),
             typeof(PowerView));
 
@@ -37,7 +37,7 @@ namespace OWCE.Views
 
 
         public static readonly BindableProperty TripAmpHoursProperty = BindableProperty.Create(
-            "TripAmpHours",
+            nameof(TripAmpHours),
             typeof(double),
             typeof(PowerView));
 
@@ -52,7 +52,7 @@ namespace OWCE.Views
 
 
         public static readonly BindableProperty TripRegenAmpHoursProperty = BindableProperty.Create(
-            "TripRegenAmpHours",
+            nameof(TripRegenAmpHours),
             typeof(double),
             typeof(PowerView));
 

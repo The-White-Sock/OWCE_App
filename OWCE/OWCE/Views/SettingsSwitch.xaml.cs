@@ -61,9 +61,9 @@ namespace OWCE.Views
             set { SetValue(CurrentColorProperty, value); }
         }
 
-        bool _isToggling = false;
+        bool _isToggling;
 
-        public event EventHandler<bool> IsToggledChanged = null;
+        public event EventHandler<bool> IsToggledChanged;
 
         public SettingsSwitch()
         {

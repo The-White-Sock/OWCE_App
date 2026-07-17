@@ -7,7 +7,7 @@ namespace OWCE.Views
     public partial class FootpadsView : ContentView
     {
         public static readonly BindableProperty LeftPadEngagedProperty = BindableProperty.Create(
-            "LeftPadEngaged",
+            nameof(LeftPadEngaged),
             typeof(bool),
             typeof(FootpadsView),
             false);

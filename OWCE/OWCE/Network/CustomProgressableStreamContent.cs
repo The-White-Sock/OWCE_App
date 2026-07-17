@@ -13,7 +13,7 @@ namespace OWCE.Network
         FileStream fileStream;
         int bufferSize = 4096;
         IProgress<double> progress;
-        int lastProgress = 0;
+        int lastProgress;
 
         public CustomProgressableStreamContent(FileStream fileStream, IProgress<double> progress)
         {

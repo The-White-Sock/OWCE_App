@@ -32,7 +32,7 @@ namespace OWCE.Pages
         }
 
 
-        WeakReference<ViewRawRideDataPage> _page = null;
+        WeakReference<ViewRawRideDataPage> _page;
 
         public ViewRawRideDataModel(ViewRawRideDataPage page)
         {

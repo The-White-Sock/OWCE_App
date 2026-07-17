@@ -42,7 +42,7 @@ namespace OWCE.Pages
             BindingContext = this;
         }
 
-        bool _hasFirstLoad = false;
+        bool _hasFirstLoad;
         protected override void OnAppearing()
         {
             base.OnAppearing();

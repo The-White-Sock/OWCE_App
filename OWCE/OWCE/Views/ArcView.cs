@@ -6,7 +6,7 @@ namespace OWCE.Views
     public class ArcView : View
     {
         public static readonly BindableProperty ArcColorProperty = BindableProperty.Create(
-            propertyName: "ArcColor",
+            propertyName: nameof(ArcColor),
             returnType: typeof(Color),
             declaringType: typeof(ArcView),
             defaultValue: Color.FromHex("#F3F300"));
@@ -18,7 +18,7 @@ namespace OWCE.Views
         }
 
         public static readonly BindableProperty CircleColorProperty = BindableProperty.Create(
-            propertyName: "CircleColor",
+            propertyName: nameof(CircleColor),
             returnType: typeof(Color),
             declaringType: typeof(ArcView),
             defaultValue: Color.FromHex("#D6D600"));
@@ -30,7 +30,7 @@ namespace OWCE.Views
         }
 
         public static readonly BindableProperty MinimumProperty = BindableProperty.Create(
-            propertyName: "Minimum",
+            propertyName: nameof(Minimum),
             returnType: typeof(float),
             declaringType: typeof(ArcView),
             defaultValue: 0f);
@@ -42,7 +42,7 @@ namespace OWCE.Views
         }
 
         public static readonly BindableProperty MaximumProperty = BindableProperty.Create(
-            propertyName: "Maximum",
+            propertyName: nameof(Maximum),
             returnType: typeof(float),
             declaringType: typeof(ArcView),
             defaultValue: 100f);
@@ -54,7 +54,7 @@ namespace OWCE.Views
         }
 
         public static readonly BindableProperty CurrentProperty = BindableProperty.Create(
-            propertyName: "Current",
+            propertyName: nameof(Current),
             returnType: typeof(float),
             declaringType: typeof(ArcView),
             defaultValue: 0f);

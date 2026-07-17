@@ -14,7 +14,7 @@ namespace OWCE.Views
 
 
         public static readonly BindableProperty BatteryPercentProperty = BindableProperty.Create(
-          "BatteryPercent",
+          nameof(BatteryPercent),
           typeof(int),
           typeof(BatteryView),
           0,
@@ -56,7 +56,7 @@ namespace OWCE.Views
 
 
         public static readonly BindableProperty BatteryVoltageProperty = BindableProperty.Create(
-          "BatteryVoltage",
+          nameof(BatteryVoltage),
           typeof(float),
           typeof(BatteryView),
           0f,
@@ -75,7 +75,7 @@ namespace OWCE.Views
         }
 
         public static readonly BindableProperty BatteryCellsProperty = BindableProperty.Create(
-          "BatteryCells",
+          nameof(BatteryCells),
           typeof(BatteryCells),
           typeof(BatteryView),
           null,
@@ -95,7 +95,7 @@ namespace OWCE.Views
 
 
         public static readonly BindableProperty BoardTypeProperty = BindableProperty.Create(
-            "BoardType",
+            nameof(BoardType),
             typeof(OWBoardType),
             typeof(BatteryView));
 

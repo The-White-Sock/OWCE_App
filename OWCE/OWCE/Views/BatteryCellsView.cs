@@ -27,7 +27,7 @@ namespace OWCE.Views
         */
 
         Dictionary<uint, Label> _cellLables = new Dictionary<uint, Label>();
-        BatteryCells _subscribedBatteryCells = null;
+        BatteryCells _subscribedBatteryCells;
 
         public BatteryCellsView()
         {

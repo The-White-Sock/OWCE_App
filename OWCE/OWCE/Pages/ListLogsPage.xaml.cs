@@ -22,7 +22,7 @@ namespace OWCE.Pages
         ObservableRangeCollection<LogSummary> _logsList = new ObservableRangeCollection<LogSummary>();
         public ObservableRangeCollection<LogSummary> LogsList { get { return _logsList; } }
 
-        bool _isRefreshing = false;
+        bool _isRefreshing;
         public bool IsRefreshing
         {
             set

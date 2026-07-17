@@ -23,9 +23,9 @@ namespace OWCE.Views
         float _endAngleForArc;
 
 
-        float _currentSweepAngle = 0;
+        float _currentSweepAngle;
         float _minSweepAngle = 5;
-        int _animationNumber = 0;
+        int _animationNumber;
 
         float _totalArc;
 

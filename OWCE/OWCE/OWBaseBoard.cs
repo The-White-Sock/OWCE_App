@@ -42,7 +42,7 @@ namespace OWCE
             }
         }
 
-        protected bool _isAvailable = false;
+        protected bool _isAvailable;
         public bool IsAvailable
         {
             get
@@ -59,7 +59,7 @@ namespace OWCE
             }
         }
 
-        protected Object _nativePeripheral = null;
+        protected Object _nativePeripheral;
         public Object NativePeripheral
         {
             get { return _nativePeripheral; }
@@ -144,8 +144,8 @@ namespace OWCE
                     };
 
                     OnPropertyChanged();
-                    OnPropertyChanged("BoardModelStringShort");
-                    OnPropertyChanged("BoardModelStringLong");
+                    OnPropertyChanged(nameof(BoardModelStringShort));
+                    OnPropertyChanged(nameof(BoardModelStringLong));
                     OnPropertyChanged("RideModeString");
                 }
             }
