@@ -16,21 +16,26 @@
 
     <!-- Multiple packages OWCE.csproj references (SkiaSharp.Views.Forms,
          Xamarin.CommunityToolkit) transitively depend on
-         Xamarin.Forms.Platform.WPF, each at a different minimum version, in
-         an asset group NuGet picks for a net8.0 consumer specifically -
-         OWCE.csproj's own netstandard2.1 build never touches any of this.
-         Platform.WPF's own dependency chain is what pulls in
-         OpenTK.GLControl, which has no net8.0 assets at all and trips
-         NETSDK1136. Excluding OpenTK/OpenTK.GLControl directly doesn't work -
-         they're two hops away from this project, and NuGet only lets a
-         direct sibling reference override an inherited one for the *same,
-         immediately* re-declared package. Platform.WPF is that immediate
-         package, so exclude it here instead. Pinned to the same version as
-         OWCE.csproj's own Xamarin.Forms reference below - Platform.WPF is
-         published in lockstep with the main Xamarin.Forms package, so this
-         is comfortably above every transitive minimum seen so far (4.8.0.1821,
-         5.0.0.2291) without needing to track each one individually. -->
+         Xamarin.Forms.Platform.WPF, in an asset group NuGet picks for a
+         net8.0 consumer specifically - OWCE.csproj's own netstandard2.1 build
+         never touches any of this. Platform.WPF's own dependency chain is
+         what pulls in OpenTK/OpenTK.GLControl, which have no net8.0 assets at
+         all and trip NETSDK1136.
+
+         ExcludeAssets on a sibling reference only overrides asset flow for
+         THAT package - it does not cascade to exclude that package's own
+         dependencies, which still resolve as independent graph nodes with
+         their normal (unrestricted) assets. So excluding Platform.WPF alone
+         fixes the version-downgrade conflict but not the OpenTK problem;
+         OpenTK/OpenTK.GLControl need their own explicit exclusions too,
+         pinned to the version actually resolving (3.0.1, confirmed via CI's
+         NU1701 warnings). Platform.WPF is pinned to match OWCE.csproj's own
+         Xamarin.Forms reference below - published in lockstep with it, so
+         comfortably above every transitive minimum seen so far (4.8.0.1821,
+         5.0.0.2291). -->
     <PackageReference Include="Xamarin.Forms.Platform.WPF" Version="5.0.0.2662" ExcludeAssets="all" />
+    <PackageReference Include="OpenTK" Version="3.0.1" ExcludeAssets="all" />
+    <PackageReference Include="OpenTK.GLControl" Version="3.0.1" ExcludeAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
