@@ -20,26 +20,33 @@
          net8.0 consumer specifically - OWCE.csproj's own netstandard2.1 build
          never touches any of this. Platform.WPF's own dependency chain is
          what pulls in OpenTK/OpenTK.GLControl, which have no net8.0 assets at
-         all and trip NETSDK1136.
+         all.
 
-         ExcludeAssets on a sibling reference only overrides asset flow for
-         THAT package - it does not cascade to exclude that package's own
-         dependencies, which still resolve as independent graph nodes with
-         their normal (unrestricted) assets. So excluding Platform.WPF alone
-         fixes the version-downgrade conflict but not the OpenTK problem;
-         OpenTK/OpenTK.GLControl need their own explicit exclusions too,
-         pinned to the version actually resolving (3.0.1, confirmed via CI's
-         NU1701 warnings). Platform.WPF is pinned to match OWCE.csproj's own
-         Xamarin.Forms reference below - published in lockstep with it, so
-         comfortably above every transitive minimum seen so far (4.8.0.1821,
-         5.0.0.2291). -->
+         This pin exists only to resolve the version-downgrade conflict
+         between the two different minimums those packages require
+         (4.8.0.1821 and 5.0.0.2291) - matched to OWCE.csproj's own
+         Xamarin.Forms version below, which Platform.WPF is published in
+         lockstep with. ExcludeAssets does NOT stop NETSDK1136 below - proved
+         on PR #43 CI across every combination of asset exclusion on this
+         package and on OpenTK/OpenTK.GLControl directly, all with identical
+         results. That check isn't driven by asset consumption at all. -->
     <PackageReference Include="Xamarin.Forms.Platform.WPF" Version="5.0.0.2662" ExcludeAssets="all" />
-    <PackageReference Include="OpenTK" Version="3.0.1" ExcludeAssets="all" />
-    <PackageReference Include="OpenTK.GLControl" Version="3.0.1" ExcludeAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OWCE\OWCE.csproj" />
+  </ItemGroup>
+
+  <!-- The actual NETSDK1136 trigger: Platform.WPF being present in the
+       resolved graph at all (regardless of asset exclusion) makes the SDK
+       auto-inject a FrameworkReference to the Windows Desktop shared
+       framework, which is what the "-windows must be in TargetFramework"
+       check actually keys off - not UseWindowsForms/UseWPF as properties,
+       and not package asset flags. Removing the auto-injected item directly
+       is what actually stops it. -->
+  <ItemGroup>
+    <FrameworkReference Remove="Microsoft.WindowsDesktop.App.WindowsForms" />
+    <FrameworkReference Remove="Microsoft.WindowsDesktop.App.WPF" />
   </ItemGroup>
 
 </Project>
