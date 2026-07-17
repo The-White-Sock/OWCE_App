@@ -321,7 +321,7 @@ namespace OWCE.Droid.DependencyImplementations
         // GiveUpReconnecting/BoardReconnectFailed) - previously this retried every 2
         // seconds forever with no way to stop short of the user manually cancelling
         // the "Reconnecting..." popup.
-        private static readonly TimeSpan ReconnectGiveUpAfter = TimeSpan.FromSeconds(60);
+        private static readonly TimeSpan ReconnectGiveUpAfter = TimeSpan.FromSeconds(30);
         private DateTime _reconnectDeadlineUtc;
 
 
@@ -470,6 +470,25 @@ namespace OWCE.Droid.DependencyImplementations
                     {
                         _reconnectDeadlineUtc = DateTime.UtcNow + ReconnectGiveUpAfter;
                         Reconnect();
+
+                        // Reconnect()'s ConnectGatt() attempt may never invoke any
+                        // callback at all if the board stays unreachable - unlike an
+                        // established connection's supervision timeout, a fresh
+                        // ConnectGatt() isn't guaranteed to report failure on its own.
+                        // RetryReconnect()'s deadline check only ever runs following an
+                        // actual callback, so without this independent watchdog, a
+                        // first attempt that never calls back would leave the
+                        // "Reconnecting..." popup spinning forever regardless of
+                        // ReconnectGiveUpAfter (this is what was actually happening -
+                        // confirmed via hardware testing).
+                        Device.StartTimer(ReconnectGiveUpAfter, () =>
+                        {
+                            if (_reconnecting)
+                            {
+                                GiveUpReconnecting();
+                            }
+                            return false;
+                        });
                     }
                 }
             }
@@ -1016,7 +1035,11 @@ namespace OWCE.Droid.DependencyImplementations
         {
             Device.StartTimer(TimeSpan.FromSeconds(2), () =>
             {
-                if (_requestingDisconnect)
+                // _reconnecting is false if the standalone watchdog in
+                // OnConnectionStateChange already gave up (or a reconnect
+                // succeeded) while this 2s delay was pending - don't resurrect
+                // that by dispatching yet another ConnectGatt() attempt.
+                if (_requestingDisconnect || _reconnecting == false)
                 {
                     return false;
                 }
@@ -1038,6 +1061,15 @@ namespace OWCE.Droid.DependencyImplementations
         private void GiveUpReconnecting()
         {
             _reconnecting = false;
+
+            // A ConnectGatt() attempt may still be pending if we're giving up
+            // precisely because it never called back at all (the usual case the
+            // standalone watchdog exists for) - close it so a late callback can't
+            // land after the UI has already disconnected and moved on.
+            _bluetoothGatt?.Close();
+            _bluetoothGatt = null;
+            _gattCallback = null;
+
             BoardReconnectFailed?.Invoke();
         }
 
