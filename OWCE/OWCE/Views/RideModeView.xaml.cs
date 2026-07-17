@@ -50,7 +50,7 @@ namespace OWCE.Views
     public partial class RideModeView : ContentView
     {
         public static readonly BindableProperty BoardTypeProperty = BindableProperty.Create(
-            "BoardType",
+            nameof(BoardType),
             typeof(OWBoardType),
             typeof(RideModeView));
 
@@ -64,7 +64,7 @@ namespace OWCE.Views
         }
 
         public static readonly BindableProperty SimpleStopEnabledProperty = BindableProperty.Create(
-            "SimpleStopEnabled",
+            nameof(SimpleStopEnabled),
             typeof(bool?),
             typeof(RideModeView));
 

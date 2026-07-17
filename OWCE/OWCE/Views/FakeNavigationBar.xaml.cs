@@ -8,7 +8,7 @@ namespace OWCE.Views
     public partial class FakeNavigationBar : Grid
     {
 
-        public static readonly BindableProperty InnerContentProperty = BindableProperty.Create("InnerContent", typeof(View), typeof(FakeNavigationBar), null);
+        public static readonly BindableProperty InnerContentProperty = BindableProperty.Create(nameof(InnerContent), typeof(View), typeof(FakeNavigationBar), null);
         public View InnerContent
         {
             get { return (View)GetValue(InnerContentProperty); }

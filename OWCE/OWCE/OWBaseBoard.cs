@@ -144,8 +144,8 @@ namespace OWCE
                     };
 
                     OnPropertyChanged();
-                    OnPropertyChanged("BoardModelStringShort");
-                    OnPropertyChanged("BoardModelStringLong");
+                    OnPropertyChanged(nameof(BoardModelStringShort));
+                    OnPropertyChanged(nameof(BoardModelStringLong));
                     OnPropertyChanged("RideModeString");
                 }
             }

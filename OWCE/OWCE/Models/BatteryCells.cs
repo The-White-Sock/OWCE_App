@@ -159,126 +159,126 @@ namespace OWCE.Models
                     if (BatteryCell0 != voltageString)
                     {
                         BatteryCell0 = voltageString;
-                        OnPropertyChanged("BatteryCell0");
+                        OnPropertyChanged(nameof(BatteryCell0));
                     }
                     break;
                 case 1:
                     if (BatteryCell1 != voltageString)
                     {
                         BatteryCell1 = voltageString;
-                        OnPropertyChanged("BatteryCell1");
+                        OnPropertyChanged(nameof(BatteryCell1));
                     }
                     break;
                 case 2:
                     if (BatteryCell2 != voltageString)
                     {
                         BatteryCell2 = voltageString;
-                        OnPropertyChanged("BatteryCell2");
+                        OnPropertyChanged(nameof(BatteryCell2));
                     }
                     break;
                 case 3:
                     if (BatteryCell3 != voltageString)
                     {
                         BatteryCell3 = voltageString;
-                        OnPropertyChanged("BatteryCell3");
+                        OnPropertyChanged(nameof(BatteryCell3));
                     }
                     break;
                 case 4:
                     if (BatteryCell4 != voltageString)
                     {
                         BatteryCell4 = voltageString;
-                        OnPropertyChanged("BatteryCell4");
+                        OnPropertyChanged(nameof(BatteryCell4));
                     }
                     break;
                 case 5:
                     if (BatteryCell5 != voltageString)
                     {
                         BatteryCell5 = voltageString;
-                        OnPropertyChanged("BatteryCell5");
+                        OnPropertyChanged(nameof(BatteryCell5));
                     }
                     break;
                 case 6:
                     if (BatteryCell6 != voltageString)
                     {
                         BatteryCell6 = voltageString;
-                        OnPropertyChanged("BatteryCell6");
+                        OnPropertyChanged(nameof(BatteryCell6));
                     }
                     break;
                 case 7:
                     if (BatteryCell7 != voltageString)
                     {
                         BatteryCell7 = voltageString;
-                        OnPropertyChanged("BatteryCell7");
+                        OnPropertyChanged(nameof(BatteryCell7));
                     }
                     break;
                 case 8:
                     if (BatteryCell8 != voltageString)
                     {
                         BatteryCell8 = voltageString;
-                        OnPropertyChanged("BatteryCell8");
+                        OnPropertyChanged(nameof(BatteryCell8));
                     }
                     break;
                 case 9:
                     if (BatteryCell9 != voltageString)
                     {
                         BatteryCell9 = voltageString;
-                        OnPropertyChanged("BatteryCell9");
+                        OnPropertyChanged(nameof(BatteryCell9));
                     }
                     break;
                 case 10:
                     if (BatteryCell10 != voltageString)
                     {
                         BatteryCell10 = voltageString;
-                        OnPropertyChanged("BatteryCell10");
+                        OnPropertyChanged(nameof(BatteryCell10));
                     }
                     break;
                 case 11:
                     if (BatteryCell11 != voltageString)
                     {
                         BatteryCell11 = voltageString;
-                        OnPropertyChanged("BatteryCell11");
+                        OnPropertyChanged(nameof(BatteryCell11));
                     }
                     break;
                 case 12:
                     if (BatteryCell12 != voltageString)
                     {
                         BatteryCell12 = voltageString;
-                        OnPropertyChanged("BatteryCell12");
+                        OnPropertyChanged(nameof(BatteryCell12));
                     }
                     break;
                 case 13:
                     if (BatteryCell13 != voltageString)
                     {
                         BatteryCell13 = voltageString;
-                        OnPropertyChanged("BatteryCell13");
+                        OnPropertyChanged(nameof(BatteryCell13));
                     }
                     break;
                 case 14:
                     if (BatteryCell14 != voltageString)
                     {
                         BatteryCell14 = voltageString;
-                        OnPropertyChanged("BatteryCell14");
+                        OnPropertyChanged(nameof(BatteryCell14));
                     }
                     break;
                 case 15:
                     if (BatteryCell15 != voltageString)
                     {
                         BatteryCell15 = voltageString;
-                        OnPropertyChanged("BatteryCell15");
+                        OnPropertyChanged(nameof(BatteryCell15));
                     }
                     break;
                 case 16:
                     if (BatteryCell16 != voltageString)
                     {
                         BatteryCell16 = voltageString;
-                        OnPropertyChanged("BatteryCell16");
+                        OnPropertyChanged(nameof(BatteryCell16));
                     }
                     break;
                 case 17:
                     if (BatteryCell17 != voltageString)
                     {
                         BatteryCell17 = voltageString;
-                        OnPropertyChanged("BatteryCell17");
+                        OnPropertyChanged(nameof(BatteryCell17));
                     }
                     break;
             }
