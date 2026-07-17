@@ -324,6 +324,15 @@ namespace OWCE.Droid.DependencyImplementations
         private static readonly TimeSpan ReconnectGiveUpAfter = TimeSpan.FromSeconds(30);
         private DateTime _reconnectDeadlineUtc;
 
+        // How long to wait for a fresh, first-time connection attempt (ConnectGatt()
+        // through DiscoverServices()) before giving up automatically. Needed for the
+        // same reason as ReconnectGiveUpAfter above: a fresh ConnectGatt() isn't
+        // guaranteed to ever invoke OnConnectionStateChange if the peripheral is
+        // unreachable, so without an independent timer here, a first-time connect to
+        // a silent/unreachable board would leave the "Connecting..." popup spinning
+        // forever with no automatic recovery - only manual user cancellation.
+        private static readonly TimeSpan ConnectGiveUpAfter = TimeSpan.FromSeconds(30);
+
 
         TaskCompletionSource<bool> _connectTaskCompletionSource = null;
         private OWBaseBoard _board = null;
@@ -1007,6 +1016,20 @@ namespace OWCE.Droid.DependencyImplementations
                         }
                     });
                 }
+
+                // See ConnectGiveUpAfter above - this covers the whole first-time
+                // connect (ConnectGatt() through DiscoverServices()), since both can
+                // silently never call back and this timer only cares whether
+                // connectTaskCompletionSource has resolved by the deadline, regardless
+                // of which phase is stuck.
+                Device.StartTimer(ConnectGiveUpAfter, () =>
+                {
+                    if (connectTaskCompletionSource.TrySetResult(false))
+                    {
+                        _bluetoothGatt?.Disconnect();
+                    }
+                    return false;
+                });
             }
 
             return connectTaskCompletionSource.Task;
