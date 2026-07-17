@@ -48,6 +48,10 @@ namespace OWCE
         public const int PlusXR_Delirium = 8;
         public const int PlusXR_Custom = 9;
 
+        // Same value/name as PlusXR_Sequoia - confirmed via the rewheel project's
+        // mode table (see #36). OWCE's own UI never offers this as a selectable
+        // Pint mode, but the board can in principle report it.
+        public const int Pint_Sequoia = 4;
         public const int Pint_Redwood = 5;
         public const int Pint_Pacific = 6;
         public const int Pint_Elevated = 7;
@@ -369,6 +373,7 @@ namespace OWCE
                 {
                     return _rideMode switch
                     {
+                        4 => "Sequoia",
                         5 => "Redwood",
                         6 => "Pacific",
                         7 => "Elevated",
