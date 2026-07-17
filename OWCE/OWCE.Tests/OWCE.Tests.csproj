@@ -13,22 +13,24 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-
-    <!-- OWCE.csproj -> SkiaSharp.Views.Forms transitively pulls in OpenTK/
-         OpenTK.GLControl (a WinForms control, version pinned per CI's NU1701
-         warning). It has no net8.0 assets at all, so NuGet falls back to its
-         .NET Framework build, which trips the SDK's "must target -windows"
-         check (NETSDK1136) even though nothing here uses WinForms. Neither
-         package is actually needed to call into OWBoard/OWBaseBoard, so
-         exclude both outright rather than fight the SDK's Windows-Forms
-         detection - this is scoped to this project only, OWCE.csproj (and the
-         Android/iOS/Mac apps that reference it) are untouched. -->
-    <PackageReference Include="OpenTK" Version="3.0.1" ExcludeAssets="all" />
-    <PackageReference Include="OpenTK.GLControl" Version="3.0.1" ExcludeAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OWCE\OWCE.csproj" />
+    <!-- ExcludeAssets="build;buildTransitive": OWCE.csproj's own packages
+         (SkiaSharp.Views.Forms -> OpenTK.GLControl, a WinForms control with no
+         net8.0 assets at all) otherwise flow their MSBuild build/buildTransitive
+         targets into this project too, which is what actually flips
+         UseWindowsForms on and trips NETSDK1136 - even though nothing here uses
+         WinForms. Excluding a same-package reference at the leaf level isn't
+         enough on its own (confirmed on PR #43 CI: NuGet still unions asset
+         flags across the two paths bringing in the same package - the direct
+         exclusion and the transitive one via this ProjectReference - so the
+         unrestricted transitive path still won). This instead cuts it off at
+         the one edge that actually feeds this project, without touching what
+         compile/runtime assets flow through (still need those - it's the
+         actual OWCE.dll). Scoped to this project only; OWCE.csproj and the
+         Android/iOS/Mac apps that reference it are untouched. -->
+    <ProjectReference Include="..\OWCE\OWCE.csproj" ExcludeAssets="build;buildTransitive" />
   </ItemGroup>
 
 </Project>
