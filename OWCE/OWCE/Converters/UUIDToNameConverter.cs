@@ -13,9 +13,9 @@ namespace OWCE.Converters
         {
             if (value is string stringValue)
             {
-                if (uuidLookup.ContainsKey(stringValue))
+                if (uuidLookup.TryGetValue(stringValue, out var cachedName))
                 {
-                    return uuidLookup[stringValue];
+                    return cachedName;
                 }
 
                 var actualName = stringValue.ToUpperInvariant() switch

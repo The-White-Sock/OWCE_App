@@ -152,7 +152,7 @@ namespace OWCE.Views
 
         private void BatteryCells_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName.StartsWith("BatteryCell"))
+            if (e.PropertyName.StartsWith("BatteryCell", StringComparison.Ordinal))
             {
                 var labelSpan = e.PropertyName.AsSpan();
 
@@ -164,7 +164,7 @@ namespace OWCE.Views
                     UpdateCell(cellID);
                 }
             }
-            else if (e.PropertyName.StartsWith("CellCount"))
+            else if (e.PropertyName.StartsWith("CellCount", StringComparison.Ordinal))
             {
                 SetupGrid();
             }
@@ -172,10 +172,9 @@ namespace OWCE.Views
 
         void UpdateCell(uint cellID)
         {
-            if (BindingContext is BatteryCells batteryCells && _cellLables.ContainsKey(cellID))
+            if (BindingContext is BatteryCells batteryCells && _cellLables.TryGetValue(cellID, out var label))
             {
                 var value = batteryCells.GetCell(cellID);
-                var label = _cellLables[cellID];
                 var color = GetColor(value);
 
                 Xamarin.Essentials.MainThread.BeginInvokeOnMainThread(() =>

@@ -904,7 +904,7 @@ namespace OWCE
                     var jumpstartAlert = new Pages.Popup.JumpstartAlert(new Command(async () =>
                     {
                         await PopupNavigation.Instance.PopAllAsync();
-                        if (App.Current.MainPage.Navigation.ModalStack.Count == 1 && App.Current.MainPage.Navigation.ModalStack.FirstOrDefault() is NavigationPage modalNavigationPage && modalNavigationPage.CurrentPage is Pages.BoardPage boardPage)
+                        if (App.Current.MainPage.Navigation.ModalStack.Count == 1 && App.Current.MainPage.Navigation.ModalStack[0] is NavigationPage modalNavigationPage && modalNavigationPage.CurrentPage is Pages.BoardPage boardPage)
                         {
                             await boardPage.DisconnectAndPop();
                             return;
@@ -924,7 +924,7 @@ namespace OWCE
                         await App.Current.MainPage.DisplayAlert("Error", handshakeException.Message, "Ok");
                         if (handshakeException.ShouldDisconnect)
                         {
-                            if (App.Current.MainPage.Navigation.ModalStack.Count == 1 && App.Current.MainPage.Navigation.ModalStack.FirstOrDefault() is Pages.CustomNavigationPage modalNavigationPage && modalNavigationPage.CurrentPage is Pages.BoardPage boardPage)
+                            if (App.Current.MainPage.Navigation.ModalStack.Count == 1 && App.Current.MainPage.Navigation.ModalStack[0] is Pages.CustomNavigationPage modalNavigationPage && modalNavigationPage.CurrentPage is Pages.BoardPage boardPage)
                             {
                                 await boardPage.DisconnectAndPop();
                             }
@@ -1070,11 +1070,15 @@ namespace OWCE
                     arrayToMD5_part2.CopyTo(arrayToMD5, arrayToMD5_part1.Length);
 
                     // Start prepping the MD5 hash
+                    // MD5 is mandated by the board's own handshake protocol, not a security choice
+                    // made here - swapping algorithms would break the challenge/response with real hardware.
+#pragma warning disable CA5351
                     byte[] md5Hash = null;
                     using (var md5 = System.Security.Cryptography.MD5.Create())
                     {
                         md5Hash = md5.ComputeHash(arrayToMD5);
                     }
+#pragma warning restore CA5351
 
                     // Add it to the 3 bytes we already have.
                     Array.Copy(md5Hash, 0, outputArray, 3, md5Hash.Length);
@@ -1338,7 +1342,7 @@ namespace OWCE
                         OWBoardType.Pint => 0.002f,
                         OWBoardType.PintX => 0.002f,
                         OWBoardType.GT => 0.002f,
-                        _ => throw new Exception("Unknown board type: " + _boardType),
+                        _ => throw new InvalidOperationException("Unknown board type: " + _boardType),
                     };
 
                     /// https://en.wikipedia.org/wiki/Two's_complement
