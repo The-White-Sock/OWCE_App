@@ -660,7 +660,7 @@ namespace OWCE
             _events.BoardEvents.Add(new OWBoardEvent()
             {
                 Uuid = characteristicGuid,
-                Data = ByteString.CopyFrom(data),
+                Data = byteString,
                 Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             });
 
