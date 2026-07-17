@@ -153,7 +153,7 @@ namespace OWCE
         {
             IsScanning = true;
 
-            System.Diagnostics.Debug.WriteLine($"Logs directory: {App.Current.LogsDirectory}");
+            System.Diagnostics.Debug.WriteLine($"Logs directory: {App.LogsDirectory}");
 
 
             var rand = new Random();

@@ -59,7 +59,7 @@ namespace OWCE.Pages
 
         async Task SubmitRide()
         {
-            var filename = Path.Combine(App.Current.LogsDirectory, ride.DataFileName);
+            var filename = Path.Combine(App.LogsDirectory, ride.DataFileName);
             if (File.Exists(filename) == false)
             {
                 await DisplayAlert("Error", "Could not load saved ride.", "Okay");
@@ -97,7 +97,7 @@ namespace OWCE.Pages
             {
                 try
                 {
-                    httpClient.DefaultRequestHeaders.Add("User-Agent", App.Current.UserAgent);
+                    httpClient.DefaultRequestHeaders.Add("User-Agent", App.UserAgent);
 
                     var submitRideRequest = model.GetSubmitRideRequest();
 
@@ -164,7 +164,7 @@ namespace OWCE.Pages
 
         public async Task ViewDataSubmittedAsync()
         {
-            var filename = Path.Combine(App.Current.LogsDirectory, ride.DataFileName);
+            var filename = Path.Combine(App.LogsDirectory, ride.DataFileName);
             if (File.Exists(filename) == false)
             {
                 await DisplayAlert("Error", "Could not load saved ride.", "Okay");

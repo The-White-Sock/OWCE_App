@@ -67,7 +67,7 @@ namespace OWCE.Pages
         void RefreshLogs()
         {
             var tempLogSummary = new List<LogSummary>();
-            var files = Directory.GetFiles(App.Current.LogsDirectory, "*.bin");
+            var files = Directory.GetFiles(App.LogsDirectory, "*.bin");
             foreach (var file in files)
             {
                 var logSummary = new LogSummary()
@@ -95,7 +95,7 @@ namespace OWCE.Pages
                     try
                     {
                         var events = new List<OWBoardEvent>();
-                        var logPath = Path.Combine(App.Current.LogsDirectory, current.Filename);
+                        var logPath = Path.Combine(App.LogsDirectory, current.Filename);
                         using (FileStream fs = new FileStream(logPath, FileMode.Open, FileAccess.Read))
                         {
                             OWBoardEvent owBoardEvent;

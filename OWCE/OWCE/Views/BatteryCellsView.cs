@@ -185,7 +185,7 @@ namespace OWCE.Views
             }
         }
 
-        Color GetColor(float voltage)
+        static Color GetColor(float voltage)
         {
             var minVoltage = 2.8f;
             var maxVoltage = 4.2f;

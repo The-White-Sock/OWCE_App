@@ -139,7 +139,7 @@ namespace OWCE.Views
             }
         }
 
-        float DegreesToRadians(float degrees)
+        static float DegreesToRadians(float degrees)
         {
             return (float)(Math.PI / 180.0) * degrees;
         }

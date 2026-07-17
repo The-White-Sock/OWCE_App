@@ -84,7 +84,7 @@ namespace OWCE.Pages
 
                 // The DB row is only half of a ride - the recorded telemetry lives in its
                 // own .bin file, which was previously never cleaned up here.
-                var dataFilePath = Path.Combine(App.Current.LogsDirectory, ride.DataFileName);
+                var dataFilePath = Path.Combine(App.LogsDirectory, ride.DataFileName);
                 if (File.Exists(dataFilePath))
                 {
                     File.Delete(dataFilePath);

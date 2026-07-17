@@ -46,9 +46,9 @@ namespace OWCE
             set { SetValue(MetricDisplayProperty, value); }
         }
 
-        public string LogsDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "past_rides");
+        public static string LogsDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "past_rides");
 
-        public string UserAgent => $"OWCE/{Xamarin.Essentials.AppInfo.VersionString} Build/{Xamarin.Essentials.AppInfo.BuildString} ({Xamarin.Essentials.DeviceInfo.Platform}; {Xamarin.Essentials.DeviceInfo.VersionString})";
+        public static string UserAgent => $"OWCE/{Xamarin.Essentials.AppInfo.VersionString} Build/{Xamarin.Essentials.AppInfo.BuildString} ({Xamarin.Essentials.DeviceInfo.Platform}; {Xamarin.Essentials.DeviceInfo.VersionString})";
 
 
         public App()
@@ -127,7 +127,7 @@ namespace OWCE
             /*
             var cancellationTokenSource = new CancellationTokenSource();
 
-            var file = Directory.GetFiles(App.Current.LogsDirectory, "*.bin").First();
+            var file = Directory.GetFiles(App.LogsDirectory, "*.bin").First();
             var rand = new Random();
             var baseBoard = new OWBaseBoard()
             {
@@ -168,7 +168,7 @@ namespace OWCE
             return null;
         }
 
-        internal void DisconnectFromBoard()
+        internal static void DisconnectFromBoard()
         {
             /*
             OWBLE.Disconnect();

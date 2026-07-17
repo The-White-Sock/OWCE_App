@@ -42,7 +42,7 @@ namespace OWCE
             {
                 newRideGuid = Guid.NewGuid();
                 newDataFileName = $"{newRideGuid.ToString().ToUpperInvariant()}.bin";
-                newDataFilePath = Path.Combine(App.Current.LogsDirectory, newDataFileName);
+                newDataFilePath = Path.Combine(App.LogsDirectory, newDataFileName);
 
                 // Check a ride doens't exist in the database either.
                 dbRidesFound = Database.Connection.ExecuteScalar<int>("SELECT COUNT(*) FROM Ride WHERE id=?", newRideGuid);

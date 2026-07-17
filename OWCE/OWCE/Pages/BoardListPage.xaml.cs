@@ -191,7 +191,7 @@ namespace OWCE.Pages
 
 
             //var board = new OWBoard(new OWBaseBoard("000000", "ow000000"));
-            //(Path.Combine(App.Current.LogsDirectory, "25 July 2020 03/53/40 PM.bin"));
+            //(Path.Combine(App.LogsDirectory, "25 July 2020 03/53/40 PM.bin"));
 
             // Navigation.PushAsync(new BoardPage(board));
 
@@ -245,7 +245,7 @@ namespace OWCE.Pages
             }
         }
 
-        private async Task StartScanning()
+        private static async Task StartScanning()
         {
             if (App.Current.OWBLE.IsScanning)
                 return;
@@ -274,7 +274,7 @@ namespace OWCE.Pages
             }
         }
 
-        private void StopScanning()
+        private static void StopScanning()
         {
             App.Current.OWBLE.StopScanning();
         }

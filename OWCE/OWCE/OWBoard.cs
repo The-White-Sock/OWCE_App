@@ -1198,7 +1198,7 @@ namespace OWCE
         }
 
 
-        private byte[] GetBytesForBoardFromUInt16(UInt16 value, string uuidHint = null)
+        private static byte[] GetBytesForBoardFromUInt16(UInt16 value, string uuidHint = null)
         {
             if (uuidHint == null)
             {
@@ -1507,7 +1507,7 @@ namespace OWCE
 
             _currentRide = Ride.CreateNewRide();
 
-            //_currentLogFile = Path.Combine(App.Current.LogsDirectory, filename);
+            //_currentLogFile = Path.Combine(App.LogsDirectory, filename);
 
 
             IsRecordingRide = true;
@@ -1636,7 +1636,7 @@ namespace OWCE
             {
                 var oldEvents = _events;
                 _events = new OWBoardEventList();
-                using (var fileStream = new FileStream(Path.Combine(App.Current.LogsDirectory, _currentRide.DataFileName), FileMode.Append, FileAccess.Write))
+                using (var fileStream = new FileStream(Path.Combine(App.LogsDirectory, _currentRide.DataFileName), FileMode.Append, FileAccess.Write))
                 {
                     foreach (var owBoardEvent in oldEvents.BoardEvents)
                     {
