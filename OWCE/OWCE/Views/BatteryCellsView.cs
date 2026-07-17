@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using OWCE.Models;
 using OWCE.Views;
@@ -47,7 +48,7 @@ namespace OWCE.Views
         {
             base.OnPropertyChanged(propertyName);
 
-            if (BindingContextProperty.PropertyName.Equals(propertyName))
+            if (BindingContextProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 if (_subscribedBatteryCells != null)
                 {
@@ -179,7 +180,7 @@ namespace OWCE.Views
 
                 Xamarin.Essentials.MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    label.Text = value.ToString("F2");
+                    label.Text = value.ToString("F2", CultureInfo.CurrentCulture);
                     label.BackgroundColor = color;
                 });
             }

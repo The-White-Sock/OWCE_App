@@ -130,11 +130,11 @@ namespace OWCE.Views
             base.OnPropertyChanged(propertyName);
 
             //System.Diagnostics.Debug.WriteLine($"OnPropertyChanged: {propertyName}");
-            if (BatteryPercentProperty.PropertyName.Equals(propertyName))
+            if (BatteryPercentProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 BatteryBar.AnimateWidthPercent((float)BatteryPercent * 0.01);
             }
-            else if (BatteryCellsProperty.PropertyName.Equals(propertyName))
+            else if (BatteryCellsProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 //BatteryCellsView.BindingContext = BatteryCells;
             }
@@ -149,7 +149,7 @@ namespace OWCE.Views
 
         void ExpanderView_PropertyChanged(System.Object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (Expander.IsExpandedProperty.PropertyName.Equals(e.PropertyName))
+            if (Expander.IsExpandedProperty.PropertyName.Equals(e.PropertyName, StringComparison.Ordinal))
             {
                 if (ExpanderView.IsExpanded)
                 {

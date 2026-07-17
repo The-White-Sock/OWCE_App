@@ -82,7 +82,7 @@ namespace OWCE.Views
 
         void ExpanderView_PropertyChanged(System.Object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (Expander.IsExpandedProperty.PropertyName.Equals(e.PropertyName))
+            if (Expander.IsExpandedProperty.PropertyName.Equals(e.PropertyName, StringComparison.Ordinal))
             {
                 if (ExpanderView.IsExpanded)
                 {

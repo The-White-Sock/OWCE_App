@@ -56,7 +56,7 @@ namespace OWCE.Views
         {
             base.OnPropertyChanged(propertyName);
 
-            if (ArrowColorProperty.PropertyName.Equals(propertyName))
+            if (ArrowColorProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 if (Content is Polyline polyline)
                 {

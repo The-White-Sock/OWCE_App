@@ -96,7 +96,7 @@ namespace OWCE.Views
         {
             base.OnPropertyChanged(propertyName);
 
-            if (IsToggledProperty.PropertyName.Equals(propertyName))
+            if (IsToggledProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 UpdateTogglePosition().SafeFireAndForget();
             }

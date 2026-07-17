@@ -141,7 +141,7 @@ namespace OWCE.Pages
         {
             base.OnPropertyChanging(propertyName);
 
-            if (BaseContentProperty.PropertyName.Equals(propertyName))
+            if (BaseContentProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 if (BaseContent != null)
                 {
@@ -154,17 +154,17 @@ namespace OWCE.Pages
         {
             base.OnPropertyChanged(propertyName);
 
-            if (Xamarin.Forms.PlatformConfiguration.iOSSpecific.Page.SafeAreaInsetsProperty.PropertyName.Equals(propertyName))
+            if (Xamarin.Forms.PlatformConfiguration.iOSSpecific.Page.SafeAreaInsetsProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 SafeAreaInsets = On<Xamarin.Forms.PlatformConfiguration.iOS>().SafeAreaInsets();
                 _mainGrid.RowDefinitions[0].Height = new GridLength(SafeAreaInsets.Top, GridUnitType.Absolute);
             }
-            else if (BaseContentProperty.PropertyName.Equals(propertyName))
+            else if (BaseContentProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 Grid.SetRow(BaseContent, 2);
                 _mainGrid.Children.Add(BaseContent);
             }
-            else if (TitleProperty.PropertyName.Equals(propertyName))
+            else if (TitleProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
                 _titleLabel.Text = Title;
             }
