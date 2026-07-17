@@ -403,11 +403,20 @@ namespace OWCE.Droid.DependencyImplementations
                     // _bluetoothGatt with a new one via ConnectGatt(), so without this the
                     // failed client would never get closed.
                     gatt.Close();
-                    if (gatt == _bluetoothGatt)
+
+                    if (gatt != _bluetoothGatt)
                     {
-                        _bluetoothGatt = null;
-                        _gattCallback = null;
+                        // A stale/duplicate callback for a GATT client that's already been
+                        // superseded (eg Reconnect() already moved on, or GiveUpReconnecting
+                        // already ran) - Android's BLE stack can deliver a late or repeated
+                        // callback for an old client. The current connection attempt (if any)
+                        // is unaffected, so don't touch shared state or restart the retry
+                        // cycle for it.
+                        return;
                     }
+
+                    _bluetoothGatt = null;
+                    _gattCallback = null;
 
                     FailAndClearPendingOperations();
                     RetryReconnect();
@@ -417,26 +426,44 @@ namespace OWCE.Droid.DependencyImplementations
                 // TrySetResult (not SetResult): cancelling the "connecting..." popup can
                 // race with this callback landing on the GATT thread, and SetResult
                 // throws if the task was already cancelled in that window.
-                _connectTaskCompletionSource?.TrySetResult(false);
-                return;
-            }
-
-            if (newState == ProfileState.Disconnected)
-            {
-                var wasStillConnecting = _reconnecting == false && _connectTaskCompletionSource != null &&
-                    _connectTaskCompletionSource.Task.IsCanceled == false && _connectTaskCompletionSource.Task.IsCompleted == false;
-                var wasReconnecting = _reconnecting;
-
-                // Release the native GATT client now that the disconnect is confirmed by
-                // the OS. This was previously never called anywhere, leaking Android's
-                // limited pool of concurrent GATT client registrations on every
-                // connect/disconnect cycle.
+                //
+                // Initial (non-reconnecting) connect attempt failed at the connection
+                // level - close the failed GATT client rather than leaking one of
+                // Android's limited pool of concurrent GATT client registrations.
                 gatt.Close();
                 if (gatt == _bluetoothGatt)
                 {
                     _bluetoothGatt = null;
                     _gattCallback = null;
                 }
+
+                _connectTaskCompletionSource?.TrySetResult(false);
+                return;
+            }
+
+            if (newState == ProfileState.Disconnected)
+            {
+                // Release the native GATT client now that the disconnect is confirmed by
+                // the OS. This was previously never called anywhere, leaking Android's
+                // limited pool of concurrent GATT client registrations on every
+                // connect/disconnect cycle.
+                gatt.Close();
+
+                if (gatt != _bluetoothGatt)
+                {
+                    // Stale/duplicate callback for an already-superseded GATT client (see
+                    // the identical check above) - a reconnect or fresh connect has
+                    // already replaced it, so don't tear down or restart anything for the
+                    // connection that's actually current.
+                    return;
+                }
+
+                var wasStillConnecting = _reconnecting == false && _connectTaskCompletionSource != null &&
+                    _connectTaskCompletionSource.Task.IsCanceled == false && _connectTaskCompletionSource.Task.IsCompleted == false;
+                var wasReconnecting = _reconnecting;
+
+                _bluetoothGatt = null;
+                _gattCallback = null;
 
                 // Any queued/in-flight operations belong to this now-dead connection -
                 // their BluetoothGattCharacteristic references become invalid once it's
