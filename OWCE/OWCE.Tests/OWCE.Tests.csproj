@@ -16,21 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- ExcludeAssets="build;buildTransitive": OWCE.csproj's own packages
-         (SkiaSharp.Views.Forms -> OpenTK.GLControl, a WinForms control with no
-         net8.0 assets at all) otherwise flow their MSBuild build/buildTransitive
-         targets into this project too, which is what actually flips
-         UseWindowsForms on and trips NETSDK1136 - even though nothing here uses
-         WinForms. Excluding a same-package reference at the leaf level isn't
-         enough on its own (confirmed on PR #43 CI: NuGet still unions asset
-         flags across the two paths bringing in the same package - the direct
-         exclusion and the transitive one via this ProjectReference - so the
-         unrestricted transitive path still won). This instead cuts it off at
-         the one edge that actually feeds this project, without touching what
-         compile/runtime assets flow through (still need those - it's the
-         actual OWCE.dll). Scoped to this project only; OWCE.csproj and the
-         Android/iOS/Mac apps that reference it are untouched. -->
-    <ProjectReference Include="..\OWCE\OWCE.csproj" ExcludeAssets="build;buildTransitive" />
+    <ProjectReference Include="..\OWCE\OWCE.csproj" />
   </ItemGroup>
 
 </Project>
