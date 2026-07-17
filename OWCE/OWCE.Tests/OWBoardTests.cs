@@ -31,10 +31,16 @@ namespace OWCE.Tests
         [InlineData(OWBoardType.Plus, 9, "Custom")]
         [InlineData(OWBoardType.XR, 4, "Sequoia")]
         [InlineData(OWBoardType.XR, 9, "Custom")]
+        // Pint mode 4 ("Sequoia") isn't a selectable Pint mode in OWCE's own UI
+        // (GetAvailableRideModes has no case for it), but the board can in
+        // principle report it - confirmed via the rewheel project's mode table
+        // (see #36). Was rendering "Unknown" before this fix.
+        [InlineData(OWBoardType.Pint, 4, "Sequoia")]
         [InlineData(OWBoardType.Pint, 5, "Redwood")]
         [InlineData(OWBoardType.Pint, 6, "Pacific")]
         [InlineData(OWBoardType.Pint, 7, "Elevated")]
         [InlineData(OWBoardType.Pint, 8, "Skyline")]
+        [InlineData(OWBoardType.PintX, 4, "Sequoia")]
         [InlineData(OWBoardType.PintX, 5, "Redwood")]
         [InlineData(OWBoardType.GT, 3, "Bay")]
         [InlineData(OWBoardType.GT, 4, "Roam")]
