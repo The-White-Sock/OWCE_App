@@ -37,33 +37,33 @@ namespace OWCE
 
     public struct RideModes
     {
-        public const int V1_Classic = 1;
-        public const int V1_Extreme = 2;
-        public const int V1_Elevated = 3;
+        public const int V1Classic = 1;
+        public const int V1Extreme = 2;
+        public const int V1Elevated = 3;
 
-        public const int PlusXR_Sequoia = 4;
-        public const int PlusXR_Cruz = 5;
-        public const int PlusXR_Mission = 6;
-        public const int PlusXR_Elevated = 7;
-        public const int PlusXR_Delirium = 8;
-        public const int PlusXR_Custom = 9;
+        public const int PlusXRSequoia = 4;
+        public const int PlusXRCruz = 5;
+        public const int PlusXRMission = 6;
+        public const int PlusXRElevated = 7;
+        public const int PlusXRDelirium = 8;
+        public const int PlusXRCustom = 9;
 
-        // Same value/name as PlusXR_Sequoia - confirmed via the rewheel project's
+        // Same value/name as PlusXRSequoia - confirmed via the rewheel project's
         // mode table (see #36). OWCE's own UI never offers this as a selectable
         // Pint mode, but the board can in principle report it.
-        public const int Pint_Sequoia = 4;
-        public const int Pint_Redwood = 5;
-        public const int Pint_Pacific = 6;
-        public const int Pint_Elevated = 7;
-        public const int Pint_Skyline = 8;
+        public const int PintSequoia = 4;
+        public const int PintRedwood = 5;
+        public const int PintPacific = 6;
+        public const int PintElevated = 7;
+        public const int PintSkyline = 8;
 
-        public const int GT_Bay = 3;
-        public const int GT_Roam = 4;
-        public const int GT_Flow = 5;
-        public const int GT_HighLine = 6;
-        public const int GT_Elevated = 7;
-        public const int GT_Apex = 8;
-        public const int GT_Custom = 9;
+        public const int GTBay = 3;
+        public const int GTRoam = 4;
+        public const int GTFlow = 5;
+        public const int GTHighLine = 6;
+        public const int GTElevated = 7;
+        public const int GTApex = 8;
+        public const int GTCustom = 9;
 
 
     }
