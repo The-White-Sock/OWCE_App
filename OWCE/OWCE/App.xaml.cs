@@ -53,6 +53,12 @@ namespace OWCE
 
         public App()
         {
+            // Crash/error telemetry (see #26). Registered unconditionally - Sentry's
+            // static API safely no-ops until SentryXamarin.Init() has actually been
+            // called (each platform's entry point does that, gated on AppConstants.SentryDsn
+            // being non-empty), so this is harmless when telemetry is disabled.
+            AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+            TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
             MetricDisplay = Preferences.Get("metric_display", System.Globalization.RegionInfo.CurrentRegion.IsMetric);
 
@@ -118,6 +124,20 @@ namespace OWCE
             });
             Debug.WriteLine("After 1");
             */
+        }
+
+        static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            if (e.ExceptionObject is Exception ex)
+            {
+                Sentry.SentrySdk.CaptureException(ex);
+            }
+        }
+
+        static void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            Sentry.SentrySdk.CaptureException(e.Exception);
+            e.SetObserved();
         }
 
         protected override void OnStart()
