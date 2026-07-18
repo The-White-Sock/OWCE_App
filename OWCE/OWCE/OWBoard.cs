@@ -400,7 +400,7 @@ namespace OWCE
             }
         }
 
-        private bool? _simpleStopEnabled = null;
+        private bool? _simpleStopEnabled;
         public bool? SimpleStopEnabled
         {
             get { return _simpleStopEnabled; }
@@ -499,56 +499,56 @@ namespace OWCE
 
 
 
-        private bool _lightMode = false;
+        private bool _lightMode;
         public bool LightMode
         {
             get { return _lightMode; }
             set { if (_lightMode != value) { _lightMode = value; OnPropertyChanged(); } }
         }
 
-        private int _frontLightMode = 0;
+        private int _frontLightMode;
         public int FrontLightMode
         {
             get { return _frontLightMode; }
             set { if (_frontLightMode != value) { _frontLightMode = value; OnPropertyChanged(); } }
         }
 
-        private int _rearLightMode = 0;
+        private int _rearLightMode;
         public int RearLightMode
         {
             get { return _rearLightMode; }
             set { if (_rearLightMode != value) { _rearLightMode = value; OnPropertyChanged(); } }
         }
 
-        private float _UNKNOWN1 = 0;
+        private float _UNKNOWN1;
         public float UNKNOWN1
         {
             get { return _UNKNOWN1; }
             set { if (_UNKNOWN1.AlmostEqualTo(value) == false) { _UNKNOWN1 = value; OnPropertyChanged(); } }
         }
 
-        private float _UNKNOWN2 = 0;
+        private float _UNKNOWN2;
         public float UNKNOWN2
         {
             get { return _UNKNOWN2; }
             set { if (_UNKNOWN2.AlmostEqualTo(value) == false) { _UNKNOWN2 = value; OnPropertyChanged(); } }
         }
 
-        private float _UNKNOWN3 = 0;
+        private float _UNKNOWN3;
         public float UNKNOWN3
         {
             get { return _UNKNOWN3; }
             set { if (_UNKNOWN3.AlmostEqualTo(value) == false) { _UNKNOWN3 = value; OnPropertyChanged(); } }
         }
 
-        private float _UNKNOWN4 = 0;
+        private float _UNKNOWN4;
         public float UNKNOWN4
         {
             get { return _UNKNOWN4; }
             set { if (_UNKNOWN4.AlmostEqualTo(value) == false) { _UNKNOWN4 = value; OnPropertyChanged(); } }
         }
 
-        int _rssi = 0;
+        int _rssi;
         public int RSSI
         {
             get { return _rssi; }
@@ -556,7 +556,7 @@ namespace OWCE
         }
 
 
-        bool _isRecordingRide = false;
+        bool _isRecordingRide;
         public bool IsRecordingRide
         {
             get { return _isRecordingRide; }
@@ -567,13 +567,13 @@ namespace OWCE
 
         OWBoardEventList _events = new OWBoardEventList();
         List<OWBoardEvent> _initialEvents;
-        Ride _currentRide = null;
-        bool _keepHandshakeBackgroundRunning = false;
-        bool _keepRSSIMonitorRunning = false;
-        List<byte> _handshakeBuffer = null;
-        bool _isHandshaking = false;
-        TaskCompletionSource<byte[]> _handshakeTaskCompletionSource = null;
-        bool _isTornDown = false;
+        Ride _currentRide;
+        bool _keepHandshakeBackgroundRunning;
+        bool _keepRSSIMonitorRunning;
+        List<byte> _handshakeBuffer;
+        bool _isHandshaking;
+        TaskCompletionSource<byte[]> _handshakeTaskCompletionSource;
+        bool _isTornDown;
 
         public OWBoard(IOWBLE owble, OWBaseBoard baseBoard) : base(baseBoard)
         {

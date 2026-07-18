@@ -89,7 +89,7 @@ namespace OWCE
         public Action BoardReconnectFailed { get; set; }
 
 
-        bool _isScanning = false;
+        bool _isScanning;
         public bool IsScanning
         {
             get

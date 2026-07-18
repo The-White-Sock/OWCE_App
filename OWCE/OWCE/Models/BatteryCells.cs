@@ -35,7 +35,7 @@ namespace OWCE.Models
         private Dictionary<uint, float> _cells = new Dictionary<uint, float>();
         private List<uint> _ignoredCells = new List<uint>();
 
-        private int _cellCount = 0;
+        private int _cellCount;
         public int CellCount
         {
             get { return _cellCount; }
