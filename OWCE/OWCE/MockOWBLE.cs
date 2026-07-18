@@ -120,7 +120,7 @@ namespace OWCE
 
         public async Task<bool> Connect(OWBaseBoard board, CancellationToken cancellationToken)
         {
-            await Task.Delay(500);
+            await Task.Delay(500, cancellationToken);
 
             if (board.NativePeripheral is String sampleRideName)
             {

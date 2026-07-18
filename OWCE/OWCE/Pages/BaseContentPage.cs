@@ -251,7 +251,7 @@ namespace OWCE.Pages
             }
         }
 
-        void RemoveToolbarItems(IList oldItems)
+        static void RemoveToolbarItems(IList oldItems)
         {
             foreach (CustomToolbarItem customToolbarItem in oldItems)
             {
