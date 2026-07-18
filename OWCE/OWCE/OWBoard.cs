@@ -683,10 +683,14 @@ namespace OWCE
             if (_isHandshaking && characteristicGuid.Equals(SerialReadUUID, StringComparison.OrdinalIgnoreCase))
             {
                 _handshakeBuffer.AddRange(data);
-                if (_handshakeBuffer.Count == 20)
+                if (_handshakeBuffer.Count >= 20)
                 {
                     _isHandshaking = false;
-                    _handshakeTaskCompletionSource.SetResult(_handshakeBuffer.ToArray<byte>());
+                    // Board notifications can arrive in chunks that don't divide evenly into 20
+                    // bytes (eg two 11-byte fragments land on 22, skipping over an exact ==20
+                    // check) - take exactly the expected 20 bytes so the length check downstream
+                    // in PerformHandshake still matches.
+                    _handshakeTaskCompletionSource.SetResult(_handshakeBuffer.GetRange(0, 20).ToArray());
                 }
 
                 return;
@@ -1142,7 +1146,11 @@ namespace OWCE
                 client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
                 client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json");
 
-                HttpResponseMessage response = await client.GetAsync($"https://{App.OWCEApiServer}/v1/handshake/{deviceName}");
+                // deviceName is derived from the BLE-advertised device name, which is
+                // attacker-controlled (any nearby peripheral can advertise an arbitrary
+                // name) - escape it so it can't be used to inject extra path segments or
+                // query parameters into this request.
+                HttpResponseMessage response = await client.GetAsync($"https://{App.OWCEApiServer}/v1/handshake/{Uri.EscapeDataString(deviceName)}");
 
                 // We only care if we were successful, otherwise fallback to FM.
                 if (response.StatusCode == System.Net.HttpStatusCode.OK)
