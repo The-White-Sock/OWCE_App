@@ -98,7 +98,7 @@ namespace OWCE.Pages.Popup
             {
                 if (Device.RuntimePlatform == Device.iOS)
                 {
-                    var safeInsets = On<iOS>().SafeAreaInsets();
+                    Thickness safeInsets = On<iOS>().SafeAreaInsets();
                     grid.Padding = new Thickness(0, safeInsets.Top, 0, safeInsets.Bottom);
                 }
             }

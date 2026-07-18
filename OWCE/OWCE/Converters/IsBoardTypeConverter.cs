@@ -10,7 +10,7 @@ namespace OWCE.Converters
         {
             if (value is OWBoardType boardType && parameter is string requiredBoardType)
             {
-                var boardTypeString = boardType.ToString();
+                string boardTypeString = boardType.ToString();
                 if (boardTypeString.Equals(requiredBoardType, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;

@@ -56,17 +56,17 @@ namespace OWCE.Views
 
             if (ControllerTempProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
-                var percent = (ControllerTemp - MinTemp) / TempRange;
+                float percent = (ControllerTemp - MinTemp) / TempRange;
                 ControllerBarView.AnimateWidthPercent(percent);
             }
             else if (MotorTempProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
-                var percent = (MotorTemp - MinTemp) / TempRange;
+                float percent = (MotorTemp - MinTemp) / TempRange;
                 MotorBarView.AnimateWidthPercent(percent);
             }
             else if (BatteryTempProperty.PropertyName.Equals(propertyName, StringComparison.Ordinal))
             {
-                var percent = (BatteryTemp - MinTemp) / TempRange;
+                float percent = (BatteryTemp - MinTemp) / TempRange;
                 BatteryBarView.AnimateWidthPercent(percent);
             }
         }

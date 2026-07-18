@@ -63,7 +63,7 @@ namespace OWCE.Pages
             App.Current.OWBLE.BoardReconnectFailed += OWBLE_BoardReconnectFailed;
 
             // Shift title to the right.
-            var titleLabel = GetTitleLabel();
+            Label titleLabel = GetTitleLabel();
             titleLabel.HorizontalOptions = LayoutOptions.End;
             titleLabel.Padding = new Thickness(0, 0, 16, 0);
 
@@ -190,7 +190,7 @@ namespace OWCE.Pages
 
         async void Disconnect_Tapped(System.Object sender, System.EventArgs e)
         {
-            var result = await DisplayActionSheet("Are you sure you want to disconnect?", "Cancel", "Disconnect");
+            string result = await DisplayActionSheet("Are you sure you want to disconnect?", "Cancel", "Disconnect");
 
             if (result == "Disconnect")
             {

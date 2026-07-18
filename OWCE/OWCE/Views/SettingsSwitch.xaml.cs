@@ -107,18 +107,18 @@ namespace OWCE.Views
             _isToggling = true;
 
             uint duration = 100;
-            var easing = IsToggled ? Easing.CubicIn : Easing.CubicOut;
+            Easing easing = IsToggled ? Easing.CubicIn : Easing.CubicOut;
             if (animated == false)
             {
                 duration = 0;
             }
 
 
-            var xPosition = IsToggled ? (RoundedRectangle.WidthRequest - 2 - 2 - CircleDot.Width) : 0;
+            double xPosition = IsToggled ? (RoundedRectangle.WidthRequest - 2 - 2 - CircleDot.Width) : 0;
             var animationTasks = new List<Task>() { CircleDot.TranslateTo(xPosition, 0, duration, easing) };
 
-            var fromColor = RoundedRectangle.BackgroundColor;
-            var toColor = IsToggled ? OnColor : OffColor;
+            Color fromColor = RoundedRectangle.BackgroundColor;
+            Color toColor = IsToggled ? OnColor : OffColor;
             animationTasks.Add(RoundedRectangle.ColorTo(fromColor, toColor, (color) =>
             {
                 RoundedRectangle.BackgroundColor = color;

@@ -8,7 +8,7 @@ namespace OWCE.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            var format = "F0";
+            string format = "F0";
 
             if (parameter is string formatString)
             {
@@ -22,7 +22,7 @@ namespace OWCE.Converters
                     return $"{distanceInMilesAsFloat.ToString(format, culture)} mi";
                 }
 
-                var distanceKilometers = distanceInMilesAsFloat * 1.60934;
+                double distanceKilometers = distanceInMilesAsFloat * 1.60934;
                 return $"{distanceKilometers.ToString(format, culture)} km";
             }
             else if (value is int distanceInMilesAsInt)
@@ -32,7 +32,7 @@ namespace OWCE.Converters
                     return $"{distanceInMilesAsInt.ToString(format, culture)} mi";
                 }
 
-                var distanceKilometers = (double)distanceInMilesAsInt * 1.60934;
+                double distanceKilometers = (double)distanceInMilesAsInt * 1.60934;
                 return $"{distanceKilometers.ToString(format, culture)} km";
             }
 

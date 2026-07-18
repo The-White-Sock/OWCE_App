@@ -31,7 +31,7 @@ namespace OWCE.Extensions
             if (self.Parent is VisualElement parent)
             {
                 self.AbortAnimation("WidthPercent");
-                var newWidth = parent.Width * toPercent;
+                double newWidth = parent.Width * toPercent;
                 var animation = new Animation(width => self.WidthRequest = width, self.WidthRequest, newWidth);
                 animation.Commit(self, "WidthPercent");
             }

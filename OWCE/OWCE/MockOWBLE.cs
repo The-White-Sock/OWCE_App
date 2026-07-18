@@ -36,16 +36,16 @@ namespace OWCE
             OWBoardEvent currentEvent = null;
             try
             {
-                var assembly = System.Reflection.IntrospectionExtensions.GetTypeInfo(typeof(App)).Assembly;
+                System.Reflection.Assembly assembly = System.Reflection.IntrospectionExtensions.GetTypeInfo(typeof(App)).Assembly;
 
-                var expectedResourceFile = $"OWCE.Resources.SampleRideData.{_sampleRideName}.bin";
-                var logFileFound = assembly.GetManifestResourceNames().Contains(expectedResourceFile);
+                string expectedResourceFile = $"OWCE.Resources.SampleRideData.{_sampleRideName}.bin";
+                bool logFileFound = assembly.GetManifestResourceNames().Contains(expectedResourceFile);
                 if (logFileFound == false)
                 {
                     return;
                 }
 
-                using var stream = assembly.GetManifestResourceStream(expectedResourceFile);
+                using Stream stream = assembly.GetManifestResourceStream(expectedResourceFile);
                 do
                 {
                     previousEvent = currentEvent;
@@ -156,13 +156,13 @@ namespace OWCE
 
             var rand = new Random();
             var filenameRegex = new System.Text.RegularExpressions.Regex(@"^OWCE\.Resources\.SampleRideData\.(.*)\.bin$");
-            var assembly = System.Reflection.IntrospectionExtensions.GetTypeInfo(typeof(App)).Assembly;
-            foreach (var resourceName in assembly.GetManifestResourceNames())
+            System.Reflection.Assembly assembly = System.Reflection.IntrospectionExtensions.GetTypeInfo(typeof(App)).Assembly;
+            foreach (string resourceName in assembly.GetManifestResourceNames())
             {
-                var match = filenameRegex.Match(resourceName);
+                System.Text.RegularExpressions.Match match = filenameRegex.Match(resourceName);
                 if (match.Success)
                 {
-                    using var resourceStream = assembly.GetManifestResourceStream(resourceName);
+                    using Stream resourceStream = assembly.GetManifestResourceStream(resourceName);
 
                     // Can't use real board serial for this as multiple test data of the same board would all appear as the same board,
                     // which means it would not show. Instead we generate a 6 digit number based on the MD5 hash of the file. It isn't
@@ -174,21 +174,21 @@ namespace OWCE
                     //
                     // While we don't use the hash itself, we use this to seed our random number generator which should give the same
                     // number every time.
-                    var fakeDeviceID = String.Empty;
+                    string fakeDeviceID = String.Empty;
                     // Non-cryptographic use - only the hash's bit pattern is used as a Random seed, see above.
 #pragma warning disable CA5351
                     using (var md5 = System.Security.Cryptography.MD5.Create())
                     {
                         // Hash will be 16 bytes. Seed is an int which is 4 bytes. So we will instead take the average of every 4
                         // bytes of the hash.
-                        var hash = md5.ComputeHash(resourceStream);
-                        var shrunkHash = new byte[4];
+                        byte[] hash = md5.ComputeHash(resourceStream);
+                        byte[] shrunkHash = new byte[4];
                         for (int startIndex = 0, outIndex = 0; startIndex < 16; startIndex += 4, outIndex += 1)
                         {
-                            var sum = hash[startIndex + 0] + hash[startIndex + 1] + hash[startIndex + 2] + hash[startIndex + 3];
+                            int sum = hash[startIndex + 0] + hash[startIndex + 1] + hash[startIndex + 2] + hash[startIndex + 3];
                             shrunkHash[outIndex] = (byte)(sum / 4);
                         }
-                        var shrunkHashNumber = BitConverter.ToInt32(shrunkHash);
+                        int shrunkHashNumber = BitConverter.ToInt32(shrunkHash);
 
                         var random = new Random(shrunkHashNumber);
                         fakeDeviceID = random.Next(0, 999999).ToString("D6", CultureInfo.InvariantCulture);

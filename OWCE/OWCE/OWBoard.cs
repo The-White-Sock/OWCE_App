@@ -627,7 +627,7 @@ namespace OWCE
 
         public virtual void Init()
         {
-            var autoRideRecording = Preferences.Get("auto_ride_recording", false);
+            bool autoRideRecording = Preferences.Get("auto_ride_recording", false);
             if (autoRideRecording)
             {
                 StartLogging();
@@ -818,7 +818,7 @@ namespace OWCE
         // to re-assert the board's unlock state on its own.
         private async Task RestoreLiveDataSync()
         {
-            foreach (var characteristic in _characteristicsToSubscribeTo)
+            foreach (string characteristic in _characteristicsToSubscribeTo)
             {
                 // SubscribeValue returns null (rather than a Task) if the connection
                 // has already dropped again - eg a second disconnect landing while
@@ -826,7 +826,7 @@ namespace OWCE
                 // NRE that SafeFireAndForget (see OWBLE_BoardReconnected below) would
                 // otherwise swallow silently, abandoning the rest of the resync.
                 // Bail out instead; the next reconnect will call this again.
-                var subscribeTask = _owble.SubscribeValue(characteristic);
+                Task subscribeTask = _owble.SubscribeValue(characteristic);
                 if (subscribeTask == null)
                 {
                     return;
@@ -834,14 +834,14 @@ namespace OWCE
                 await subscribeTask;
             }
 
-            foreach (var characteristic in _characteristicsToReadNow)
+            foreach (string characteristic in _characteristicsToReadNow)
             {
-                var readTask = _owble.ReadValue(characteristic);
+                Task<byte[]> readTask = _owble.ReadValue(characteristic);
                 if (readTask == null)
                 {
                     return;
                 }
-                var data = await readTask;
+                byte[] data = await readTask;
                 SetValue(characteristic, data, true);
             }
         }
@@ -865,14 +865,14 @@ namespace OWCE
             // (and, since it's invoked fire-and-forget, become an unobserved task
             // fault instead of a reported error). Bail out instead; a reconnect
             // will pick the resync back up via RestoreLiveDataSync.
-            var hardwareRevisionTask = _owble.ReadValue(HardwareRevisionUUID);
+            Task<byte[]> hardwareRevisionTask = _owble.ReadValue(HardwareRevisionUUID);
             if (hardwareRevisionTask == null)
             {
                 return;
             }
             SetValue(HardwareRevisionUUID, await hardwareRevisionTask, true);
 
-            var firmwareRevisionTask = _owble.ReadValue(FirmwareRevisionUUID);
+            Task<byte[]> firmwareRevisionTask = _owble.ReadValue(FirmwareRevisionUUID);
             if (firmwareRevisionTask == null)
             {
                 return;
@@ -881,13 +881,13 @@ namespace OWCE
 
             if (HardwareRevision > 3000 && FirmwareRevision > 4000) // Requires Gemini handshake
             {
-                var rideModeTask = _owble.ReadValue(RideModeUUID);
+                Task<byte[]> rideModeTask = _owble.ReadValue(RideModeUUID);
                 if (rideModeTask == null)
                 {
                     return;
                 }
-                var rideMode = await rideModeTask;
-                var rideModeInt = BitConverter.ToUInt16(rideMode, 0);
+                byte[] rideMode = await rideModeTask;
+                ushort rideModeInt = BitConverter.ToUInt16(rideMode, 0);
 
                 if (rideModeInt > 0)
                 {
@@ -980,7 +980,7 @@ namespace OWCE
             // the board went away mid-handshake, so surface it via the same
             // HandshakeException path SubscribeToBLE already catches, instead of
             // an uncaught NRE from awaiting null.
-            var subscribeTask = _owble.SubscribeValue(OWBoard.SerialReadUUID, true);
+            Task subscribeTask = _owble.SubscribeValue(OWBoard.SerialReadUUID, true);
             if (subscribeTask == null)
             {
                 _isHandshaking = false;
@@ -991,7 +991,7 @@ namespace OWCE
             // Data does not send until this is triggered.
             byte[] firmwareRevision = GetBytesForBoardFromUInt16((UInt16)FirmwareRevision, FirmwareRevisionUUID);
 
-            var writeTask = _owble.WriteValue(OWBoard.FirmwareRevisionUUID, firmwareRevision, true);
+            Task<byte[]> writeTask = _owble.WriteValue(OWBoard.FirmwareRevisionUUID, firmwareRevision, true);
             if (writeTask == null)
             {
                 _isHandshaking = false;
@@ -1002,7 +1002,7 @@ namespace OWCE
             // Guard against the board never sending the full handshake response (eg it
             // disconnected mid-handshake) which would otherwise hang this task forever.
             var timeoutTask = Task.Delay(TimeSpan.FromSeconds(10));
-            var completedTask = await Task.WhenAny(_handshakeTaskCompletionSource.Task, timeoutTask);
+            Task completedTask = await Task.WhenAny(_handshakeTaskCompletionSource.Task, timeoutTask);
             if (completedTask == timeoutTask)
             {
                 _isHandshaking = false;
@@ -1010,7 +1010,7 @@ namespace OWCE
                 throw new Exceptions.HandshakeException("Timed out waiting for a response from the board.", true);
             }
 
-            var byteArray = await _handshakeTaskCompletionSource.Task;
+            byte[] byteArray = await _handshakeTaskCompletionSource.Task;
 
             await _owble.UnsubscribeValue(OWBoard.SerialReadUUID, true);
             // TODO: Restore _characteristics[OWBoard.SerialReadUUID].ValueUpdated -= SerialRead_ValueUpdated;
@@ -1019,14 +1019,14 @@ namespace OWCE
                 if (FirmwareRevision >= 4141) // Pint or XR with 4210 hardware 
                 {
                     // Get bytes 3 through to 19 (start 3, length 16)
-                    var apiKeyArray = new byte[16];
+                    byte[] apiKeyArray = new byte[16];
                     Array.Copy(byteArray, 3, apiKeyArray, 0, 16);
 
                     // Convert to base16 string.
-                    var apiKey = BitConverter.ToString(apiKeyArray).Replace("-", "");
+                    string apiKey = BitConverter.ToString(apiKeyArray).Replace("-", "");
 
                     // Exchange this apiKey for key from server.
-                    var tokenArray = await FetchToken(apiKey);
+                    byte[] tokenArray = await FetchToken(apiKey);
                     if (tokenArray != null)
                     {
                         // Feed it back to the app how we normally would.
@@ -1035,16 +1035,16 @@ namespace OWCE
                 }
                 else
                 {
-                    var outputArray = new byte[20];
+                    byte[] outputArray = new byte[20];
                     Array.Copy(byteArray, 0, outputArray, 0, 3);
 
                     // Take almost all of the bytes from the input array. This is almost the same as the last part as
                     // we are ignoring the first 3 and the last bytes.
-                    var arrayToMD5_part1 = new byte[16];
+                    byte[] arrayToMD5_part1 = new byte[16];
                     Array.Copy(byteArray, 3, arrayToMD5_part1, 0, 16);
 
                     // This appears to be a static value from the board.
-                    var arrayToMD5_part2 = new byte[] {
+                    byte[] arrayToMD5_part2 = new byte[] {
                          217,    // D9
                          37,     // 25
                          95,     // 5F
@@ -1065,7 +1065,7 @@ namespace OWCE
 
 
                     // New byte array we are going to MD5 hash. Part of the input string, part of this static string.
-                    var arrayToMD5 = new byte[arrayToMD5_part1.Length + arrayToMD5_part2.Length];
+                    byte[] arrayToMD5 = new byte[arrayToMD5_part1.Length + arrayToMD5_part2.Length];
                     arrayToMD5_part1.CopyTo(arrayToMD5, 0);
                     arrayToMD5_part2.CopyTo(arrayToMD5, arrayToMD5_part1.Length);
 
@@ -1090,8 +1090,8 @@ namespace OWCE
                         outputArray[19] = ((byte)(outputArray[i] ^ outputArray[19]));
                     }
 
-                    var inputString = BitConverter.ToString(byteArray).Replace("-", ":").ToLowerInvariant();
-                    var outputString = BitConverter.ToString(outputArray).Replace("-", ":").ToLowerInvariant();
+                    string inputString = BitConverter.ToString(byteArray).Replace("-", ":").ToLowerInvariant();
+                    string outputString = BitConverter.ToString(outputArray).Replace("-", ":").ToLowerInvariant();
 
                     Debug.WriteLine($"Input: {inputString}");
                     Debug.WriteLine($"Output: {outputString}");
@@ -1108,14 +1108,14 @@ namespace OWCE
             {
                 return null;
             }
-            var deviceName = Name.ToLowerInvariant();
+            string deviceName = Name.ToLowerInvariant();
             deviceName = deviceName.Replace("ow", String.Empty);
 
 
             //SecureStorage.Remove($"board_{deviceName}_token");
             //SecureStorage.Remove($"board_{deviceName}_key");
 
-            var key = await SecureStorage.GetAsync($"board_{deviceName}_key");
+            string key = await SecureStorage.GetAsync($"board_{deviceName}_key");
 
             // If the API key has changed delete the stored token.
             if (key != apiKey)
@@ -1125,10 +1125,10 @@ namespace OWCE
 
 
             // If we already have a token lets use it.
-            var token = await SecureStorage.GetAsync($"board_{deviceName}_token");
+            string token = await SecureStorage.GetAsync($"board_{deviceName}_token");
             if (String.IsNullOrEmpty(token) == false)
             {
-                var tokenArray = token.StringToByteArray();
+                byte[] tokenArray = token.StringToByteArray();
                 return tokenArray;
             }
 
@@ -1142,32 +1142,32 @@ namespace OWCE
                 client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
                 client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json");
 
-                var response = await client.GetAsync($"https://{App.OWCEApiServer}/v1/handshake/{deviceName}");
+                HttpResponseMessage response = await client.GetAsync($"https://{App.OWCEApiServer}/v1/handshake/{deviceName}");
 
                 // We only care if we were successful, otherwise fallback to FM.
                 if (response.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    var responseBody = await response.Content.ReadAsStringAsync();
-                    var keyResponse = JsonSerializer.Deserialize<KeyResponse>(responseBody);
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    KeyResponse keyResponse = JsonSerializer.Deserialize<KeyResponse>(responseBody);
 
                     if (String.IsNullOrWhiteSpace(keyResponse.Key) == false)
                     {
                         await SecureStorage.SetAsync($"board_{deviceName}_key", apiKey);
                         await SecureStorage.SetAsync($"board_{deviceName}_token", keyResponse.Key);
 
-                        var tokenArray = keyResponse.Key.StringToByteArray();
+                        byte[] tokenArray = keyResponse.Key.StringToByteArray();
                         return tokenArray;
                     }
                 }
 
-                var statusResponse = await client.GetAsync($"https://{App.OWCEApiServer}/v1/status/handshake");
+                HttpResponseMessage statusResponse = await client.GetAsync($"https://{App.OWCEApiServer}/v1/status/handshake");
                 if (statusResponse.StatusCode != System.Net.HttpStatusCode.OK)
                 {
                     return null;
                 }
 
-                var handshakeStatusResponseBody = await statusResponse.Content.ReadAsStringAsync();
-                var handshakeStatusResponse = JsonSerializer.Deserialize<HandshakeStatusResponse>(handshakeStatusResponseBody);
+                string handshakeStatusResponseBody = await statusResponse.Content.ReadAsStringAsync();
+                HandshakeStatusResponse handshakeStatusResponse = JsonSerializer.Deserialize<HandshakeStatusResponse>(handshakeStatusResponseBody);
 
                 if (handshakeStatusResponse.Online == false)
                 {
@@ -1202,7 +1202,7 @@ namespace OWCE
 
             }
 
-            var bytes = BitConverter.GetBytes(value);
+            byte[] bytes = BitConverter.GetBytes(value);
             return bytes;
         }
 
@@ -1271,7 +1271,7 @@ namespace OWCE
             }
 
 
-            var value = BitConverter.ToUInt16(data, 0);
+            ushort value = BitConverter.ToUInt16(data, 0);
 
 
             switch (uuid)
@@ -1327,7 +1327,7 @@ namespace OWCE
                         break;
                     }
 
-                    var scaleFactor = BoardType switch
+                    float scaleFactor = BoardType switch
                     {
                         OWBoardType.V1 => 0.0009f,
                         OWBoardType.Plus => 0.0018f,
@@ -1435,14 +1435,14 @@ namespace OWCE
                     // Different battery cell logic for XR 4210+ and Pint.
                     if (FirmwareRevision >= 4141)
                     {
-                        var cellID = (uint)((value & 0xF000) >> 12);
-                        var batteryVoltage = (value & 0x0FFF) * 0.0011f;
+                        uint cellID = (uint)((value & 0xF000) >> 12);
+                        float batteryVoltage = (value & 0x0FFF) * 0.0011f;
                         BatteryCells.SetCell(cellID, batteryVoltage, "F3");
                     }
                     else
                     {
-                        var cellID = (uint)data[1];
-                        var batteryVoltage = (float)data[0] * 0.02f;
+                        uint cellID = (uint)data[1];
+                        float batteryVoltage = (float)data[0] * 0.02f;
                         BatteryCells.SetCell(cellID, batteryVoltage);
                     }
 
@@ -1614,11 +1614,11 @@ namespace OWCE
         {
             try
             {
-                var oldEvents = _events;
+                OWBoardEventList oldEvents = _events;
                 _events = new OWBoardEventList();
                 using (var fileStream = new FileStream(Path.Combine(App.Current.LogsDirectory, _currentRide.DataFileName), FileMode.Append, FileAccess.Write))
                 {
-                    foreach (var owBoardEvent in oldEvents.BoardEvents)
+                    foreach (OWBoardEvent owBoardEvent in oldEvents.BoardEvents)
                     {
                         owBoardEvent.WriteDelimitedTo(fileStream);
                     }
@@ -1691,7 +1691,7 @@ namespace OWCE
             {
                 _incomingRideMode = rideMode;
                 byte[] rideModeBytes = BitConverter.GetBytes(rideMode);
-                var result = await App.Current.OWBLE.WriteValue(OWBoard.RideModeUUID, rideModeBytes, true);
+                byte[] result = await App.Current.OWBLE.WriteValue(OWBoard.RideModeUUID, rideModeBytes, true);
             }
             catch (Exception err)
             {

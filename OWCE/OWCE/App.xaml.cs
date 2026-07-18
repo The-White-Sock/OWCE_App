@@ -159,7 +159,7 @@ namespace OWCE
 
         internal async Task<OWBoard> ConnectToBoard(OWBaseBoard baseBoard, CancellationToken token)
         {
-            var didConnect = await OWBLE.Connect(baseBoard, token);
+            bool didConnect = await OWBLE.Connect(baseBoard, token);
             if (didConnect)
             {
                 return new OWBoard(OWBLE, baseBoard);

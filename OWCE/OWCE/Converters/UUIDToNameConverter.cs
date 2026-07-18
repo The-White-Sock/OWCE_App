@@ -13,12 +13,12 @@ namespace OWCE.Converters
         {
             if (value is string stringValue)
             {
-                if (_uuidLookup.TryGetValue(stringValue, out var cachedName))
+                if (_uuidLookup.TryGetValue(stringValue, out string cachedName))
                 {
                     return cachedName;
                 }
 
-                var actualName = stringValue.ToUpperInvariant() switch
+                string actualName = stringValue.ToUpperInvariant() switch
                 {
                     OWBoard.SerialNumberUUID => "SerialNumber",
                     OWBoard.RideModeUUID => "RideMode",

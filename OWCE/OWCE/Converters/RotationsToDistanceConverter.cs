@@ -17,7 +17,7 @@ namespace OWCE.Converters
         {
             if (value is ushort rotations)
             {
-                var wheelCircumference = (parameter is float wheelCircumfrence && wheelCircumfrence > 0f) ? wheelCircumfrence : DefaultWheelCircumference;
+                float wheelCircumference = (parameter is float wheelCircumfrence && wheelCircumfrence > 0f) ? wheelCircumfrence : DefaultWheelCircumference;
                 return ConvertRotationsToDistance(rotations, wheelCircumference);
             }
 
@@ -26,7 +26,7 @@ namespace OWCE.Converters
 
         public static string ConvertRotationsToDistance(ushort rotations, float wheelCircumference = DefaultWheelCircumference)
         {
-            var kilometers = wheelCircumference * rotations * 0.001f * 0.001f;
+            float kilometers = wheelCircumference * rotations * 0.001f * 0.001f;
 
             if (App.Current.MetricDisplay)
             {

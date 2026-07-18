@@ -8,7 +8,7 @@ namespace OWCE.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            var outputValue = 0f;
+            float outputValue = 0f;
             if (value is float metersPerSecond)
             {
                 if (App.Current.MetricDisplay)
@@ -28,7 +28,7 @@ namespace OWCE.Converters
 
             if (parameter is string forDisplay && forDisplay == "DisplayUnits")
             {
-                var unit = (App.Current.MetricDisplay ? "km/h" : "mph");
+                string unit = (App.Current.MetricDisplay ? "km/h" : "mph");
                 return $"{outputValue:F1} {unit}";
             }
 

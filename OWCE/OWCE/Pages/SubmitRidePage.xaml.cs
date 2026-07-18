@@ -59,13 +59,13 @@ namespace OWCE.Pages
 
         async Task SubmitRide()
         {
-            var filename = Path.Combine(App.Current.LogsDirectory, _ride.DataFileName);
+            string filename = Path.Combine(App.Current.LogsDirectory, _ride.DataFileName);
             if (File.Exists(filename) == false)
             {
                 await DisplayAlert("Error", "Could not load saved ride.", "Okay");
                 return;
             }
-            var tempFilename = Path.Combine(Path.GetTempPath(), Path.GetFileName(_ride.DataFileName));
+            string tempFilename = Path.Combine(Path.GetTempPath(), Path.GetFileName(_ride.DataFileName));
 
             var cancellationTokenSource = new CancellationTokenSource();
 
@@ -80,7 +80,7 @@ namespace OWCE.Pages
 
             await PopupNavigation.Instance.PushAsync(uploadingAlert, true);
 
-            var prepareResult = await Task.Run(() => PrepareData(filename, tempFilename, cancellationTokenSource));
+            bool prepareResult = await Task.Run(() => PrepareData(filename, tempFilename, cancellationTokenSource));
             if (prepareResult == false)
             {
                 await PopupNavigation.Instance.PopAsync();
@@ -98,9 +98,9 @@ namespace OWCE.Pages
             {
                 httpClient.DefaultRequestHeaders.Add("User-Agent", App.Current.UserAgent);
 
-                var submitRideRequest = _model.GetSubmitRideRequest();
+                SubmitRideRequest submitRideRequest = _model.GetSubmitRideRequest();
 
-                var rawResponse = await httpClient.PostAsJsonAsync<SubmitRideRequest>($"https://{App.OWCEApiServer}/v1/ride/submit", submitRideRequest, cancellationTokenSource.Token);
+                HttpResponseMessage rawResponse = await httpClient.PostAsJsonAsync<SubmitRideRequest>($"https://{App.OWCEApiServer}/v1/ride/submit", submitRideRequest, cancellationTokenSource.Token);
                 if (rawResponse.IsSuccessStatusCode == false)
                 {
                     await PopupNavigation.Instance.PopAsync();
@@ -108,7 +108,7 @@ namespace OWCE.Pages
                     return;
                 }
 
-                var response = await rawResponse.Content.ReadFromJsonAsync<SubmitRideResponse>();
+                SubmitRideResponse response = await rawResponse.Content.ReadFromJsonAsync<SubmitRideResponse>();
                 if (response == null)
                 {
                     await PopupNavigation.Instance.PopAsync();
@@ -116,7 +116,7 @@ namespace OWCE.Pages
                     return;
                 }
 
-                using var fileStream = File.OpenRead(tempFilename);
+                using FileStream fileStream = File.OpenRead(tempFilename);
                 /*
                 using (var customProgressableStreamContent = new CustomProgressableStreamContent(fileStream, progress))
 
@@ -129,7 +129,7 @@ namespace OWCE.Pages
                 using var streamContent = new StreamContent(fileStream);
                 streamContent.Headers.ContentType = new MediaTypeHeaderValue("binary/octet-stream");
                 var request = new HttpRequestMessage(HttpMethod.Put, response.UploadUrl) { Content = streamContent };
-                var putResponse = await httpClient.SendAsync(request, cancellationTokenSource.Token);
+                HttpResponseMessage putResponse = await httpClient.SendAsync(request, cancellationTokenSource.Token);
 
                 await PopupNavigation.Instance.PopAsync();
 
@@ -158,13 +158,13 @@ namespace OWCE.Pages
 
         public async Task ViewDataSubmittedAsync()
         {
-            var filename = Path.Combine(App.Current.LogsDirectory, _ride.DataFileName);
+            string filename = Path.Combine(App.Current.LogsDirectory, _ride.DataFileName);
             if (File.Exists(filename) == false)
             {
                 await DisplayAlert("Error", "Could not load saved ride.", "Okay");
                 return;
             }
-            var tempFilename = Path.Combine(Path.GetTempPath(), Path.GetFileName(_ride.DataFileName));
+            string tempFilename = Path.Combine(Path.GetTempPath(), Path.GetFileName(_ride.DataFileName));
 
             var cancellationTokenSource = new CancellationTokenSource();
 
@@ -179,7 +179,7 @@ namespace OWCE.Pages
 
             await PopupNavigation.Instance.PushAsync(preparingAlert, true);
 
-            var prepareResult = await Task.Run<bool>(() => { return PrepareData(filename, tempFilename, cancellationTokenSource); });
+            bool prepareResult = await Task.Run<bool>(() => { return PrepareData(filename, tempFilename, cancellationTokenSource); });
             if (prepareResult == false)
             {
                 await PopupNavigation.Instance.PopAsync();
@@ -221,7 +221,7 @@ namespace OWCE.Pages
 
                     using var inputFile = new FileStream(originalData, FileMode.Open, FileAccess.Read);
                     using var outputFile = new FileStream(outputData, FileMode.Create);
-                    var events = 0;
+                    int events = 0;
                     do
                     {
                         if (cancellationTokenSource.IsCancellationRequested)
@@ -229,7 +229,7 @@ namespace OWCE.Pages
                             return false;
                         }
 
-                        var currentEvent = OWBoardEvent.Parser.ParseDelimitedFrom(inputFile);
+                        OWBoardEvent currentEvent = OWBoardEvent.Parser.ParseDelimitedFrom(inputFile);
                         if (privateUUIDs.Contains(currentEvent.Uuid))
                         {
                             // If private data, zero it out.

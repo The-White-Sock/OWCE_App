@@ -48,7 +48,7 @@ namespace OWCE.Pages
                 {
                     do
                     {
-                        var currentEvent = OWBoardEvent.Parser.ParseDelimitedFrom(inputFile);
+                        OWBoardEvent currentEvent = OWBoardEvent.Parser.ParseDelimitedFrom(inputFile);
                         boardEvents.Add(currentEvent);
                     }
                     while (inputFile.Position < inputFile.Length);

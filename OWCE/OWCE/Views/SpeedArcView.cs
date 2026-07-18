@@ -97,10 +97,10 @@ namespace OWCE.Views
             base.OnSizeAllocated(width, height);
 
             // Scale up for units we use to draw with SkiaSharp.
-            var scaledWidth = width * _displayScale;
+            double scaledWidth = width * _displayScale;
 
             // padding magic value of 0.1924 = 66 / 343, to match the designs
-            var padding = scaledWidth * 0.24f;
+            double padding = scaledWidth * 0.24f;
 
             // circle radius is half of (width minus padding)
             _circleRadius = (float)((scaledWidth - padding) * 0.5f);
@@ -114,7 +114,7 @@ namespace OWCE.Views
             _arcEndY = _circleCenterY + (_circleRadius * (float)Math.Cos(DegreesToRadians(45))); // 13?
 
             // Set the height of the widget to the 2.888% increase of the circle radius
-            var screenCircleRadius = (_circleRadius / _displayScale);
+            float screenCircleRadius = (_circleRadius / _displayScale);
             HeightRequest = (screenCircleRadius + (screenCircleRadius * 0.0288f)); // * 2;
         }
 
@@ -146,8 +146,8 @@ namespace OWCE.Views
             //System.Diagnostics.Debug.WriteLine("OnPaintSurface");
             base.OnPaintSurface(e);
 
-            var surface = e.Surface;
-            var canvas = surface.Canvas;
+            SKSurface surface = e.Surface;
+            SKCanvas canvas = surface.Canvas;
 
             canvas.Clear(SKColors.Yellow);
 
@@ -184,7 +184,7 @@ namespace OWCE.Views
             }
 
             ++_animationNumber;
-            var animationNumber = _animationNumber;
+            int animationNumber = _animationNumber;
 
             var animation = new Animation(v =>
             {

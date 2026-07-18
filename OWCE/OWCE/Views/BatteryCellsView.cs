@@ -97,13 +97,13 @@ namespace OWCE.Views
                 }
 
                 // Setup row definitions.
-                for (var row = 0; row < rows; ++row)
+                for (int row = 0; row < rows; ++row)
                 {
                     grid.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(45) });
                 }
 
                 // Setup column definitions (not required, its * by default)
-                for (var column = 0; column < columns; ++column)
+                for (int column = 0; column < columns; ++column)
                 {
                     grid.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Star) });
                 }
@@ -114,11 +114,11 @@ namespace OWCE.Views
                 var voltageRange = maxVoltage - minVoltage; //1.4f
                 var voltagePerIndex = voltageRange / batteryCells.CellCount;
                 */
-                for (var row = 0; row < rows; ++row)
+                for (int row = 0; row < rows; ++row)
                 {
-                    for (var column = 0; column < columns; ++column)
+                    for (int column = 0; column < columns; ++column)
                     {
-                        var cellIndex = column + (columns * row);
+                        int cellIndex = column + (columns * row);
 
                         //var voltage = minVoltage + (voltagePerIndex * cellIndex);
                         var label = new Label()
@@ -152,10 +152,10 @@ namespace OWCE.Views
         {
             if (e.PropertyName.StartsWith("BatteryCell", StringComparison.Ordinal))
             {
-                var labelSpan = e.PropertyName.AsSpan();
+                ReadOnlySpan<char> labelSpan = e.PropertyName.AsSpan();
 
                 // 11 = "BatteryCell".Length
-                var cellIDSpan = labelSpan[11..];
+                ReadOnlySpan<char> cellIDSpan = labelSpan[11..];
 
                 if (UInt32.TryParse(cellIDSpan, out uint cellID))
                 {
@@ -170,10 +170,10 @@ namespace OWCE.Views
 
         void UpdateCell(uint cellID)
         {
-            if (BindingContext is BatteryCells batteryCells && _cellLables.TryGetValue(cellID, out var label))
+            if (BindingContext is BatteryCells batteryCells && _cellLables.TryGetValue(cellID, out Label label))
             {
-                var value = batteryCells.GetCell(cellID);
-                var color = GetColor(value);
+                float value = batteryCells.GetCell(cellID);
+                Color color = GetColor(value);
 
                 Xamarin.Essentials.MainThread.BeginInvokeOnMainThread(() =>
                 {
@@ -185,8 +185,8 @@ namespace OWCE.Views
 
         static Color GetColor(float voltage)
         {
-            var minVoltage = 2.8f;
-            var maxVoltage = 4.2f;
+            float minVoltage = 2.8f;
+            float maxVoltage = 4.2f;
 
             if (voltage < minVoltage)
             {
@@ -197,10 +197,10 @@ namespace OWCE.Views
                 voltage = maxVoltage;
             }
 
-            var voltageRange = maxVoltage - minVoltage; //1.4f
-            var voltageOffset = voltage - minVoltage; // 0.46
-            var voltagePercent = 1f - (voltageOffset / voltageRange);
-            var colorPercent = (voltagePercent * 0.788235294118);
+            float voltageRange = maxVoltage - minVoltage; //1.4f
+            float voltageOffset = voltage - minVoltage; // 0.46
+            float voltagePercent = 1f - (voltageOffset / voltageRange);
+            double colorPercent = (voltagePercent * 0.788235294118);
 
             //System.Diagnostics.Debug.WriteLine($"{voltage:F2} - {colorPercent:F2}");
             return new Color(1f, colorPercent, 1f);

@@ -302,7 +302,7 @@ namespace OWCE.Pages
         void OWBLE_BoardDiscovered(OWBaseBoard board)
         {
             Debug.WriteLine($"OWBLE_BoardDiscovered: {board.Name} {board.ID}");
-            var boardIndex = Boards.IndexOf(board);
+            int boardIndex = Boards.IndexOf(board);
             if (boardIndex == -1)
             {
                 Boards.Add(board);
