@@ -55,8 +55,111 @@ namespace OWCE
                 {
                     _isAvailable = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(ShowCachedInfo));
                 }
             }
+        }
+
+        // Last-known data for this board, persisted while it was last connected (see
+        // #34). Populated from CachedBoardData when this board isn't currently
+        // available; ShowCachedInfo is what the UI actually binds IsVisible to, so it
+        // never shows stale data once a live connection re-establishes it.
+        private bool _hasCachedData;
+        public bool HasCachedData
+        {
+            get { return _hasCachedData; }
+            set
+            {
+                if (_hasCachedData != value)
+                {
+                    _hasCachedData = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(ShowCachedInfo));
+                }
+            }
+        }
+
+        public bool ShowCachedInfo => HasCachedData && IsAvailable == false;
+
+        private int _cachedBatteryPercent;
+        public int CachedBatteryPercent
+        {
+            get { return _cachedBatteryPercent; }
+            set { if (_cachedBatteryPercent != value) { _cachedBatteryPercent = value; OnPropertyChanged(); } }
+        }
+
+        private string _cachedRideModeString = String.Empty;
+        public string CachedRideModeString
+        {
+            get { return _cachedRideModeString; }
+            set { if (_cachedRideModeString != value) { _cachedRideModeString = value; OnPropertyChanged(); } }
+        }
+
+        private string _cachedTripOdometerDescription = String.Empty;
+        public string CachedTripOdometerDescription
+        {
+            get { return _cachedTripOdometerDescription; }
+            set { if (_cachedTripOdometerDescription != value) { _cachedTripOdometerDescription = value; OnPropertyChanged(); } }
+        }
+
+        private DateTime? _cachedLastUpdated;
+        public DateTime? CachedLastUpdated
+        {
+            get { return _cachedLastUpdated; }
+            set
+            {
+                if (_cachedLastUpdated != value)
+                {
+                    _cachedLastUpdated = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(LastSyncedText));
+                }
+            }
+        }
+
+        public string LastSyncedText
+        {
+            get
+            {
+                if (CachedLastUpdated == null)
+                {
+                    return String.Empty;
+                }
+
+                var elapsed = DateTime.UtcNow - CachedLastUpdated.Value;
+                if (elapsed.TotalMinutes < 1)
+                {
+                    return "Last synced just now";
+                }
+                else if (elapsed.TotalMinutes < 60)
+                {
+                    return $"Last synced {(int)elapsed.TotalMinutes}m ago";
+                }
+                else if (elapsed.TotalHours < 24)
+                {
+                    return $"Last synced {(int)elapsed.TotalHours}h ago";
+                }
+                else
+                {
+                    return $"Last synced {(int)elapsed.TotalDays}d ago";
+                }
+            }
+        }
+
+        public void ApplyCachedData(CachedBoardData cachedData)
+        {
+            if (cachedData == null)
+            {
+                HasCachedData = false;
+                return;
+            }
+
+            BoardType = cachedData.BoardType;
+            CachedBatteryPercent = cachedData.BatteryPercent;
+            CachedRideModeString = cachedData.RideModeString;
+            CachedTripOdometerDescription = cachedData.TripOdometerDescription;
+            CachedLastUpdated = cachedData.LastUpdated;
+            HasCachedData = true;
         }
 
         private Object _nativePeripheral;

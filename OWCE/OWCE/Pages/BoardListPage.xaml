@@ -56,9 +56,9 @@
                     <DataTemplate x:DataType="owce:OWBaseBoard">
                         <ContentView Padding="16,10,16,15">
                            
-                            <yummy:PancakeView HeightRequest="121" CornerRadius="11" BackgroundColor="{StaticResource BrightYellow}" xcte:TouchEffect.NativeAnimation="true" xcte:TouchEffect.Command="{Binding Source={x:Reference MainCollectionView}, Path=BindingContext.BoardSelectedCommand}" xcte:TouchEffect.CommandParameter="{Binding .}" >
+                            <yummy:PancakeView HeightRequest="121" CornerRadius="11" BackgroundColor="{StaticResource BrightYellow}" Opacity="{Binding IsAvailable, Converter={StaticResource boardIsAvailableOpacityConverter}}" xcte:TouchEffect.NativeAnimation="true" xcte:TouchEffect.Command="{Binding Source={x:Reference MainCollectionView}, Path=BindingContext.BoardSelectedCommand}" xcte:TouchEffect.CommandParameter="{Binding .}" >
 
-                                
+
                                 <yummy:PancakeView.Shadow>
                                     <yummy:DropShadow Color="Black" Opacity="0.14" Offset="0,1" BlurRadius="5" />
                                 </yummy:PancakeView.Shadow>
@@ -66,8 +66,17 @@
                                 <Grid>
                                     <Label FontFamily="SairaExtraCondensed-Bold" FontSize="16" Text="{Binding BoardModelStringLong}" TextColor="Black" Margin="20,5,0,0" CharacterSpacing="-0.26" />
                                     <Label FontFamily="SairaExtraCondensed-Black" FontSize="40" Text="{Binding Name}" TextColor="Black" HorizontalOptions="Center" VerticalOptions="Center" CharacterSpacing="0.48" />
+
+                                    <StackLayout IsVisible="{Binding ShowCachedInfo}" HorizontalOptions="Center" VerticalOptions="End" Margin="0,0,0,4" Spacing="2">
+                                        <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="10">
+                                            <Label FontFamily="SairaExtraCondensed-SemiBold" FontSize="14" Text="{Binding CachedBatteryPercent, StringFormat='{0}%'}" TextColor="Black" />
+                                            <Label FontFamily="SairaExtraCondensed-SemiBold" FontSize="14" Text="{Binding CachedTripOdometerDescription}" TextColor="Black" />
+                                            <Label FontFamily="SairaExtraCondensed-SemiBold" FontSize="14" Text="{Binding CachedRideModeString}" TextColor="Black" />
+                                        </StackLayout>
+                                        <Label FontFamily="SairaExtraCondensed-SemiBold" FontSize="11" Text="{Binding LastSyncedText}" TextColor="Black" HorizontalOptions="Center" FontAttributes="Italic" />
+                                    </StackLayout>
                                 </Grid>
-                                
+
                             </yummy:PancakeView>
                         </ContentView>
 
