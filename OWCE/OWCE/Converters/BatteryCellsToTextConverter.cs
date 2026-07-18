@@ -19,7 +19,7 @@ namespace OWCE.Converters
                 var sb = new StringBuilder();
                 for (uint cellID = 0; cellID < batteryCells.CellCount; ++cellID)
                 {
-                    var voltage = batteryCells.GetCell(cellID);
+                    float voltage = batteryCells.GetCell(cellID);
                     sb.AppendLine($"{cellID}: ({voltage:N2}V)");
                 }
 

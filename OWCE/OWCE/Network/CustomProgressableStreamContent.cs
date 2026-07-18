@@ -31,9 +31,9 @@ namespace OWCE.Network
 
         protected async Task SerializeToStreamAsync(Stream stream, CancellationToken cancellationToken)
         {
-            var buffer = new byte[_bufferSize];
-            var size = _fileStream.Length;
-            var uploaded = 0;
+            byte[] buffer = new byte[_bufferSize];
+            long size = _fileStream.Length;
+            int uploaded = 0;
 
             while (true)
             {
@@ -42,7 +42,7 @@ namespace OWCE.Network
                     break;
                 }
 
-                var length = await _fileStream.ReadAsync(buffer.AsMemory(0, _bufferSize), cancellationToken).ConfigureAwait(false);
+                int length = await _fileStream.ReadAsync(buffer.AsMemory(0, _bufferSize), cancellationToken).ConfigureAwait(false);
 
                 if (length <= 0)
                 {
@@ -56,8 +56,8 @@ namespace OWCE.Network
 
 
                 // Only report progress when we have actually gone up a percent
-                var currentProgress = (double)uploaded / size;
-                var currentProgressInt = (int)(currentProgress * 100);
+                double currentProgress = (double)uploaded / size;
+                int currentProgressInt = (int)(currentProgress * 100);
                 if (_lastProgress != currentProgressInt)
                 {
                     _progress.Report(currentProgress);

@@ -86,18 +86,18 @@ namespace OWCE.Pages
 
         async Task<bool> ExportAsync()
         {
-            var cancelButton = "Cancel";
-            var jsonButton = "json";
-            var csvButton = "csv";
-            var originalButton = "original";
-            var exportFormats = new string[]
+            string cancelButton = "Cancel";
+            string jsonButton = "json";
+            string csvButton = "csv";
+            string originalButton = "original";
+            string[] exportFormats = new string[]
                     {
                         jsonButton,
                         csvButton,
                         originalButton
                     };
 
-            var exportFormat = await DisplayActionSheet("Export format", cancelButton, null, exportFormats);
+            string exportFormat = await DisplayActionSheet("Export format", cancelButton, null, exportFormats);
             if (String.IsNullOrEmpty(exportFormat) || exportFormat == cancelButton)
             {
                 return true;
@@ -134,16 +134,16 @@ namespace OWCE.Pages
                 {
                     var uuidToNameConverter = new UUIDToNameConverter();
 
-                    var baseFilename = Path.GetFileNameWithoutExtension(model.DataFile);
+                    string baseFilename = Path.GetFileNameWithoutExtension(model.DataFile);
                     if (String.IsNullOrEmpty(model.SubmitRideRequest.RideName) == false)
                     {
-                        var newBaseFilename = model.SubmitRideRequest.RideName;
+                        string newBaseFilename = model.SubmitRideRequest.RideName;
                         newBaseFilename = newBaseFilename.Replace("/", "-");
                         newBaseFilename = newBaseFilename.Replace("\\", "-");
                         newBaseFilename = newBaseFilename.Replace(":", "-");
 
 
-                        foreach (var characterToRemove in _filenameCharactersToRemove)
+                        foreach (string characterToRemove in _filenameCharactersToRemove)
                         {
                             newBaseFilename = newBaseFilename.Replace(characterToRemove, String.Empty);
                         }
@@ -156,14 +156,14 @@ namespace OWCE.Pages
 
                     if (exportFormat == jsonButton)
                     {
-                        var outputJSON = Path.Combine(Path.GetTempPath(), $"{baseFilename}.json");
+                        string outputJSON = Path.Combine(Path.GetTempPath(), $"{baseFilename}.json");
 
                         using (var streamWriter = new StreamWriter(outputJSON, false))
                         {
                             using var jsonWriter = new Utf8JsonWriter(streamWriter.BaseStream, new JsonWriterOptions() { Indented = true });
                             jsonWriter.WriteStartArray();
 
-                            foreach (var boardEvent in model.BoardEvents)
+                            foreach (OWBoardEvent boardEvent in model.BoardEvents)
                             {
                                 if (cancellationTokenSource.IsCancellationRequested)
                                 {
@@ -206,20 +206,20 @@ namespace OWCE.Pages
                     }
                     else if (exportFormat == csvButton)
                     {
-                        var outputCSV = Path.Combine(Path.GetTempPath(), $"{baseFilename}.csv");
+                        string outputCSV = Path.Combine(Path.GetTempPath(), $"{baseFilename}.csv");
 
                         using (var streamWriter = new StreamWriter(outputCSV, false))
                         {
                             streamWriter.WriteLine("Timestamp,Property UUID,Property Name,Raw Data (hex)");
 
-                            foreach (var boardEvent in model.BoardEvents)
+                            foreach (OWBoardEvent boardEvent in model.BoardEvents)
                             {
                                 if (cancellationTokenSource.IsCancellationRequested)
                                 {
                                     break;
                                 }
 
-                                var propertyName = uuidToNameConverter.Convert(boardEvent.Uuid, null, null, System.Globalization.CultureInfo.InvariantCulture);
+                                object propertyName = uuidToNameConverter.Convert(boardEvent.Uuid, null, null, System.Globalization.CultureInfo.InvariantCulture);
                                 byte[] byteArray = ArrayPool<byte>.Shared.Rent(boardEvent.Data.Length);
                                 boardEvent.Data.CopyTo(byteArray, 0);
                                 streamWriter.WriteLine($"{boardEvent.Timestamp},{boardEvent.Uuid},\"{propertyName}\",{BitConverter.ToString(byteArray, 0, boardEvent.Data.Length)}");

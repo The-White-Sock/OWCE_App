@@ -36,7 +36,7 @@ namespace OWCE.Pages
                 }, allowsMultipleExecutions: false),
             });
 
-            var rides = Database.Connection.Table<Ride>().OrderByDescending((r) => r.StartTime);
+            SQLite.TableQuery<Ride> rides = Database.Connection.Table<Ride>().OrderByDescending((r) => r.StartTime);
             Rides.AddRange(rides);
 
             BindingContext = this;
@@ -65,7 +65,7 @@ namespace OWCE.Pages
         //[RelayCommand]
         async Task RideSelected(Ride ride)
         {
-            var submit = await DisplayAlert("Coming Soon", "Viewing of recorded rides is not available yet. We are working hard to bring it to you soon.\n\nIn the meantime if you would like to assist with OWCE development (specifically if you have aftermarket batteries) you can submit your ride data for research purposes.", "Learn More", "Cancel");
+            bool submit = await DisplayAlert("Coming Soon", "Viewing of recorded rides is not available yet. We are working hard to bring it to you soon.\n\nIn the meantime if you would like to assist with OWCE development (specifically if you have aftermarket batteries) you can submit your ride data for research purposes.", "Learn More", "Cancel");
             if (submit)
             {
                 await Navigation.PushModalAsync(new CustomNavigationPage(new SubmitRidePage(ride)));
@@ -76,7 +76,7 @@ namespace OWCE.Pages
         //[RelayCommand]
         async Task DeleteRide(Ride ride)
         {
-            var delete = await DisplayAlert("Delete Ride", $"Are you sure you want to delete the ride \"{ride.Name}\"?", "Delete", "Cancel");
+            bool delete = await DisplayAlert("Delete Ride", $"Are you sure you want to delete the ride \"{ride.Name}\"?", "Delete", "Cancel");
             if (delete)
             {
                 Database.Connection.Delete(ride);
@@ -84,7 +84,7 @@ namespace OWCE.Pages
 
                 // The DB row is only half of a ride - the recorded telemetry lives in its
                 // own .bin file, which was previously never cleaned up here.
-                var dataFilePath = Path.Combine(App.Current.LogsDirectory, ride.DataFileName);
+                string dataFilePath = Path.Combine(App.Current.LogsDirectory, ride.DataFileName);
                 if (File.Exists(dataFilePath))
                 {
                     File.Delete(dataFilePath);
@@ -95,7 +95,7 @@ namespace OWCE.Pages
         //[RelayCommand]
         async Task RenameRide(Ride ride)
         {
-            var name = await DisplayPromptAsync("Rename Ride", "What would like to rename this ride to?", "Save", initialValue: ride.Name);
+            string name = await DisplayPromptAsync("Rename Ride", "What would like to rename this ride to?", "Save", initialValue: ride.Name);
             if (String.IsNullOrWhiteSpace(name) == false)
             {
                 ride.Name = name;

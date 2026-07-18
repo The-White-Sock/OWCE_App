@@ -9,14 +9,14 @@ namespace OWCE.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            var tempCelsius = System.Convert.ToInt32(value, culture);
+            int tempCelsius = System.Convert.ToInt32(value, culture);
 
             if (App.Current.MetricDisplay)
             {
                 return $"{tempCelsius:F0}°C";
             }
 
-            var tempFahrenheit = (int)(tempCelsius * 1.8f) + 32;
+            int tempFahrenheit = (int)(tempCelsius * 1.8f) + 32;
             return $"{tempFahrenheit:F0}°F";
         }
 

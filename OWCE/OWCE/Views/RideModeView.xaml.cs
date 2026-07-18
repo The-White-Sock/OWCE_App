@@ -135,7 +135,7 @@ namespace OWCE.Views
         {
             _rideModesList.Clear();
 
-            foreach (var rideMode in _availableRideModes)
+            foreach ((string, ushort) rideMode in _availableRideModes)
             {
                 _rideModesList.Add(new RideModeButton()
                 {
@@ -153,14 +153,14 @@ namespace OWCE.Views
 
         void RideModeButton_Clicked(System.Object sender, System.EventArgs e)
         {
-            foreach (var button in _rideModesList)
+            foreach (RideModeButton button in _rideModesList)
             {
                 button.IsSelected = false;
             }
 
             if (sender is Button senderButton)
             {
-                var selectedRideMode = _rideModesList.FirstOrDefault(x => x.Name == senderButton.Text);
+                RideModeButton selectedRideMode = _rideModesList.FirstOrDefault(x => x.Name == senderButton.Text);
                 if (selectedRideMode != null)
                 {
                     selectedRideMode.IsSelected = true;

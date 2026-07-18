@@ -21,7 +21,7 @@ namespace OWCE.Converters
         {
             if (value is int rpm)
             {
-                var wheelCircumference = (parameter is float wheelCircumfrence && wheelCircumfrence > 0f) ? wheelCircumfrence : DefaultWheelCircumference;
+                float wheelCircumference = (parameter is float wheelCircumfrence && wheelCircumfrence > 0f) ? wheelCircumfrence : DefaultWheelCircumference;
                 return ConvertFromRpm(rpm, wheelCircumference);
             }
 
@@ -30,7 +30,7 @@ namespace OWCE.Converters
 
         public static float ConvertFromRpm(int rpm, float wheelCircumference = DefaultWheelCircumference)
         {
-            var metersPerSecond = wheelCircumference * rpm * MillimetersPerMinuteToMetersPerSecond;
+            float metersPerSecond = wheelCircumference * rpm * MillimetersPerMinuteToMetersPerSecond;
 
             if (App.Current.MetricDisplay)
             {

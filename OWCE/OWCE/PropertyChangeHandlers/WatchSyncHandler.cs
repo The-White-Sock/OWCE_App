@@ -61,7 +61,7 @@ namespace OWCE.PropertyChangeHandlers
         // Sends all outstanding updates to the watch, and reset the update Dictionary
         private void FlushMessages()
         {
-            var updates = _watchUpdates;
+            Dictionary<WatchMessage, object> updates = _watchUpdates;
             _watchUpdates = new Dictionary<WatchMessage, object>();
 
             IWatch watchService = DependencyService.Get<IWatch>();

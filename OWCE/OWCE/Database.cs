@@ -11,7 +11,7 @@ namespace OWCE
 
         static Database()
         {
-            var databasePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "owce.db");
+            string databasePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "owce.db");
 
             Connection = new SQLiteConnection(databasePath);
         }

@@ -137,13 +137,13 @@ namespace OWCE.Models
                 return;
             }
 
-            var voltageString = voltage.ToString(format, CultureInfo.CurrentCulture) + "V";
+            string voltageString = voltage.ToString(format, CultureInfo.CurrentCulture) + "V";
             SetCellVoltageString(cellID, voltageString);
         }
 
         public float GetCell(uint id)
         {
-            if (_cells.TryGetValue(id, out var voltage))
+            if (_cells.TryGetValue(id, out float voltage))
             {
                 return voltage;
             }

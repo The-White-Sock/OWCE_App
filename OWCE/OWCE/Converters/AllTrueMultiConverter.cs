@@ -15,7 +15,7 @@ namespace OWCE.Converters
                 // Alternatively, return BindableProperty.UnsetValue to use the binding FallbackValue
             }
 
-            foreach (var value in values)
+            foreach (object value in values)
             {
                 if (!(value is bool b))
                 {
