@@ -26,10 +26,10 @@ namespace OWCE.Network
 
         protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)
         {
-            return SerializeToStreamAsync(stream, context, default(CancellationToken));
+            return SerializeToStreamAsync(stream, default);
         }
 
-        protected async Task SerializeToStreamAsync(Stream stream, TransportContext? context, CancellationToken cancellationToken)
+        protected async Task SerializeToStreamAsync(Stream stream, CancellationToken cancellationToken)
         {
             var buffer = new byte[_bufferSize];
             var size = _fileStream.Length;

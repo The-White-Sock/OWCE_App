@@ -997,7 +997,7 @@ namespace OWCE
                 _isHandshaking = false;
                 throw new Exceptions.HandshakeException("Board disconnected before the handshake could start.", true);
             }
-            var didWrite = await writeTask;
+            await writeTask;
 
             // Guard against the board never sending the full handshake response (eg it
             // disconnected mid-handshake) which would otherwise hang this task forever.
@@ -1135,47 +1135,43 @@ namespace OWCE
             try
             {
                 // First lets fetch it from OWCE servers.
-                using (var handler = new HttpClientHandler())
+                using var handler = new HttpClientHandler();
+                handler.AutomaticDecompression = System.Net.DecompressionMethods.GZip;
+
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
+                client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json");
+
+                var response = await client.GetAsync($"https://{App.OWCEApiServer}/v1/handshake/{deviceName}");
+
+                // We only care if we were successful, otherwise fallback to FM.
+                if (response.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    handler.AutomaticDecompression = System.Net.DecompressionMethods.GZip;
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    var keyResponse = JsonSerializer.Deserialize<KeyResponse>(responseBody);
 
-                    using (var client = new HttpClient())
+                    if (String.IsNullOrWhiteSpace(keyResponse.Key) == false)
                     {
-                        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
-                        client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json");
+                        await SecureStorage.SetAsync($"board_{deviceName}_key", apiKey);
+                        await SecureStorage.SetAsync($"board_{deviceName}_token", keyResponse.Key);
 
-                        var response = await client.GetAsync($"https://{App.OWCEApiServer}/v1/handshake/{deviceName}");
-
-                        // We only care if we were successful, otherwise fallback to FM.
-                        if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                        {
-                            var responseBody = await response.Content.ReadAsStringAsync();
-                            var keyResponse = JsonSerializer.Deserialize<KeyResponse>(responseBody);
-
-                            if (String.IsNullOrWhiteSpace(keyResponse.Key) == false)
-                            {
-                                await SecureStorage.SetAsync($"board_{deviceName}_key", apiKey);
-                                await SecureStorage.SetAsync($"board_{deviceName}_token", keyResponse.Key);
-
-                                var tokenArray = keyResponse.Key.StringToByteArray();
-                                return tokenArray;
-                            }
-                        }
-
-                        var statusResponse = await client.GetAsync($"https://{App.OWCEApiServer}/v1/status/handshake");
-                        if (statusResponse.StatusCode != System.Net.HttpStatusCode.OK)
-                        {
-                            return null;
-                        }
-
-                        var handshakeStatusResponseBody = await statusResponse.Content.ReadAsStringAsync();
-                        var handshakeStatusResponse = JsonSerializer.Deserialize<HandshakeStatusResponse>(handshakeStatusResponseBody);
-
-                        if (handshakeStatusResponse.Online == false)
-                        {
-                            throw new Exceptions.HandshakeException(handshakeStatusResponse.Message, true);
-                        }
+                        var tokenArray = keyResponse.Key.StringToByteArray();
+                        return tokenArray;
                     }
+                }
+
+                var statusResponse = await client.GetAsync($"https://{App.OWCEApiServer}/v1/status/handshake");
+                if (statusResponse.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    return null;
+                }
+
+                var handshakeStatusResponseBody = await statusResponse.Content.ReadAsStringAsync();
+                var handshakeStatusResponse = JsonSerializer.Deserialize<HandshakeStatusResponse>(handshakeStatusResponseBody);
+
+                if (handshakeStatusResponse.Online == false)
+                {
+                    throw new Exceptions.HandshakeException(handshakeStatusResponse.Message, true);
                 }
             }
             catch (Exceptions.HandshakeException err)
@@ -1225,10 +1221,7 @@ namespace OWCE
                 }
                 else
                 {
-                    if (_initialEvents == null)
-                    {
-                        _initialEvents = new List<OWBoardEvent>();
-                    }
+                    _initialEvents ??= new List<OWBoardEvent>();
 
                     _initialEvents.Add(new OWBoardEvent()
                     {
@@ -1407,10 +1400,7 @@ namespace OWCE
                     else if (value >= 5000 && value <= 5999)
                     {
                         BoardType = OWBoardType.Pint;
-                        if (SimpleStopEnabled == null)
-                        {
-                            SimpleStopEnabled = false;
-                        }
+                        SimpleStopEnabled ??= false;
 
                         BatteryCells.CellCount = 15;
                         BatteryCells.IgnoreCell(15);
@@ -1419,10 +1409,7 @@ namespace OWCE
                     else if (value >= 7000 && value <= 7999)
                     {
                         BoardType = OWBoardType.PintX;
-                        if (SimpleStopEnabled == null)
-                        {
-                            SimpleStopEnabled = false;
-                        }
+                        SimpleStopEnabled ??= false;
 
                         BatteryCells.CellCount = 15;
                         BatteryCells.IgnoreCell(15);
@@ -1431,10 +1418,7 @@ namespace OWCE
                     else if (value >= 6000 && value <= 6999)
                     {
                         BoardType = OWBoardType.GT;
-                        if (SimpleStopEnabled == null)
-                        {
-                            SimpleStopEnabled = false;
-                        }
+                        SimpleStopEnabled ??= false;
 
                         BatteryCells.CellCount = 18;
                         OnPropertyChanged(nameof(BatteryCells));
@@ -1659,79 +1643,44 @@ namespace OWCE
         {
             uuid = uuid.ToUpperInvariant();
 
-            switch (uuid)
+            return uuid switch
             {
-                case SerialNumberUUID:
-                    return "SerialNumber";
-                case RideModeUUID:
-                    return "RideMode";
-                case BatteryPercentUUID:
-                    return "BatteryPercent";
-                case BatteryLow5UUID:
-                    return "BatteryLow5";
-                case BatteryLow20UUID:
-                    return "BatteryLow20";
-                case BatterySerialUUID:
-                    return "BatterySerial";
-                case PitchUUID:
-                    return "Pitch";
-                case RollUUID:
-                    return "Roll";
-                case YawUUID:
-                    return "Yaw";
-                case TripOdometerUUID:
-                    return "TripOdometer";
-                case RpmUUID:
-                    return "Rpm";
-                case LightModeUUID:
-                    return "LightMode";
-                case LightsFrontUUID:
-                    return "LightsFront";
-                case LightsBackUUID:
-                    return "LightsBack";
-                case StatusErrorUUID:
-                    return "StatusError";
-                case TemperatureUUID:
-                    return "Temperature";
-                case FirmwareRevisionUUID:
-                    return "FirmwareRevision";
-                case CurrentAmpsUUID:
-                    return "CurrentAmps";
-                case TripAmpHoursUUID:
-                    return "TripAmpHours";
-                case TripRegenAmpHoursUUID:
-                    return "TripRegenAmpHours";
-                case BatteryTemperatureUUID:
-                    return "BatteryTemperature";
-                case BatteryVoltageUUID:
-                    return "BatteryVoltage";
-                case SafetyHeadroomUUID:
-                    return "SafetyHeadroom";
-                case HardwareRevisionUUID:
-                    return "HardwareRevision";
-                case LifetimeOdometerUUID:
-                    return "LifetimeOdometer";
-                case LifetimeAmpHoursUUID:
-                    return "LifetimeAmpHours";
-                case BatteryCellsUUID:
-                    return "BatteryCells";
-                case LastErrorCodeUUID:
-                    return "LastErrorCode";
-                case SerialReadUUID:
-                    return "SerialRead";
-                case SerialWriteUUID:
-                    return "SerialWrite";
-                case UNKNOWN1UUID:
-                    return "UNKNOWN1";
-                case UNKNOWN2UUID:
-                    return "UNKNOWN2";
-                case UNKNOWN3UUID:
-                    return "UNKNOWN3";
-                case UNKNOWN4UUID:
-                    return "UNKNOWN4";
-            }
-
-            return "Unknown";
+                SerialNumberUUID => "SerialNumber",
+                RideModeUUID => "RideMode",
+                BatteryPercentUUID => "BatteryPercent",
+                BatteryLow5UUID => "BatteryLow5",
+                BatteryLow20UUID => "BatteryLow20",
+                BatterySerialUUID => "BatterySerial",
+                PitchUUID => "Pitch",
+                RollUUID => "Roll",
+                YawUUID => "Yaw",
+                TripOdometerUUID => "TripOdometer",
+                RpmUUID => "Rpm",
+                LightModeUUID => "LightMode",
+                LightsFrontUUID => "LightsFront",
+                LightsBackUUID => "LightsBack",
+                StatusErrorUUID => "StatusError",
+                TemperatureUUID => "Temperature",
+                FirmwareRevisionUUID => "FirmwareRevision",
+                CurrentAmpsUUID => "CurrentAmps",
+                TripAmpHoursUUID => "TripAmpHours",
+                TripRegenAmpHoursUUID => "TripRegenAmpHours",
+                BatteryTemperatureUUID => "BatteryTemperature",
+                BatteryVoltageUUID => "BatteryVoltage",
+                SafetyHeadroomUUID => "SafetyHeadroom",
+                HardwareRevisionUUID => "HardwareRevision",
+                LifetimeOdometerUUID => "LifetimeOdometer",
+                LifetimeAmpHoursUUID => "LifetimeAmpHours",
+                BatteryCellsUUID => "BatteryCells",
+                LastErrorCodeUUID => "LastErrorCode",
+                SerialReadUUID => "SerialRead",
+                SerialWriteUUID => "SerialWrite",
+                UNKNOWN1UUID => "UNKNOWN1",
+                UNKNOWN2UUID => "UNKNOWN2",
+                UNKNOWN3UUID => "UNKNOWN3",
+                UNKNOWN4UUID => "UNKNOWN4",
+                _ => "Unknown",
+            };
         }
 
 

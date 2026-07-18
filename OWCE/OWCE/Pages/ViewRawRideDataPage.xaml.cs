@@ -160,31 +160,29 @@ namespace OWCE.Pages
 
                         using (var streamWriter = new StreamWriter(outputJSON, false))
                         {
-                            using (var jsonWriter = new Utf8JsonWriter(streamWriter.BaseStream, new JsonWriterOptions() { Indented = true }))
+                            using var jsonWriter = new Utf8JsonWriter(streamWriter.BaseStream, new JsonWriterOptions() { Indented = true });
+                            jsonWriter.WriteStartArray();
+
+                            foreach (var boardEvent in model.BoardEvents)
                             {
-                                jsonWriter.WriteStartArray();
-
-                                foreach (var boardEvent in model.BoardEvents)
+                                if (cancellationTokenSource.IsCancellationRequested)
                                 {
-                                    if (cancellationTokenSource.IsCancellationRequested)
-                                    {
-                                        break;
-                                    }
-
-                                    jsonWriter.WriteStartObject();
-                                    jsonWriter.WriteNumber("timestamp", boardEvent.Timestamp);
-                                    jsonWriter.WriteString("property_uuid", boardEvent.Uuid);
-                                    jsonWriter.WriteString("property_name", uuidToNameConverter.Convert(boardEvent.Uuid, null, null, System.Globalization.CultureInfo.InvariantCulture) as String);
-                                    byte[] byteArray = ArrayPool<byte>.Shared.Rent(boardEvent.Data.Length);
-                                    boardEvent.Data.CopyTo(byteArray, 0);
-                                    jsonWriter.WriteString("raw_data", BitConverter.ToString(byteArray, 0, boardEvent.Data.Length));
-                                    ArrayPool<byte>.Shared.Return(byteArray);
-                                    jsonWriter.WriteEndObject();
+                                    break;
                                 }
 
-                                jsonWriter.WriteEndArray();
-                                jsonWriter.Flush();
+                                jsonWriter.WriteStartObject();
+                                jsonWriter.WriteNumber("timestamp", boardEvent.Timestamp);
+                                jsonWriter.WriteString("property_uuid", boardEvent.Uuid);
+                                jsonWriter.WriteString("property_name", uuidToNameConverter.Convert(boardEvent.Uuid, null, null, System.Globalization.CultureInfo.InvariantCulture) as String);
+                                byte[] byteArray = ArrayPool<byte>.Shared.Rent(boardEvent.Data.Length);
+                                boardEvent.Data.CopyTo(byteArray, 0);
+                                jsonWriter.WriteString("raw_data", BitConverter.ToString(byteArray, 0, boardEvent.Data.Length));
+                                ArrayPool<byte>.Shared.Return(byteArray);
+                                jsonWriter.WriteEndObject();
                             }
+
+                            jsonWriter.WriteEndArray();
+                            jsonWriter.Flush();
                         }
 
                         Device.BeginInvokeOnMainThread(async () =>

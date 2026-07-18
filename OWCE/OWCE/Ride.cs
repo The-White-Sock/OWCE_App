@@ -34,10 +34,10 @@ namespace OWCE
 
         public static Ride CreateNewRide()
         {
-            var newRideGuid = Guid.Empty;
-            var newDataFileName = String.Empty;
-            var newDataFilePath = String.Empty;
-            var dbRidesFound = 0;
+            Guid newRideGuid;
+            string newDataFileName;
+            string newDataFilePath;
+            int dbRidesFound;
             do
             {
                 newRideGuid = Guid.NewGuid();

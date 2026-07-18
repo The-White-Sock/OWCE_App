@@ -115,9 +115,7 @@ namespace OWCE.Views
 
 
             var xPosition = IsToggled ? (RoundedRectangle.WidthRequest - 2 - 2 - CircleDot.Width) : 0;
-            var animationTasks = new List<Task>();
-
-            animationTasks.Add(CircleDot.TranslateTo(xPosition, 0, duration, easing));
+            var animationTasks = new List<Task>() { CircleDot.TranslateTo(xPosition, 0, duration, easing) };
 
             var fromColor = RoundedRectangle.BackgroundColor;
             var toColor = IsToggled ? OnColor : OffColor;

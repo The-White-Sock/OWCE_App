@@ -32,7 +32,7 @@ namespace OWCE
                 Thread.Sleep(100);
             }
 
-            OWBoardEvent previousEvent = null;
+            OWBoardEvent previousEvent;
             OWBoardEvent currentEvent = null;
             try
             {
@@ -45,31 +45,29 @@ namespace OWCE
                     return;
                 }
 
-                using (var stream = assembly.GetManifestResourceStream(expectedResourceFile))
+                using var stream = assembly.GetManifestResourceStream(expectedResourceFile);
+                do
                 {
-                    do
+                    previousEvent = currentEvent;
+                    currentEvent = OWBoardEvent.Parser.ParseDelimitedFrom(stream);
+
+                    if (previousEvent != null)
                     {
-                        previousEvent = currentEvent;
-                        currentEvent = OWBoardEvent.Parser.ParseDelimitedFrom(stream);
-
-                        if (previousEvent != null)
-                        {
-                            long sleepDuration = currentEvent.Timestamp - previousEvent.Timestamp;
-                            Thread.Sleep((int)sleepDuration);
-                        }
-
-                        if (currentEvent.Uuid == _rssiKey)
-                        {
-                            RSSIUpdated?.Invoke(BitConverter.ToInt32(currentEvent.Data.ToByteArray()));
-                        }
-                        else
-                        {
-                            BoardValueChanged.Invoke(currentEvent.Uuid, currentEvent.Data.ToByteArray());
-                        }
-
+                        long sleepDuration = currentEvent.Timestamp - previousEvent.Timestamp;
+                        Thread.Sleep((int)sleepDuration);
                     }
-                    while (stream.Position < stream.Length);
+
+                    if (currentEvent.Uuid == _rssiKey)
+                    {
+                        RSSIUpdated?.Invoke(BitConverter.ToInt32(currentEvent.Data.ToByteArray()));
+                    }
+                    else
+                    {
+                        BoardValueChanged.Invoke(currentEvent.Uuid, currentEvent.Data.ToByteArray());
+                    }
+
                 }
+                while (stream.Position < stream.Length);
             }
             catch (Exception err)
             {
@@ -164,54 +162,52 @@ namespace OWCE
                 var match = filenameRegex.Match(resourceName);
                 if (match.Success)
                 {
-                    using (var resourceStream = assembly.GetManifestResourceStream(resourceName))
-                    {
+                    using var resourceStream = assembly.GetManifestResourceStream(resourceName);
 
-                        // Can't use real board serial for this as multiple test data of the same board would all appear as the same board,
-                        // which means it would not show. Instead we generate a 6 digit number based on the MD5 hash of the file. It isn't
-                        // perfect (potential collisions, etc) but it should work fine for what we are doing.
-                        //
-                        // The reason we want unique rather than random is because when you come back to the board list page you will see
-                        // duplicate results as they will have different device IDs. If it's based on something that doesn't change such as
-                        // the hash of a file this will prevent duplicates re-appearing.
-                        //
-                        // While we don't use the hash itself, we use this to seed our random number generator which should give the same
-                        // number every time.
-                        var fakeDeviceID = String.Empty;
-                        // Non-cryptographic use - only the hash's bit pattern is used as a Random seed, see above.
+                    // Can't use real board serial for this as multiple test data of the same board would all appear as the same board,
+                    // which means it would not show. Instead we generate a 6 digit number based on the MD5 hash of the file. It isn't
+                    // perfect (potential collisions, etc) but it should work fine for what we are doing.
+                    //
+                    // The reason we want unique rather than random is because when you come back to the board list page you will see
+                    // duplicate results as they will have different device IDs. If it's based on something that doesn't change such as
+                    // the hash of a file this will prevent duplicates re-appearing.
+                    //
+                    // While we don't use the hash itself, we use this to seed our random number generator which should give the same
+                    // number every time.
+                    var fakeDeviceID = String.Empty;
+                    // Non-cryptographic use - only the hash's bit pattern is used as a Random seed, see above.
 #pragma warning disable CA5351
-                        using (var md5 = System.Security.Cryptography.MD5.Create())
+                    using (var md5 = System.Security.Cryptography.MD5.Create())
+                    {
+                        // Hash will be 16 bytes. Seed is an int which is 4 bytes. So we will instead take the average of every 4
+                        // bytes of the hash.
+                        var hash = md5.ComputeHash(resourceStream);
+                        var shrunkHash = new byte[4];
+                        for (int startIndex = 0, outIndex = 0; startIndex < 16; startIndex += 4, outIndex += 1)
                         {
-                            // Hash will be 16 bytes. Seed is an int which is 4 bytes. So we will instead take the average of every 4
-                            // bytes of the hash.
-                            var hash = md5.ComputeHash(resourceStream);
-                            var shrunkHash = new byte[4];
-                            for (int startIndex = 0, outIndex = 0; startIndex < 16; startIndex += 4, outIndex += 1)
-                            {
-                                var sum = hash[startIndex + 0] + hash[startIndex + 1] + hash[startIndex + 2] + hash[startIndex + 3];
-                                shrunkHash[outIndex] = (byte)(sum / 4);
-                            }
-                            var shrunkHashNumber = BitConverter.ToInt32(shrunkHash);
-
-                            var random = new Random(shrunkHashNumber);
-                            fakeDeviceID = random.Next(0, 999999).ToString("D6", CultureInfo.InvariantCulture);
+                            var sum = hash[startIndex + 0] + hash[startIndex + 1] + hash[startIndex + 2] + hash[startIndex + 3];
+                            shrunkHash[outIndex] = (byte)(sum / 4);
                         }
+                        var shrunkHashNumber = BitConverter.ToInt32(shrunkHash);
+
+                        var random = new Random(shrunkHashNumber);
+                        fakeDeviceID = random.Next(0, 999999).ToString("D6", CultureInfo.InvariantCulture);
+                    }
 #pragma warning restore CA5351
 
-                        // Fallback incase something bad happened.
-                        if (String.IsNullOrEmpty(fakeDeviceID))
-                        {
-                            fakeDeviceID = rand.Next(0, 999999).ToString("D6", CultureInfo.InvariantCulture);
-                        }
-
-                        BoardDiscovered?.Invoke(new OWBaseBoard()
-                        {
-                            ID = "ow" + fakeDeviceID,
-                            Name = match.Groups[1].Value,
-                            IsAvailable = true,
-                            NativePeripheral = match.Groups[1].Value,
-                        });
+                    // Fallback incase something bad happened.
+                    if (String.IsNullOrEmpty(fakeDeviceID))
+                    {
+                        fakeDeviceID = rand.Next(0, 999999).ToString("D6", CultureInfo.InvariantCulture);
                     }
+
+                    BoardDiscovered?.Invoke(new OWBaseBoard()
+                    {
+                        ID = "ow" + fakeDeviceID,
+                        Name = match.Groups[1].Value,
+                        IsAvailable = true,
+                        NativePeripheral = match.Groups[1].Value,
+                    });
                 }
             }
         }
@@ -239,11 +235,8 @@ namespace OWCE
 
         public void Shutdown()
         {
-            if (_messagePumpThread != null)
-            {
-                _messagePumpThread.Abort();
-                _messagePumpThread = null;
-            }
+            _messagePumpThread?.Abort();
+            _messagePumpThread = null;
         }
 
         public void RequestRSSIUpdate()

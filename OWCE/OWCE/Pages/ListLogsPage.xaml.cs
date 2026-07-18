@@ -53,8 +53,6 @@ namespace OWCE.Pages
             InitializeComponent();
 
             BindingContext = this;
-
-            var ms = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
         protected override void OnAppearing()
@@ -86,29 +84,26 @@ namespace OWCE.Pages
             if (sender is CollectionView collectionView)
             {
                 var previous = (e.PreviousSelection.Count > 0 ? e.PreviousSelection[0] : null) as LogSummary;
-                var current = (e.CurrentSelection.Count > 0 ? e.CurrentSelection[0] : null) as LogSummary;
 
                 collectionView.SelectedItem = null;
 
-                if (previous == null && current != null)
+                if (previous == null && (e.CurrentSelection.Count > 0 ? e.CurrentSelection[0] : null) is LogSummary current)
                 {
                     try
                     {
                         var events = new List<OWBoardEvent>();
                         var logPath = Path.Combine(App.Current.LogsDirectory, current.Filename);
-                        using (FileStream fs = new FileStream(logPath, FileMode.Open, FileAccess.Read))
+                        using var fs = new FileStream(logPath, FileMode.Open, FileAccess.Read);
+                        OWBoardEvent owBoardEvent;
+                        do
                         {
-                            OWBoardEvent owBoardEvent;
-                            do
+                            owBoardEvent = OWBoardEvent.Parser.ParseDelimitedFrom(fs);
+                            if (owBoardEvent != null)
                             {
-                                owBoardEvent = OWBoardEvent.Parser.ParseDelimitedFrom(fs);
-                                if (owBoardEvent != null)
-                                {
-                                    events.Add(owBoardEvent);
-                                }
+                                events.Add(owBoardEvent);
                             }
-                            while (fs.Position < fs.Length);
                         }
+                        while (fs.Position < fs.Length);
                     }
                     catch (Exception err)
                     {
