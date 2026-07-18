@@ -53,7 +53,7 @@ namespace OWCE.Pages
         AsyncRelayCommand _viewDataSubmittedCommand;
         public AsyncRelayCommand ViewDataSubmittedCommand => _viewDataSubmittedCommand ??= new AsyncRelayCommand(ViewDataSubmittedAsync);
 
-        WeakReference<SubmitRidePage> _page;
+        readonly WeakReference<SubmitRidePage> _page;
 
         public SubmitRideModel(SubmitRidePage page)
         {

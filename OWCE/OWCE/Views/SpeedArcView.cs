@@ -153,7 +153,7 @@ namespace OWCE.Views
 
             canvas.DrawCircle(_circleCenterX, _circleCenterY, _circleRadius, _circlePaint);
 
-            SKPath path = new SKPath();
+            var path = new SKPath();
             path.MoveTo(_circleCenterX, _circleCenterY);
             path.LineTo(_arcEndX, _arcEndY);
 
