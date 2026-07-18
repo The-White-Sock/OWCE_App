@@ -625,6 +625,27 @@ namespace OWCE
             MessagingCenter.Unsubscribe<App>(this, App.UnitDisplayUpdatedKey);
         }
 
+        // Persists a snapshot of this board's current data so it's still viewable
+        // (as clearly-marked cached/stale data, not live) after disconnecting - see
+        // #34. Called from BoardPage's single disconnect path (DisconnectAndPop),
+        // which every disconnect flow (user-initiated, and OWBLE giving up on
+        // reconnect) already funnels through.
+        public void SaveCachedData()
+        {
+            new CachedBoardData()
+            {
+                BoardID = ID,
+                Name = Name,
+                BoardType = BoardType,
+                BatteryPercent = BatteryPercent,
+                RideModeString = RideModeString,
+                TripOdometerDescription = TripOdometerDescription,
+                LifetimeOdometer = LifetimeOdometer,
+                LifetimeAmpHours = LifetimeAmpHours,
+                LastUpdated = DateTime.UtcNow,
+            }.Save();
+        }
+
         public virtual void Init()
         {
             bool autoRideRecording = Preferences.Get("auto_ride_recording", false);

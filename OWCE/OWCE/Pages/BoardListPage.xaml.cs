@@ -188,6 +188,10 @@ namespace OWCE.Pages
             BackgroundLogoImage.Margin = new Thickness(0, (SafeAreaInsets.Top + SafeAreaInsets.Bottom), 0, 0);
             //BackgroundImage
 
+            // Re-run every time this page appears (not just _hasAppeared's one-time
+            // setup) so a board disconnected from just now shows its fresh snapshot
+            // immediately on returning here, rather than only after a fresh app launch.
+            LoadCachedBoards();
 
             //var board = new OWBoard(new OWBaseBoard("000000", "ow000000"));
             //(Path.Combine(App.Current.LogsDirectory, "25 July 2020 03/53/40 PM.bin"));
@@ -297,6 +301,32 @@ namespace OWCE.Pages
                 var alert = new Pages.Popup.Alert("Error", message);
                 await PopupNavigation.Instance.PushAsync(alert, true);
             });
+        }
+
+        // Populates Boards with every board that has a saved last-known snapshot (see
+        // #34), so they're visible even while out of BLE range/not yet re-scanned.
+        // Only adds entries that aren't already present - never overwrites a board
+        // that OWBLE_BoardDiscovered already knows is currently available, since
+        // ShowCachedInfo only surfaces this data while IsAvailable is false anyway.
+        void LoadCachedBoards()
+        {
+            foreach (CachedBoardData cachedBoard in Database.Connection.Table<CachedBoardData>())
+            {
+                OWBaseBoard existingBoard = Boards.FirstOrDefault(b => b.ID == cachedBoard.BoardID);
+                if (existingBoard == null)
+                {
+                    var board = new OWBaseBoard(cachedBoard.BoardID, cachedBoard.Name)
+                    {
+                        IsAvailable = false,
+                    };
+                    board.ApplyCachedData(cachedBoard);
+                    Boards.Add(board);
+                }
+                else
+                {
+                    existingBoard.ApplyCachedData(cachedBoard);
+                }
+            }
         }
 
         void OWBLE_BoardDiscovered(OWBaseBoard board)

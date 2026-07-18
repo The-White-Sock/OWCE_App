@@ -219,6 +219,7 @@ namespace OWCE.Pages
 
             await App.Current.OWBLE.Disconnect();
 
+            Board.SaveCachedData();
             Board.StopLogging();
             TearDown();
 

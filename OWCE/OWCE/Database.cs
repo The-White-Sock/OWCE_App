@@ -19,6 +19,7 @@ namespace OWCE
         public static void Init()
         {
             Connection.CreateTable<Ride>();
+            Connection.CreateTable<CachedBoardData>();
         }
     }
 }
