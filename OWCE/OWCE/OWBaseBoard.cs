@@ -260,44 +260,44 @@ namespace OWCE
             {
                 return new List<(string, ushort)>()
                 {
-                    ("Classic", RideModes.V1_Classic),
-                    ("Extreme", RideModes.V1_Extreme),
-                    ("Elevated", RideModes.V1_Elevated),
+                    ("Classic", RideModes.V1Classic),
+                    ("Extreme", RideModes.V1Extreme),
+                    ("Elevated", RideModes.V1Elevated),
                 };
             }
             else if (_boardType == OWBoardType.Plus || _boardType == OWBoardType.XR)
             {
                 return new List<(string, ushort)>()
                 {
-                    ("Sequoia", RideModes.PlusXR_Sequoia),
-                    ("Cruz", RideModes.PlusXR_Cruz),
-                    ("Mission", RideModes.PlusXR_Mission),
-                    ("Elevated", RideModes.PlusXR_Elevated),
-                    ("Delirium", RideModes.PlusXR_Delirium),
-                    ("Custom", RideModes.PlusXR_Custom),
+                    ("Sequoia", RideModes.PlusXRSequoia),
+                    ("Cruz", RideModes.PlusXRCruz),
+                    ("Mission", RideModes.PlusXRMission),
+                    ("Elevated", RideModes.PlusXRElevated),
+                    ("Delirium", RideModes.PlusXRDelirium),
+                    ("Custom", RideModes.PlusXRCustom),
                 };
             }
             else if (_boardType == OWBoardType.Pint || _boardType == OWBoardType.PintX)
             {
                 return new List<(string, ushort)>()
                 {
-                    ("Redwood", RideModes.Pint_Redwood),
-                    ("Pacific", RideModes.Pint_Pacific),
-                    ("Elevated", RideModes.Pint_Elevated),
-                    ("Skyline", RideModes.Pint_Skyline),
+                    ("Redwood", RideModes.PintRedwood),
+                    ("Pacific", RideModes.PintPacific),
+                    ("Elevated", RideModes.PintElevated),
+                    ("Skyline", RideModes.PintSkyline),
                 };
             }
             else if (_boardType == OWBoardType.GT)
             {
                 return new List<(string, ushort)>()
                 {
-                    ("Bay", RideModes.GT_Bay),
-                    ("Roam", RideModes.GT_Roam),
-                    ("Flow", RideModes.GT_Flow),
-                    ("Highline", RideModes.GT_HighLine),
-                    ("Elevated", RideModes.GT_Elevated),
-                    ("Apex", RideModes.GT_Apex),
-                    ("Custom", RideModes.GT_Custom),
+                    ("Bay", RideModes.GTBay),
+                    ("Roam", RideModes.GTRoam),
+                    ("Flow", RideModes.GTFlow),
+                    ("Highline", RideModes.GTHighLine),
+                    ("Elevated", RideModes.GTElevated),
+                    ("Apex", RideModes.GTApex),
+                    ("Custom", RideModes.GTCustom),
                 };
             }
 
