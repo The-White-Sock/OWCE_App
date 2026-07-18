@@ -17,7 +17,7 @@ namespace OWCE.Pages
     public partial class BoardPage : BaseContentPage
     {
         ConnectingAlert _reconnectingAlert;
-        bool _isTornDown = false;
+        bool _isTornDown;
 
 
         public OWBoard Board { get; private set; }
@@ -31,12 +31,12 @@ namespace OWCE.Pages
             }
         }*/
 
-        Grid _sideMenuItem = null;
+        Grid _sideMenuItem;
 
-        IAsyncCommand _startRecordRideCommand = null;
+        IAsyncCommand _startRecordRideCommand;
         public IAsyncCommand StartRecordRideCommand => _startRecordRideCommand ??= new AsyncCommand(StartRecordingAsync, allowsMultipleExecutions: false);
 
-        IAsyncCommand _stopRecordRideCommand = null;
+        IAsyncCommand _stopRecordRideCommand;
         public IAsyncCommand StopRecordRideCommand => _stopRecordRideCommand ??= new AsyncCommand(StopRecordingAsync, allowsMultipleExecutions: false);
 
 
@@ -202,7 +202,7 @@ namespace OWCE.Pages
             }
         }
 
-        bool _isDisconnecting = false;
+        bool _isDisconnecting;
 
         public async Task DisconnectAndPop()
         {

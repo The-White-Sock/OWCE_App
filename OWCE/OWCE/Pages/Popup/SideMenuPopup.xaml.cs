@@ -24,7 +24,7 @@ namespace OWCE.Pages.Popup
         IAsyncCommand<Grid> _settingsCommand;
         public IAsyncCommand<Grid> SettingsCommand => _settingsCommand ??= new AsyncCommand<Grid>(async (sender) => await SettingsCommand_Clicked(sender), allowsMultipleExecutions: false);
 
-        View _pageSpecificSideMenu = null;
+        View _pageSpecificSideMenu;
         public View PageSpecificSideMenu
         {
             get

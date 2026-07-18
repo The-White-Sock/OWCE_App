@@ -110,7 +110,7 @@ namespace OWCE.Views
             }
         }
 
-        List<(string, ushort)> _availableRideModes = null;
+        List<(string, ushort)> _availableRideModes;
 
         async void SetCustomShaping_Clicked(System.Object sender, System.EventArgs e)
         {

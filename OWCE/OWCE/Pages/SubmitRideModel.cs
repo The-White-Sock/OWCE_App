@@ -15,7 +15,7 @@ namespace OWCE.Pages
             set => SetProperty(ref rideName, value);
         }
 
-        bool isAftermarketBattery = false;
+        bool isAftermarketBattery;
         public bool IsAftermarketBattery
         {
             get => isAftermarketBattery;
@@ -36,7 +36,7 @@ namespace OWCE.Pages
             set => SetProperty(ref removeIdentifiers, value);
         }
 
-        bool allowPublicly = false;
+        bool allowPublicly;
         public bool AllowPublicly
         {
             get => allowPublicly;
@@ -53,7 +53,7 @@ namespace OWCE.Pages
         AsyncRelayCommand _viewDataSubmittedCommand;
         public AsyncRelayCommand ViewDataSubmittedCommand => _viewDataSubmittedCommand ??= new AsyncRelayCommand(ViewDataSubmittedAsync);
 
-        WeakReference<SubmitRidePage> _page = null;
+        WeakReference<SubmitRidePage> _page;
 
         public SubmitRideModel(SubmitRidePage page)
         {
