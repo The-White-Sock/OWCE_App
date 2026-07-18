@@ -11,28 +11,28 @@ namespace OWCE.Views
 {
     public class RideModeButton : INotifyPropertyChanged
     {
-        protected string _name;
+        private string _name;
         public string Name
         {
             get { return _name; }
             set { if (_name != value) { _name = value; OnPropertyChanged(); } }
         }
 
-        protected ushort _value;
+        private ushort _value;
         public ushort Value
         {
             get { return _value; }
             set { if (_value != value) { _value = value; OnPropertyChanged(); } }
         }
 
-        protected int _rideMode;
+        private int _rideMode;
         public int RideMode
         {
             get { return _rideMode; }
             set { if (_rideMode != value) { _rideMode = value; OnPropertyChanged(); } }
         }
 
-        protected bool _isSelected;
+        private bool _isSelected;
         public bool IsSelected
         {
             get { return _isSelected; }

@@ -8,7 +8,7 @@ namespace OWCE
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected string _id = String.Empty;
+        private string _id = String.Empty;
         public string ID
         {
             get
@@ -25,7 +25,7 @@ namespace OWCE
             }
         }
 
-        protected string _name = String.Empty;
+        private string _name = String.Empty;
         public string Name
         {
             get
@@ -42,7 +42,7 @@ namespace OWCE
             }
         }
 
-        protected bool _isAvailable;
+        private bool _isAvailable;
         public bool IsAvailable
         {
             get
@@ -59,7 +59,7 @@ namespace OWCE
             }
         }
 
-        protected Object _nativePeripheral;
+        private Object _nativePeripheral;
         public Object NativePeripheral
         {
             get { return _nativePeripheral; }
@@ -67,7 +67,7 @@ namespace OWCE
         }
 
         // Value is in millimeters.
-        protected float _wheelCircumference;
+        private float _wheelCircumference;
         public float WheelCircumference
         {
             get
@@ -106,7 +106,7 @@ namespace OWCE
         */
 
 
-        protected OWBoardType _boardType = OWBoardType.Unknown;
+        private OWBoardType _boardType = OWBoardType.Unknown;
         public OWBoardType BoardType
         {
             get
