@@ -8,10 +8,10 @@ namespace OWCE.Views
 {
     public class SpeedArcView : SKCanvasView, IDisposable
     {
-        SKPaint _backgroundPaint;
-        SKPaint _circlePaint;
-        SKPaint _arcPaint;
-        float _displayScale;
+        readonly SKPaint _backgroundPaint;
+        readonly SKPaint _circlePaint;
+        readonly SKPaint _arcPaint;
+        readonly float _displayScale;
         float _circleRadius;
         float _circleCenterX;
         float _circleCenterY;
@@ -19,15 +19,15 @@ namespace OWCE.Views
         float _arcEndX;
         float _arcEndY;
         SKRect _circleRect;
-        float _endAngle;
-        float _endAngleForArc;
+        readonly float _endAngle;
+        readonly float _endAngleForArc;
 
 
         float _currentSweepAngle;
-        float _minSweepAngle = 5;
+        readonly float _minSweepAngle = 5;
         int _animationNumber;
 
-        float _totalArc;
+        readonly float _totalArc;
 
         public static readonly BindableProperty CurrentRPMProperty = BindableProperty.Create(
             propertyName: nameof(CurrentRPM),

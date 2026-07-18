@@ -10,18 +10,18 @@ namespace OWCE.Network
 {
     public class CustomProgressableStreamContent : HttpContent
     {
-        FileStream fileStream;
-        int bufferSize = 4096;
-        IProgress<double> progress;
-        int lastProgress;
+        readonly FileStream _fileStream;
+        readonly int _bufferSize = 4096;
+        readonly IProgress<double> _progress;
+        int _lastProgress;
 
         public CustomProgressableStreamContent(FileStream fileStream, IProgress<double> progress)
         {
             //ArgumentNullException.ThrowIfNull(fileStream);
             //ArgumentNullException.ThrowIfNull(progress);
 
-            this.fileStream = fileStream;
-            this.progress = progress;
+            _fileStream = fileStream;
+            _progress = progress;
         }
 
         protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)
@@ -31,8 +31,8 @@ namespace OWCE.Network
 
         protected async Task SerializeToStreamAsync(Stream stream, TransportContext? context, CancellationToken cancellationToken)
         {
-            var buffer = new byte[bufferSize];
-            var size = fileStream.Length;
+            var buffer = new byte[_bufferSize];
+            var size = _fileStream.Length;
             var uploaded = 0;
 
             while (true)
@@ -42,7 +42,7 @@ namespace OWCE.Network
                     break;
                 }
 
-                var length = await fileStream.ReadAsync(buffer.AsMemory(0, bufferSize), cancellationToken).ConfigureAwait(false);
+                var length = await _fileStream.ReadAsync(buffer.AsMemory(0, _bufferSize), cancellationToken).ConfigureAwait(false);
 
                 if (length <= 0)
                 {
@@ -58,17 +58,17 @@ namespace OWCE.Network
                 // Only report progress when we have actually gone up a percent
                 var currentProgress = (double)uploaded / size;
                 var currentProgressInt = (int)(currentProgress * 100);
-                if (lastProgress != currentProgressInt)
+                if (_lastProgress != currentProgressInt)
                 {
-                    progress.Report(currentProgress);
-                    lastProgress = currentProgressInt;
+                    _progress.Report(currentProgress);
+                    _lastProgress = currentProgressInt;
                 }
             }
         }
 
         protected override bool TryComputeLength(out long length)
         {
-            length = fileStream.Length;
+            length = _fileStream.Length;
             return true;
         }
     }

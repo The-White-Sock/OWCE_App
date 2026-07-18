@@ -12,14 +12,14 @@ namespace OWCE.Pages
     {
         public ObservableRangeCollection<Ride> Rides { get; set; } = new ObservableRangeCollection<Ride>();
 
-        AsyncCommand<Ride> rideSelectedCommand;
-        public AsyncCommand<Ride> RideSelectedCommand => rideSelectedCommand ??= new AsyncCommand<Ride>(RideSelected, allowsMultipleExecutions: false);
+        AsyncCommand<Ride> _rideSelectedCommand;
+        public AsyncCommand<Ride> RideSelectedCommand => _rideSelectedCommand ??= new AsyncCommand<Ride>(RideSelected, allowsMultipleExecutions: false);
 
-        AsyncCommand<Ride> deleteRideCommand;
-        public AsyncCommand<Ride> DeleteRideCommand => deleteRideCommand ??= new AsyncCommand<Ride>(DeleteRide, allowsMultipleExecutions: false);
+        AsyncCommand<Ride> _deleteRideCommand;
+        public AsyncCommand<Ride> DeleteRideCommand => _deleteRideCommand ??= new AsyncCommand<Ride>(DeleteRide, allowsMultipleExecutions: false);
 
-        AsyncCommand<Ride> renameRideCommand;
-        public AsyncCommand<Ride> RenameRideCommand => renameRideCommand ??= new AsyncCommand<Ride>(RenameRide, allowsMultipleExecutions: false);
+        AsyncCommand<Ride> _renameRideCommand;
+        public AsyncCommand<Ride> RenameRideCommand => _renameRideCommand ??= new AsyncCommand<Ride>(RenameRide, allowsMultipleExecutions: false);
 
         public PastRidesPage()
         {

@@ -83,7 +83,7 @@ namespace OWCE.Pages
         AsyncCommand _pastRidesCommand;
         public AsyncCommand PastRidesCommand => _pastRidesCommand ??= new AsyncCommand(PastRidesCommand_Clicked, allowsMultipleExecutions: false);
 
-        Grid _scanningView;
+        readonly Grid _scanningView;
 
         public BoardListPage() : base()
         {

@@ -19,7 +19,7 @@ namespace OWCE.Pages
     public partial class ListLogsPage : ContentPage
     {
 
-        ObservableRangeCollection<LogSummary> _logsList = new ObservableRangeCollection<LogSummary>();
+        readonly ObservableRangeCollection<LogSummary> _logsList = new ObservableRangeCollection<LogSummary>();
         public ObservableRangeCollection<LogSummary> LogsList { get { return _logsList; } }
 
         bool _isRefreshing;

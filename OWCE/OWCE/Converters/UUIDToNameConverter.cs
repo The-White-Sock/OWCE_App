@@ -7,13 +7,13 @@ namespace OWCE.Converters
 {
     public class UUIDToNameConverter : IValueConverter
     {
-        Dictionary<string, string> uuidLookup = new Dictionary<string, string>();
+        readonly Dictionary<string, string> _uuidLookup = new Dictionary<string, string>();
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is string stringValue)
             {
-                if (uuidLookup.TryGetValue(stringValue, out var cachedName))
+                if (_uuidLookup.TryGetValue(stringValue, out var cachedName))
                 {
                     return cachedName;
                 }
@@ -57,7 +57,7 @@ namespace OWCE.Converters
                     _ => "Unknown",
                 };
 
-                uuidLookup[stringValue] = actualName;
+                _uuidLookup[stringValue] = actualName;
 
                 return actualName;
             }

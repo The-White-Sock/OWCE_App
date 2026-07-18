@@ -62,12 +62,12 @@ namespace OWCE.Pages
         }
 
 
-        Grid _mainGrid;
-        BoxView _navBackgroundView;
-        Grid _navigationBarGrid;
+        readonly Grid _mainGrid;
+        readonly BoxView _navBackgroundView;
+        readonly Grid _navigationBarGrid;
         StackLayout _leftNavStackLayout;
         StackLayout _rightNavStackLayout;
-        Label _titleLabel;
+        readonly Label _titleLabel;
 
         public BaseContentPage()
         {

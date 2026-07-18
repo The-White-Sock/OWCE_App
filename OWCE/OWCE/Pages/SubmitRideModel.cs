@@ -8,46 +8,46 @@ namespace OWCE.Pages
 {
     public class SubmitRideModel : Xamarin.CommunityToolkit.ObjectModel.ObservableObject
     {
-        string rideName = String.Empty;
+        string _rideName = String.Empty;
         public string RideName
         {
-            get => rideName;
-            set => SetProperty(ref rideName, value);
+            get => _rideName;
+            set => SetProperty(ref _rideName, value);
         }
 
-        bool isAftermarketBattery;
+        bool _isAftermarketBattery;
         public bool IsAftermarketBattery
         {
-            get => isAftermarketBattery;
-            set => SetProperty(ref isAftermarketBattery, value);
+            get => _isAftermarketBattery;
+            set => SetProperty(ref _isAftermarketBattery, value);
         }
 
-        string batteryType = String.Empty;
+        string _batteryType = String.Empty;
         public string BatteryType
         {
-            get => batteryType;
-            set => SetProperty(ref batteryType, value);
+            get => _batteryType;
+            set => SetProperty(ref _batteryType, value);
         }
 
-        bool removeIdentifiers = true;
+        bool _removeIdentifiers = true;
         public bool RemoveIdentifiers
         {
-            get => removeIdentifiers;
-            set => SetProperty(ref removeIdentifiers, value);
+            get => _removeIdentifiers;
+            set => SetProperty(ref _removeIdentifiers, value);
         }
 
-        bool allowPublicly;
+        bool _allowPublicly;
         public bool AllowPublicly
         {
-            get => allowPublicly;
-            set => SetProperty(ref allowPublicly, value);
+            get => _allowPublicly;
+            set => SetProperty(ref _allowPublicly, value);
         }
 
-        string additionalNotes = String.Empty;
+        string _additionalNotes = String.Empty;
         public string AdditionalNotes
         {
-            get => additionalNotes;
-            set => SetProperty(ref additionalNotes, value);
+            get => _additionalNotes;
+            set => SetProperty(ref _additionalNotes, value);
         }
 
         AsyncRelayCommand _viewDataSubmittedCommand;
