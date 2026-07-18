@@ -24,18 +24,18 @@ namespace OWCE.Pages
 {
     public partial class SubmitRidePage : BaseContentPage
     {
-        Ride ride;
-        SubmitRideModel model;
+        readonly Ride _ride;
+        readonly SubmitRideModel _model;
 
         public SubmitRidePage(Ride ride)
         {
             InitializeComponent();
-            this.ride = ride;
-            model = new SubmitRideModel(this)
+            _ride = ride;
+            _model = new SubmitRideModel(this)
             {
                 RideName = ride.Name,
             };
-            BindingContext = model;
+            BindingContext = _model;
 
             CustomToolbarItems.Add(new Views.CustomToolbarItem()
             {
@@ -59,13 +59,13 @@ namespace OWCE.Pages
 
         async Task SubmitRide()
         {
-            var filename = Path.Combine(App.Current.LogsDirectory, ride.DataFileName);
+            var filename = Path.Combine(App.Current.LogsDirectory, _ride.DataFileName);
             if (File.Exists(filename) == false)
             {
                 await DisplayAlert("Error", "Could not load saved ride.", "Okay");
                 return;
             }
-            var tempFilename = Path.Combine(Path.GetTempPath(), Path.GetFileName(ride.DataFileName));
+            var tempFilename = Path.Combine(Path.GetTempPath(), Path.GetFileName(_ride.DataFileName));
 
             var cancellationTokenSource = new CancellationTokenSource();
 
@@ -99,7 +99,7 @@ namespace OWCE.Pages
                 {
                     httpClient.DefaultRequestHeaders.Add("User-Agent", App.Current.UserAgent);
 
-                    var submitRideRequest = model.GetSubmitRideRequest();
+                    var submitRideRequest = _model.GetSubmitRideRequest();
 
                     var rawResponse = await httpClient.PostAsJsonAsync<SubmitRideRequest>($"https://{App.OWCEApiServer}/v1/ride/submit", submitRideRequest, cancellationTokenSource.Token);
                     if (rawResponse.IsSuccessStatusCode == false)
@@ -164,13 +164,13 @@ namespace OWCE.Pages
 
         public async Task ViewDataSubmittedAsync()
         {
-            var filename = Path.Combine(App.Current.LogsDirectory, ride.DataFileName);
+            var filename = Path.Combine(App.Current.LogsDirectory, _ride.DataFileName);
             if (File.Exists(filename) == false)
             {
                 await DisplayAlert("Error", "Could not load saved ride.", "Okay");
                 return;
             }
-            var tempFilename = Path.Combine(Path.GetTempPath(), Path.GetFileName(ride.DataFileName));
+            var tempFilename = Path.Combine(Path.GetTempPath(), Path.GetFileName(_ride.DataFileName));
 
             var cancellationTokenSource = new CancellationTokenSource();
 
@@ -206,7 +206,7 @@ namespace OWCE.Pages
             }
 
             await Task.WhenAll(
-                Navigation.PushModalAsync(new CustomNavigationPage(new ViewRawRideDataPage(model.GetSubmitRideRequest(), tempFilename))),
+                Navigation.PushModalAsync(new CustomNavigationPage(new ViewRawRideDataPage(_model.GetSubmitRideRequest(), tempFilename))),
                 PopupNavigation.Instance.PopAsync()
             );
         }
@@ -214,7 +214,7 @@ namespace OWCE.Pages
 
         public bool PrepareData(string originalData, string outputData, CancellationTokenSource cancellationTokenSource)
         {
-            if (model.RemoveIdentifiers)
+            if (_model.RemoveIdentifiers)
             {
                 try
                 {

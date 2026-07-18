@@ -10,25 +10,25 @@ namespace OWCE.Pages
 {
     public class ViewRawRideDataModel : Xamarin.CommunityToolkit.ObjectModel.ObservableObject
     {
-        string dataFile = String.Empty;
+        string _dataFile = String.Empty;
         public string DataFile
         {
-            get => dataFile;
-            set => SetProperty(ref dataFile, value);
+            get => _dataFile;
+            set => SetProperty(ref _dataFile, value);
         }
 
-        SubmitRideRequest submitRideRequest;
+        SubmitRideRequest _submitRideRequest;
         public SubmitRideRequest SubmitRideRequest
         {
-            get => submitRideRequest;
-            set => SetProperty(ref submitRideRequest, value);
+            get => _submitRideRequest;
+            set => SetProperty(ref _submitRideRequest, value);
         }
 
-        List<OWBoardEvent> boardEvents = new List<OWBoardEvent>();
+        List<OWBoardEvent> _boardEvents = new List<OWBoardEvent>();
         public List<OWBoardEvent> BoardEvents
         {
-            get => boardEvents;
-            set => SetProperty(ref boardEvents, value);
+            get => _boardEvents;
+            set => SetProperty(ref _boardEvents, value);
         }
 
 

@@ -13,11 +13,11 @@ namespace OWCE
 {
     public class MockOWBLE : IOWBLE, INotifyPropertyChanged
     {
-        const string RSSIKey = "RSSI";
+        const string _rssiKey = "RSSI";
         public event PropertyChangedEventHandler PropertyChanged;
 
         string _sampleRideName;
-        List<OWBoardEvent> _events = new List<OWBoardEvent>();
+        readonly List<OWBoardEvent> _events = new List<OWBoardEvent>();
         Thread _messagePumpThread;
 
         public MockOWBLE()
@@ -58,7 +58,7 @@ namespace OWCE
                             Thread.Sleep((int)sleepDuration);
                         }
 
-                        if (currentEvent.Uuid == RSSIKey)
+                        if (currentEvent.Uuid == _rssiKey)
                         {
                             RSSIUpdated?.Invoke(BitConverter.ToInt32(currentEvent.Data.ToByteArray()));
                         }

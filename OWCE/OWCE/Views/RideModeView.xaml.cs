@@ -77,7 +77,7 @@ namespace OWCE.Views
             }
         }
 
-        ObservableCollection<RideModeButton> _rideModesList = new ObservableCollection<RideModeButton>();
+        readonly ObservableCollection<RideModeButton> _rideModesList = new ObservableCollection<RideModeButton>();
 
         public RideModeView()
         {

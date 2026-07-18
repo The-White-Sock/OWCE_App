@@ -292,7 +292,7 @@ namespace OWCE
             set { if (_lastErrorCode.AlmostEqualTo(value) == false) { _lastErrorCode = value; OnPropertyChanged(); } }
         }
 
-        BatteryCells _batteryCells = new BatteryCells();
+        readonly BatteryCells _batteryCells = new BatteryCells();
         public BatteryCells BatteryCells
         {
             get { return _batteryCells; }
@@ -520,32 +520,32 @@ namespace OWCE
             set { if (_rearLightMode != value) { _rearLightMode = value; OnPropertyChanged(); } }
         }
 
-        private float _UNKNOWN1;
+        private float _unknown1;
         public float UNKNOWN1
         {
-            get { return _UNKNOWN1; }
-            set { if (_UNKNOWN1.AlmostEqualTo(value) == false) { _UNKNOWN1 = value; OnPropertyChanged(); } }
+            get { return _unknown1; }
+            set { if (_unknown1.AlmostEqualTo(value) == false) { _unknown1 = value; OnPropertyChanged(); } }
         }
 
-        private float _UNKNOWN2;
+        private float _unknown2;
         public float UNKNOWN2
         {
-            get { return _UNKNOWN2; }
-            set { if (_UNKNOWN2.AlmostEqualTo(value) == false) { _UNKNOWN2 = value; OnPropertyChanged(); } }
+            get { return _unknown2; }
+            set { if (_unknown2.AlmostEqualTo(value) == false) { _unknown2 = value; OnPropertyChanged(); } }
         }
 
-        private float _UNKNOWN3;
+        private float _unknown3;
         public float UNKNOWN3
         {
-            get { return _UNKNOWN3; }
-            set { if (_UNKNOWN3.AlmostEqualTo(value) == false) { _UNKNOWN3 = value; OnPropertyChanged(); } }
+            get { return _unknown3; }
+            set { if (_unknown3.AlmostEqualTo(value) == false) { _unknown3 = value; OnPropertyChanged(); } }
         }
 
-        private float _UNKNOWN4;
+        private float _unknown4;
         public float UNKNOWN4
         {
-            get { return _UNKNOWN4; }
-            set { if (_UNKNOWN4.AlmostEqualTo(value) == false) { _UNKNOWN4 = value; OnPropertyChanged(); } }
+            get { return _unknown4; }
+            set { if (_unknown4.AlmostEqualTo(value) == false) { _unknown4 = value; OnPropertyChanged(); } }
         }
 
         int _rssi;
@@ -563,7 +563,7 @@ namespace OWCE
             set { if (_isRecordingRide != value) { _isRecordingRide = value; OnPropertyChanged(); } }
         }
 
-        IOWBLE _owble;
+        readonly IOWBLE _owble;
 
         OWBoardEventList _events = new OWBoardEventList();
         List<OWBoardEvent> _initialEvents;
@@ -729,7 +729,7 @@ namespace OWCE
 
         // Read once at initial connect, and again after a reconnect to refresh the
         // UI immediately rather than waiting on the next notification for each.
-        private static readonly List<string> CharacteristicsToReadNow = new List<string>()
+        private static readonly List<string> _characteristicsToReadNow = new List<string>()
         {
             SerialNumberUUID,
             BatteryPercentUUID,
@@ -771,7 +771,7 @@ namespace OWCE
         // per-connection at the BLE level - a reconnect gets a brand new GATT
         // session where none of these are armed anymore, so this list is also
         // used to re-subscribe after a reconnect, not just on the initial connect.
-        private static readonly List<string> CharacteristicsToSubscribeTo = new List<string>()
+        private static readonly List<string> _characteristicsToSubscribeTo = new List<string>()
         {
             //SerialNumberUUID,
             BatteryPercentUUID,
@@ -818,7 +818,7 @@ namespace OWCE
         // to re-assert the board's unlock state on its own.
         private async Task RestoreLiveDataSync()
         {
-            foreach (var characteristic in CharacteristicsToSubscribeTo)
+            foreach (var characteristic in _characteristicsToSubscribeTo)
             {
                 // SubscribeValue returns null (rather than a Task) if the connection
                 // has already dropped again - eg a second disconnect landing while
@@ -834,7 +834,7 @@ namespace OWCE
                 await subscribeTask;
             }
 
-            foreach (var characteristic in CharacteristicsToReadNow)
+            foreach (var characteristic in _characteristicsToReadNow)
             {
                 var readTask = _owble.ReadValue(characteristic);
                 if (readTask == null)
