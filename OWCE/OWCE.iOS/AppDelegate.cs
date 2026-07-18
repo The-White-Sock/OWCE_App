@@ -35,7 +35,6 @@ namespace OWCE.iOS
                 Sentry.SentryXamarin.Init(options =>
                 {
                     options.Dsn = AppConstants.SentryDsn;
-                    options.AddXamarinFormsIntegration();
                 });
             }
 

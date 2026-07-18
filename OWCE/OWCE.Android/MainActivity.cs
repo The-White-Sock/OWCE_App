@@ -26,7 +26,6 @@ namespace OWCE.Droid
                 Sentry.SentryXamarin.Init(options =>
                 {
                     options.Dsn = AppConstants.SentryDsn;
-                    options.AddXamarinFormsIntegration();
                 });
 
                 // Belt-and-braces alongside SentryXamarin.Init()'s own automatic wiring -
