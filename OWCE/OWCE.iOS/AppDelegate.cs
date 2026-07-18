@@ -23,6 +23,22 @@ namespace OWCE.iOS
         //
         public override bool FinishedLaunching(UIApplication uiApplication, NSDictionary launchOptions)
         {
+            // Crash/error telemetry (see #26) - initialize before anything else so as
+            // much of startup as possible is covered. No-op when AppConstants.SentryDsn
+            // is blank (the default, until a Sentry project DSN is configured).
+            //
+            // Not yet verified on real hardware/a Mac build (this environment can't build
+            // or run iOS at all - see #20) - only that it follows the documented Sentry.Xamarin
+            // setup and compiles conceptually the same way as the Android side.
+            if (String.IsNullOrEmpty(AppConstants.SentryDsn) == false)
+            {
+                Sentry.SentryXamarin.Init(options =>
+                {
+                    options.Dsn = AppConstants.SentryDsn;
+                    options.AddXamarinFormsIntegration();
+                });
+            }
+
             Rg.Plugins.Popup.Popup.Init();
 
             global::Xamarin.Forms.Forms.Init();

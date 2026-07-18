@@ -228,6 +228,7 @@
     <PackageReference Include="sqlite-net-pcl">
       <Version>1.9.172</Version>
     </PackageReference>
+    <PackageReference Include="Sentry.Xamarin.Forms" Version="2.1.0" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
   <ItemGroup>

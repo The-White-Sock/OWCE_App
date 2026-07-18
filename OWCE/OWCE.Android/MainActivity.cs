@@ -18,6 +18,26 @@ namespace OWCE.Droid
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
+            // Crash/error telemetry (see #26) - initialize before anything else so as
+            // much of startup as possible is covered. No-op when AppConstants.SentryDsn
+            // is blank (the default, until a Sentry project DSN is configured).
+            if (String.IsNullOrEmpty(AppConstants.SentryDsn) == false)
+            {
+                Sentry.SentryXamarin.Init(options =>
+                {
+                    options.Dsn = AppConstants.SentryDsn;
+                    options.AddXamarinFormsIntegration();
+                });
+
+                // Belt-and-braces alongside SentryXamarin.Init()'s own automatic wiring -
+                // there are real reports of unhandled Android exceptions not reliably
+                // reaching Sentry through that alone (getsentry/sentry-dotnet#122).
+                AndroidEnvironment.UnhandledExceptionRaiser += (sender, args) =>
+                {
+                    Sentry.SentrySdk.CaptureException(args.Exception);
+                };
+            }
+
             TabLayoutResource = Resource.Layout.Tabbar;
             ToolbarResource = Resource.Layout.Toolbar;
 

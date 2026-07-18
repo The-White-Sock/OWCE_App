@@ -36,6 +36,7 @@
     <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="System.Net.Http.Json" Version="8.0.1" />
+    <PackageReference Include="Sentry.Xamarin.Forms" Version="2.1.0" />
   </ItemGroup>
 
 
