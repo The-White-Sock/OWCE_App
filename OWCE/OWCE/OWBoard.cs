@@ -346,7 +346,7 @@ namespace OWCE
         {
             get
             {
-                if (_boardType == OWBoardType.V1)
+                if (BoardType == OWBoardType.V1)
                 {
                     return _rideMode switch
                     {
@@ -356,7 +356,7 @@ namespace OWCE
                         _ => "Unknown",
                     };
                 }
-                else if (_boardType == OWBoardType.Plus || _boardType == OWBoardType.XR)
+                else if (BoardType == OWBoardType.Plus || BoardType == OWBoardType.XR)
                 {
                     return _rideMode switch
                     {
@@ -369,7 +369,7 @@ namespace OWCE
                         _ => "Unknown",
                     };
                 }
-                else if (_boardType == OWBoardType.Pint || _boardType == OWBoardType.PintX)
+                else if (BoardType == OWBoardType.Pint || BoardType == OWBoardType.PintX)
                 {
                     return _rideMode switch
                     {
@@ -381,7 +381,7 @@ namespace OWCE
                         _ => "Unknown",
                     };
                 }
-                else if (_boardType == OWBoardType.GT)
+                else if (BoardType == OWBoardType.GT)
                 {
                     return _rideMode switch
                     {
@@ -414,7 +414,7 @@ namespace OWCE
             {
                 if (App.Current.MetricDisplay)
                 {
-                    if (_boardType == OWBoardType.V1)
+                    if (BoardType == OWBoardType.V1)
                     {
                         return _rideMode switch
                         {
@@ -424,7 +424,7 @@ namespace OWCE
                             _ => 24, // Unknown
                         };
                     }
-                    else if (_boardType == OWBoardType.Plus || _boardType == OWBoardType.XR)
+                    else if (BoardType == OWBoardType.Plus || BoardType == OWBoardType.XR)
                     {
                         return _rideMode switch
                         {
@@ -437,7 +437,7 @@ namespace OWCE
                             _ => 32, // Unknown
                         };
                     }
-                    else if (_boardType == OWBoardType.Pint)
+                    else if (BoardType == OWBoardType.Pint)
                     {
                         return _rideMode switch
                         {
@@ -453,7 +453,7 @@ namespace OWCE
                 }
                 else
                 {
-                    if (_boardType == OWBoardType.V1)
+                    if (BoardType == OWBoardType.V1)
                     {
                         return _rideMode switch
                         {
@@ -463,7 +463,7 @@ namespace OWCE
                             _ => 15, // Unknown
                         };
                     }
-                    else if (_boardType == OWBoardType.Plus || _boardType == OWBoardType.XR)
+                    else if (BoardType == OWBoardType.Plus || BoardType == OWBoardType.XR)
                     {
                         return _rideMode switch
                         {
@@ -476,7 +476,7 @@ namespace OWCE
                             _ => 20, // Unknown
                         };
                     }
-                    else if (_boardType == OWBoardType.Pint)
+                    else if (BoardType == OWBoardType.Pint)
                     {
                         return _rideMode switch
                         {
@@ -587,10 +587,10 @@ namespace OWCE
             });
 
             _owble = owble;
-            _id = baseBoard.ID;
-            _name = baseBoard.Name;
-            _isAvailable = baseBoard.IsAvailable;
-            _nativePeripheral = baseBoard.NativePeripheral;
+            ID = baseBoard.ID;
+            Name = baseBoard.Name;
+            IsAvailable = baseBoard.IsAvailable;
+            NativePeripheral = baseBoard.NativePeripheral;
             _owble.BoardValueChanged += OWBLE_BoardValueChanged;
             _owble.RSSIUpdated += OWBLE_RSSIUpdated;
             _owble.BoardReconnected += OWBLE_BoardReconnected;
@@ -854,7 +854,7 @@ namespace OWCE
         internal async Task SubscribeToBLE()
         {
 #if DEBUG
-            if (_nativePeripheral == null)
+            if (NativePeripheral == null)
                 return;
 #endif
             RSSIMonitor();
@@ -1104,11 +1104,11 @@ namespace OWCE
 
         private async Task<byte[]> FetchToken(string apiKey)
         {
-            if (String.IsNullOrWhiteSpace(_name))
+            if (String.IsNullOrWhiteSpace(Name))
             {
                 return null;
             }
-            var deviceName = _name.ToLowerInvariant();
+            var deviceName = Name.ToLowerInvariant();
             deviceName = deviceName.Replace("ow", String.Empty);
 
 
@@ -1252,7 +1252,7 @@ namespace OWCE
             }
             else if (uuid == BatteryTemperatureUUID)
             {
-                if (_boardType == OWBoardType.V1 || _boardType == OWBoardType.Plus)
+                if (BoardType == OWBoardType.V1 || BoardType == OWBoardType.Plus)
                 {
                     BatteryTemperature = data[1];
                 }
@@ -1329,12 +1329,12 @@ namespace OWCE
                     FirmwareRevision = value;
                     break;
                 case CurrentAmpsUUID:
-                    if (_boardType == OWBoardType.Unknown)
+                    if (BoardType == OWBoardType.Unknown)
                     {
                         break;
                     }
 
-                    var scaleFactor = _boardType switch
+                    var scaleFactor = BoardType switch
                     {
                         OWBoardType.V1 => 0.0009f,
                         OWBoardType.Plus => 0.0018f,
@@ -1342,7 +1342,7 @@ namespace OWCE
                         OWBoardType.Pint => 0.002f,
                         OWBoardType.PintX => 0.002f,
                         OWBoardType.GT => 0.002f,
-                        _ => throw new InvalidOperationException("Unknown board type: " + _boardType),
+                        _ => throw new InvalidOperationException("Unknown board type: " + BoardType),
                     };
 
                     /// https://en.wikipedia.org/wiki/Two's_complement
