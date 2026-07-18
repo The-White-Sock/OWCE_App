@@ -70,14 +70,11 @@ namespace OWCE.Views
 
         public SpeedArcView()
         {
-            _backgroundPaint = new SKPaint();
-            _backgroundPaint.Color = new SKColor(255, 255, 0); // Bright yellow
+            _backgroundPaint = new SKPaint() { Color = new SKColor(255, 255, 0) }; // Bright yellow
 
-            _circlePaint = new SKPaint();
-            _circlePaint.Color = new SKColor(0, 0, 0, 20); // Black with 8% alpha
+            _circlePaint = new SKPaint() { Color = new SKColor(0, 0, 0, 20) }; // Black with 8% alpha
 
-            _arcPaint = new SKPaint();
-            _arcPaint.Color = new SKColor(0, 0, 0, 31); // Black with 12% alpha
+            _arcPaint = new SKPaint() { Color = new SKColor(0, 0, 0, 31) }; // Black with 12% alpha
 
             _displayScale = (float)Xamarin.Essentials.DeviceDisplay.MainDisplayInfo.Density;
             //_circleRadius = (_displayScale * 278) * 0.5f;

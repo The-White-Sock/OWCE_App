@@ -93,71 +93,65 @@ namespace OWCE.Pages
             }
 
 
-            using (var httpClient = new HttpClient())
+            using var httpClient = new HttpClient();
+            try
             {
-                try
-                {
-                    httpClient.DefaultRequestHeaders.Add("User-Agent", App.Current.UserAgent);
+                httpClient.DefaultRequestHeaders.Add("User-Agent", App.Current.UserAgent);
 
-                    var submitRideRequest = _model.GetSubmitRideRequest();
+                var submitRideRequest = _model.GetSubmitRideRequest();
 
-                    var rawResponse = await httpClient.PostAsJsonAsync<SubmitRideRequest>($"https://{App.OWCEApiServer}/v1/ride/submit", submitRideRequest, cancellationTokenSource.Token);
-                    if (rawResponse.IsSuccessStatusCode == false)
-                    {
-                        await PopupNavigation.Instance.PopAsync();
-                        await DisplayAlert("Error", "Could not upload ride at this time. Please try again later. (ER001)", "Okay");
-                        return;
-                    }
-
-                    var response = await rawResponse.Content.ReadFromJsonAsync<SubmitRideResponse>();
-                    if (response == null)
-                    {
-                        await PopupNavigation.Instance.PopAsync();
-                        await DisplayAlert("Error", "Could not upload ride at this time. Please try again later. (ER002)", "Okay");
-                        return;
-                    }
-
-                    using (var fileStream = File.OpenRead(tempFilename))
-                    {
-                        /*
-                        using (var customProgressableStreamContent = new CustomProgressableStreamContent(fileStream, progress))
-
-                        var progress = new Progress<double>(percent =>
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Upload progress: {percent}");
-                        });
-                        */
-
-                        using (var streamContent = new StreamContent(fileStream))
-                        {
-                            streamContent.Headers.ContentType = new MediaTypeHeaderValue("binary/octet-stream");
-                            var request = new HttpRequestMessage(HttpMethod.Put, response.UploadUrl) { Content = streamContent };
-                            var putResponse = await httpClient.SendAsync(request, cancellationTokenSource.Token);
-
-                            await PopupNavigation.Instance.PopAsync();
-
-                            if (putResponse.IsSuccessStatusCode == false)
-                            {
-                                await DisplayAlert("Error", "Could not upload ride at this time. Please try again later. (ER004)", "Okay");
-                                return;
-                            }
-
-
-                            await DisplayAlert("Success", "Thanks for submitting your ride.", "Okay");
-                            await Navigation.PopModalAsync();
-                        }
-                    }
-                }
-                catch (Exception) when (cancellationTokenSource.IsCancellationRequested)
+                var rawResponse = await httpClient.PostAsJsonAsync<SubmitRideRequest>($"https://{App.OWCEApiServer}/v1/ride/submit", submitRideRequest, cancellationTokenSource.Token);
+                if (rawResponse.IsSuccessStatusCode == false)
                 {
                     await PopupNavigation.Instance.PopAsync();
+                    await DisplayAlert("Error", "Could not upload ride at this time. Please try again later. (ER001)", "Okay");
+                    return;
                 }
-                catch (Exception err)
+
+                var response = await rawResponse.Content.ReadFromJsonAsync<SubmitRideResponse>();
+                if (response == null)
                 {
                     await PopupNavigation.Instance.PopAsync();
-                    await DisplayAlert("Error", "Could not upload ride at this time. Please try again later. (ER003)", "Okay");
-                    System.Diagnostics.Debug.WriteLine($"SubmitRide Error: {err.Message}");
+                    await DisplayAlert("Error", "Could not upload ride at this time. Please try again later. (ER002)", "Okay");
+                    return;
                 }
+
+                using var fileStream = File.OpenRead(tempFilename);
+                /*
+                using (var customProgressableStreamContent = new CustomProgressableStreamContent(fileStream, progress))
+
+                var progress = new Progress<double>(percent =>
+                {
+                    System.Diagnostics.Debug.WriteLine($"Upload progress: {percent}");
+                });
+                */
+
+                using var streamContent = new StreamContent(fileStream);
+                streamContent.Headers.ContentType = new MediaTypeHeaderValue("binary/octet-stream");
+                var request = new HttpRequestMessage(HttpMethod.Put, response.UploadUrl) { Content = streamContent };
+                var putResponse = await httpClient.SendAsync(request, cancellationTokenSource.Token);
+
+                await PopupNavigation.Instance.PopAsync();
+
+                if (putResponse.IsSuccessStatusCode == false)
+                {
+                    await DisplayAlert("Error", "Could not upload ride at this time. Please try again later. (ER004)", "Okay");
+                    return;
+                }
+
+
+                await DisplayAlert("Success", "Thanks for submitting your ride.", "Okay");
+                await Navigation.PopModalAsync();
+            }
+            catch (Exception) when (cancellationTokenSource.IsCancellationRequested)
+            {
+                await PopupNavigation.Instance.PopAsync();
+            }
+            catch (Exception err)
+            {
+                await PopupNavigation.Instance.PopAsync();
+                await DisplayAlert("Error", "Could not upload ride at this time. Please try again later. (ER003)", "Okay");
+                System.Diagnostics.Debug.WriteLine($"SubmitRide Error: {err.Message}");
             }
         }
 
@@ -225,34 +219,28 @@ namespace OWCE.Pages
                     };
 
 
-                    using (var inputFile = new FileStream(originalData, FileMode.Open, FileAccess.Read))
+                    using var inputFile = new FileStream(originalData, FileMode.Open, FileAccess.Read);
+                    using var outputFile = new FileStream(outputData, FileMode.Create);
+                    var events = 0;
+                    do
                     {
-                        using (var outputFile = new FileStream(outputData, FileMode.Create))
+                        if (cancellationTokenSource.IsCancellationRequested)
                         {
-                            var events = 0;
-                            do
-                            {
-                                if (cancellationTokenSource.IsCancellationRequested)
-                                {
-                                    return false;
-                                }
-
-                                var currentEvent = OWBoardEvent.Parser.ParseDelimitedFrom(inputFile);
-                                if (privateUUIDs.Contains(currentEvent.Uuid))
-                                {
-                                    // If private data, zero it out.
-                                    currentEvent.Data = ByteString.CopyFrom(new byte[currentEvent.Data.Length]);
-                                }
-                                currentEvent.WriteDelimitedTo(outputFile);
-                                ++events;
-                            }
-                            while (inputFile.Position < inputFile.Length);
-
-                            return true;
+                            return false;
                         }
+
+                        var currentEvent = OWBoardEvent.Parser.ParseDelimitedFrom(inputFile);
+                        if (privateUUIDs.Contains(currentEvent.Uuid))
+                        {
+                            // If private data, zero it out.
+                            currentEvent.Data = ByteString.CopyFrom(new byte[currentEvent.Data.Length]);
+                        }
+                        currentEvent.WriteDelimitedTo(outputFile);
+                        ++events;
                     }
+                    while (inputFile.Position < inputFile.Length);
 
-
+                    return true;
                 }
                 catch (Exception err)
                 {

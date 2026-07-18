@@ -18,7 +18,7 @@ namespace System
 
             return arr;
 
-            int GetHexVal(char hex)
+            static int GetHexVal(char hex)
             {
                 int val = (int)hex;
                 //For uppercase A-F letters:

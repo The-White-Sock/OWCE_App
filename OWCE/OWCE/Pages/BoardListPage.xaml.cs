@@ -45,7 +45,7 @@ namespace OWCE.Pages
 
 
         private Command _refreshCommand;
-        public Command RefreshCommand => _refreshCommand ?? (_refreshCommand = new Command(async () =>
+        public Command RefreshCommand => _refreshCommand ??= new Command(async () =>
         {
             MainRefreshView.IsRefreshing = false;
 
@@ -53,7 +53,7 @@ namespace OWCE.Pages
             {
                 await StartScanning();
             }
-        }));
+        });
 
         AsyncCommand<OWBaseBoard> _boardSelectedCommand;
         public AsyncCommand<OWBaseBoard> BoardSelectedCommand => _boardSelectedCommand ??= new AsyncCommand<OWBaseBoard>(BoardSelectedAsync, allowsMultipleExecutions: false);
@@ -100,8 +100,8 @@ namespace OWCE.Pages
                     new ColumnDefinition() { Width = new GridLength(26, GridUnitType.Absolute) },
                 },
                 ColumnSpacing = 18,
+                BindingContext = App.Current.OWBLE,
             };
-            _scanningView.BindingContext = App.Current.OWBLE;
             _scanningView.SetBinding(Grid.IsVisibleProperty, "IsScanning");
 
             var scanningLabel = new Label()
@@ -131,8 +131,7 @@ namespace OWCE.Pages
             _scanningView.Children.Add(scanningLabel);
             _scanningView.Children.Add(scanningActivityIndicator);
 
-            var scanningToolbarItem = new CustomToolbarItem();
-            scanningToolbarItem.Content = _scanningView;
+            var scanningToolbarItem = new CustomToolbarItem() { Content = _scanningView };
             CustomToolbarItems.Add(scanningToolbarItem);
 
             var sideMenuItem = new CustomToolbarItem()
@@ -217,7 +216,7 @@ namespace OWCE.Pages
                     {
                         alert.Disappearing += (sender, e) =>
                         {
-                            var bluetoothPleaseAlert = new Popup.Alert("Bluetooth, please", "OWCE and your Onewheel use Bluetooth to communicate. We need your permission to connect.", new Command(async (object parameter) =>
+                            var bluetoothPleaseAlert = new Popup.Alert("Bluetooth, please", "OWCE and your Onewheel use Bluetooth to communicate. We need your permission to connect.", new Command(async (parameter) =>
                             {
                                 if (parameter is Popup.Alert alertPage)
                                 {

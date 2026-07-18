@@ -74,8 +74,8 @@ namespace OWCE.Views
                 grid.RowDefinitions.Clear();
                 grid.ColumnDefinitions.Clear();
 
-                int columns = 0;
-                int rows = 0;
+                int columns;
+                int rows;
                 if (batteryCells.CellCount == 15)
                 {
                     rows = 3;
@@ -114,8 +114,6 @@ namespace OWCE.Views
                 var voltageRange = maxVoltage - minVoltage; //1.4f
                 var voltagePerIndex = voltageRange / batteryCells.CellCount;
                 */
-                var color = Color.Magenta;
-
                 for (var row = 0; row < rows; ++row)
                 {
                     for (var column = 0; column < columns; ++column)
@@ -157,7 +155,7 @@ namespace OWCE.Views
                 var labelSpan = e.PropertyName.AsSpan();
 
                 // 11 = "BatteryCell".Length
-                var cellIDSpan = labelSpan.Slice(11);
+                var cellIDSpan = labelSpan[11..];
 
                 if (UInt32.TryParse(cellIDSpan, out uint cellID))
                 {

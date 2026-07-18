@@ -73,11 +73,6 @@ namespace OWCE.Views
         protected override void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             base.OnPropertyChanged(propertyName);
-
-            if (propertyName == BindingContextProperty.PropertyName)
-            {
-                var bindingContext = BindingContext;
-            }
         }
 
         void ExpanderView_PropertyChanged(System.Object sender, System.ComponentModel.PropertyChangedEventArgs e)
