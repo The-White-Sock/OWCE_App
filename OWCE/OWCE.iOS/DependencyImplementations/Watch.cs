@@ -32,7 +32,7 @@ namespace OWCE.iOS.DependencyImplementations
 
         public void DidReceiveMessage(WCSession session, Dictionary<WatchMessage, object> message)
         {
-            WatchSyncEventHandler.HandleWatchMessage(message, _board);
+            WatchSyncHandler.HandleWatchMessage(message, _board);
         }
     }
 }
