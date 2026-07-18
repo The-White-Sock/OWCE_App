@@ -94,6 +94,15 @@ jobs:
           dotnet format whitespace OWCE/OWCE/OWCE.csproj --verify-no-changes
           dotnet format style OWCE/OWCE/OWCE.csproj --verify-no-changes
 
+      # SCRATCH DIAGNOSTIC - not for merge. Enumerates IDE-severity style
+      # findings (below the "warning" threshold the step above checks) to
+      # scope issue #27's remaining IDE-suggestion bucket. continue-on-error
+      # so it doesn't fail the job; output is what we actually want.
+      - name: Scratch - enumerate IDE-severity findings
+        continue-on-error: true
+        run: |
+          dotnet format style OWCE/OWCE/OWCE.csproj --severity info --verify-no-changes --verbosity diagnostic
+
   test-core:
     name: Test core library
     runs-on: ubuntu-latest
