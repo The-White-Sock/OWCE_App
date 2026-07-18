@@ -251,7 +251,7 @@ namespace OWCE.Pages
         }
 
 
-        void ImperialSwitch_IsToggledChanged(object sender, bool isToggled)
+        static void ImperialSwitch_IsToggledChanged(object sender, bool isToggled)
         {
             App.Current.MetricDisplay = !isToggled;
             Preferences.Set("metric_display", !isToggled);
