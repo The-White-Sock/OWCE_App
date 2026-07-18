@@ -56,7 +56,7 @@ namespace OWCE.Pages
         }
 
 
-        async Task OpenUrlAsync(string url)
+        static async Task OpenUrlAsync(string url)
         {
             // Try launch browser, but if we can't launch internal browser.
             if (await Launcher.TryOpenAsync(url) == false)

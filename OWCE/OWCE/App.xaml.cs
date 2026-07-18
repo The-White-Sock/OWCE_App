@@ -168,7 +168,7 @@ namespace OWCE
             return null;
         }
 
-        internal void DisconnectFromBoard()
+        internal static void DisconnectFromBoard()
         {
             /*
             OWBLE.Disconnect();

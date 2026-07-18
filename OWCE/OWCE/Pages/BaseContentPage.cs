@@ -259,7 +259,7 @@ namespace OWCE.Pages
             }
         }
 
-        void RemoveToolbarItem(CustomToolbarItem oldItem)
+        static void RemoveToolbarItem(CustomToolbarItem oldItem)
         {
             if (oldItem.Parent is StackLayout stackLayout)
             {

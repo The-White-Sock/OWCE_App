@@ -245,7 +245,7 @@ namespace OWCE.Pages
             }
         }
 
-        private async Task StartScanning()
+        private static async Task StartScanning()
         {
             if (App.Current.OWBLE.IsScanning)
                 return;
@@ -274,7 +274,7 @@ namespace OWCE.Pages
             }
         }
 
-        private void StopScanning()
+        private static void StopScanning()
         {
             App.Current.OWBLE.StopScanning();
         }

@@ -1194,7 +1194,7 @@ namespace OWCE
         }
 
 
-        private byte[] GetBytesForBoardFromUInt16(UInt16 value, string uuidHint = null)
+        private static byte[] GetBytesForBoardFromUInt16(UInt16 value, string uuidHint = null)
         {
             if (uuidHint == null)
             {

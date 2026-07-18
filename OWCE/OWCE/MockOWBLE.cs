@@ -113,7 +113,7 @@ namespace OWCE
         }
 
 
-        public bool BluetoothEnabled()
+        public static bool BluetoothEnabled()
         {
             return true;
         }
