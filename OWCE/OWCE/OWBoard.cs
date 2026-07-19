@@ -1360,9 +1360,17 @@ namespace OWCE
             // everything else handled below) - if it turns out not to be 2 bytes, that
             // check would otherwise silently discard it before the switch further down
             // ever sees it, making it look like the value is just always zero.
+            //
+            // Console.WriteLine, not Debug.WriteLine: OWCE.Android.csproj's Release
+            // config (what release-android.yml actually builds and signs) defines
+            // neither DEBUG nor TRACE in DefineConstants, only Debug config does - so
+            // Debug.WriteLine/Trace.WriteLine (both [Conditional] on those symbols) get
+            // silently compiled out of the exact APK that ends up installed. Console
+            // output isn't conditional and Xamarin.Android always redirects it to
+            // logcat, so this is the one that actually needs to survive here.
             if (uuid == UNKNOWN1UUID || uuid == UNKNOWN2UUID || uuid == UNKNOWN3UUID || uuid == UNKNOWN4UUID)
             {
-                Debug.WriteLine($"[#38] {GetNameFromUUID(uuid)}: {BitConverter.ToString(data)}");
+                Console.WriteLine($"[#38] {GetNameFromUUID(uuid)}: {BitConverter.ToString(data)}");
             }
 
             if (initialData)
