@@ -45,6 +45,9 @@ Run the tests locally with `dotnet test OWCE/OWCE.Tests/OWCE.Tests.csproj`.
 
 [.github/workflows/release-android.yml](.github/workflows/release-android.yml) builds a signed, sideload-ready Android release APK and attaches it to a new GitHub Release. It does **not** publish to Google Play - there's no Play Store distribution set up for this project, this is for direct/manual distribution only. There's no equivalent release automation for iOS/macOS/WatchOS, for the same toolchain reasons CI doesn't cover them.
 
+See [VERSIONING.md](VERSIONING.md) for how version numbers are chosen, including
+when a release can drop its `-test` pre-release suffix or become `1.0.0`.
+
 To cut a release, either:
 
 * **From the command line:**
