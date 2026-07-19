@@ -203,19 +203,13 @@ namespace OWCE.Pages
                 return;
             }
 
-            if (Board.NativePeripheral == null)
-            {
-                // This board was opened from its cached snapshot (see
-                // BoardListPage.BoardSelectedAsync) without ever being rediscovered
-                // over BLE this session, so there's no native handle yet to connect
-                // to. OWBLE.Connect() only wires up its give-up timer and the
-                // cancellation callback inside its own "is this actually a native
-                // peripheral" check (OWBLE.cs ~line 1050) - calling it here would
-                // return a Task that never resolves and can't even be cancelled.
-                await DisplayAlert("Not in range", $"{Board.Name} hasn't been seen since it was last connected. Make sure it's powered on and nearby, then go back to the board list and try again - it'll reconnect normally once rediscovered.", "Okay");
-                return;
-            }
-
+            // A board opened from its cached snapshot (see
+            // BoardListPage.BoardSelectedAsync) was never rediscovered over BLE
+            // this session, so NativePeripheral is still null here - OWBLE.Connect()
+            // now resolves a native device directly from Board.ID (the BLE MAC
+            // address on Android 5.0+) in that case instead of requiring a fresh
+            // scan, and resolves immediately (rather than hanging) if that also
+            // fails, so this can just attempt the connect unconditionally.
             var cancellationTokenSource = new CancellationTokenSource();
             var connectingAlert = new ConnectingAlert(Board.Name, new Command(() =>
             {
@@ -306,6 +300,15 @@ namespace OWCE.Pages
 
         async void Disconnect_Tapped(System.Object sender, System.EventArgs e)
         {
+            if (Board.IsDisconnected)
+            {
+                // Already showing cached/last-known data, not a live connection -
+                // there's nothing to lose by leaving, so don't make the rider
+                // confirm an action that isn't actually disconnecting anything.
+                await DisconnectAndPop();
+                return;
+            }
+
             string result = await DisplayActionSheet("Are you sure you want to disconnect?", "Cancel", "Disconnect");
 
             if (result == "Disconnect")
