@@ -23,6 +23,9 @@ name: Release Android APK
 # Runner/toolchain choices here mirror build.yml - see that file's comments for why
 # windows-2022 (not windows-latest) and a manually-installed JDK 11 are required, and
 # why Restore and Build run as separate msbuild invocations.
+#
+# See VERSIONING.md for how to choose the version number itself (SemVer, what
+# the -test suffix means, when to drop it, when to tag 1.0.0).
 
 on:
   push:
@@ -31,7 +34,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version name to release, eg 1.2.3 (creates tag v1.2.3)'
+        description: 'Version to release - SemVer, no leading v (eg 1.2.3 or 1.2.3-test; creates tag v1.2.3). See VERSIONING.md.'
         required: true
 
 permissions:
@@ -65,11 +68,33 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             VERSION_NAME="${{ inputs.version }}"
-            TAG_NAME="v${{ inputs.version }}"
+
+            # The most common mistake here: typing "v1.2.3" (with the leading v)
+            # into the workflow_dispatch input produces the tag "vv1.2.3", since
+            # the "v" prefix below is always added on top. This has actually
+            # happened in this repo's own tag history (vv0.0.2-test..vv0.0.5-test).
+            # Fail fast instead of quietly creating another malformed tag/release.
+            if [[ "$VERSION_NAME" == v* ]]; then
+              echo "::error::Version input '$VERSION_NAME' starts with 'v' - enter just the version number (eg '1.2.3'), not the tag name. This workflow adds the 'v' prefix itself; including it here produces a broken 'vv1.2.3' tag."
+              exit 1
+            fi
+
+            TAG_NAME="v${VERSION_NAME}"
           else
             TAG_NAME="${{ github.ref_name }}"
             VERSION_NAME="${TAG_NAME#v}"
           fi
+
+          # Enforce SemVer 2.0.0 (see VERSIONING.md): MAJOR.MINOR.PATCH with an
+          # optional -prerelease suffix (eg "1.2.3" or "1.2.3-test"/"1.2.3-rc.1").
+          # Catches typos (missing a segment, stray characters) before they reach
+          # a signed build, a git tag, or a published GitHub Release.
+          SEMVER_PATTERN='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'
+          if ! [[ "$VERSION_NAME" =~ $SEMVER_PATTERN ]]; then
+            echo "::error::Version '$VERSION_NAME' isn't valid SemVer (MAJOR.MINOR.PATCH, eg '1.2.3' or '1.2.3-test'). See VERSIONING.md."
+            exit 1
+          fi
+
           # Android requires a strictly increasing integer versionCode between
           # releases for updates to install cleanly over an existing sideload -
           # the workflow run number is a simple, always-increasing source for that.

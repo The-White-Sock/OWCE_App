@@ -55,3 +55,7 @@ how to cut a signed release APK. Release notes are auto-generated and
 grouped using the categories in `.github/release.yml` - label PRs
 accordingly (`bug`, `enhancement`, `dependencies`) if you want them grouped
 correctly.
+
+See `VERSIONING.md` for how version numbers are chosen - what MAJOR/MINOR/PATCH
+mean here, what the `-test` pre-release suffix signals, and the checklist for
+when a release can drop `-test` or become `1.0.0`.
