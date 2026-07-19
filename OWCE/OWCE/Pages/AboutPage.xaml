@@ -6,13 +6,7 @@
     xmlns:xcte="clr-namespace:Xamarin.CommunityToolkit.Effects;assembly=Xamarin.CommunityToolkit"
     x:Class="OWCE.Pages.AboutPage"
     x:DataType="pages:AboutPage"
-    Title="About"
-    BackgroundColor="White">
-    <pages:BaseContentPage.Resources>
-        <Style TargetType="Label">
-            <Setter Property="TextColor" Value="Black" />
-        </Style>
-    </pages:BaseContentPage.Resources>
+    Title="About">
 
     <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
         <Label Grid.Row="0" Text="This is a third party app made by the community, for the community. Its aim is to bring additional safety features &amp; better data reporting to its users." />

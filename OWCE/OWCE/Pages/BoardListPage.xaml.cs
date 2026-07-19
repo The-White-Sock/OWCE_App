@@ -107,7 +107,7 @@ namespace OWCE.Pages
             var scanningLabel = new Label()
             {
                 Text = "Scanning...",
-                TextColor = Color.Black,
+                TextColor = ThemeHelper.Pick(Color.Black, Color.White),
                 FontFamily = "SairaExtraCondensed-SemiBold",
                 FontSize = 24,
                 VerticalOptions = LayoutOptions.Center,
@@ -118,7 +118,7 @@ namespace OWCE.Pages
             {
                 WidthRequest = 26,
                 HeightRequest = 26,
-                Color = Color.Black,
+                Color = ThemeHelper.Pick(Color.Black, Color.White),
                 IsRunning = true,
                 VerticalOptions = LayoutOptions.Center,
                 HorizontalOptions = LayoutOptions.End,

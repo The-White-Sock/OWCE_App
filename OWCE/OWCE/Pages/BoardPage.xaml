@@ -22,16 +22,16 @@
             <DataTemplate x:Key="SideMenu" x:DataType="pages:BoardPage">
                
 
-                <Grid BackgroundColor="White" ColumnSpacing="0" RowSpacing="8" VerticalOptions="FillAndExpand" RowDefinitions="Auto,1,Auto,1,*,Auto">
-                    
+                <Grid BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource darkBackgroundColor}}" ColumnSpacing="0" RowSpacing="8" VerticalOptions="FillAndExpand" RowDefinitions="Auto,1,Auto,1,*,Auto">
+
                     <Grid Grid.Row="0" RowDefinitions="Auto" ColumnDefinitions="60,*" ColumnSpacing="0" IsVisible="{Binding Board.IsRecordingRide, Converter={StaticResource InvertedBoolConverter}}" IsEnabled="{Binding Board.IsDisconnected, Converter={StaticResource InvertedBoolConverter}}" xcte:TouchEffect.NativeAnimation="True" xcte:TouchEffect.Command="{Binding StartRecordRideCommand}">
                         <Image Grid.Row="0" Grid.Column="0" Source="settings_start_recording" WidthRequest="24" HeightRequest="24" HorizontalOptions="Center" />
-                        <Label Grid.Row="0" Grid.Column="1" Text="Record ride" TextColor="Black" FontSize="18"/>
+                        <Label Grid.Row="0" Grid.Column="1" Text="Record ride" FontSize="18"/>
                     </Grid>
 
                     <Grid Grid.Row="0" RowDefinitions="Auto" ColumnDefinitions="60,*" ColumnSpacing="0" IsVisible="{Binding Board.IsRecordingRide}" IsEnabled="{Binding Board.IsDisconnected, Converter={StaticResource InvertedBoolConverter}}" xcte:TouchEffect.NativeAnimation="True" xcte:TouchEffect.Command="{Binding StopRecordRideCommand}">
                         <Image Grid.Row="0" Grid.Column="0" Source="settings_stop_recording" WidthRequest="24" HeightRequest="24" HorizontalOptions="Center" />
-                        <Label Grid.Row="0" Grid.Column="1" Text="Stop recording ride" TextColor="Black" FontSize="18"/>
+                        <Label Grid.Row="0" Grid.Column="1" Text="Stop recording ride" FontSize="18"/>
                     </Grid>
 
                     <!--
@@ -61,7 +61,7 @@
                     <Grid Grid.Row="4" VerticalOptions="End" RowDefinitions="Auto" ColumnSpacing="0" ColumnDefinitions="60,*">
 
                         <Image Grid.Row="0" Grid.Column="0" Source="settings_disconnect" WidthRequest="24" HeightRequest="24" HorizontalOptions="Center" />
-                        <Label Grid.Row="0" Grid.Column="1" Text="Disconnect from board" TextColor="Black" FontSize="18">
+                        <Label Grid.Row="0" Grid.Column="1" Text="Disconnect from board" FontSize="18">
                             <Label.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="Disconnect_Tapped" />
                             </Label.GestureRecognizers>
@@ -98,8 +98,8 @@
     <Grid>
         <Grid.Background>
             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="{StaticResource BackgroundGradientStart}" Offset="0"/>
-                <GradientStop Color="{StaticResource BackgroundGradientEnd}" Offset="1"/>
+                <GradientStop Color="{AppThemeBinding Light={StaticResource BackgroundGradientStart}, Dark={StaticResource darkBackgroundColor}}" Offset="0"/>
+                <GradientStop Color="{AppThemeBinding Light={StaticResource BackgroundGradientEnd}, Dark={StaticResource lightBackgroundColor}}" Offset="1"/>
             </LinearGradientBrush>
         </Grid.Background>
 

@@ -18,14 +18,14 @@
     <ScrollView>
         <Grid Padding="16" RowDefinitions="Auto,Auto,Auto,*" ColumnDefinitions="*,Auto" RowSpacing="16">
 
-            <Label Grid.Row="0" Grid.Column="0" VerticalOptions="Center" TextColor="Black" Text="Imperial units (mph, °F)" />
+            <Label Grid.Row="0" Grid.Column="0" VerticalOptions="Center" Text="Imperial units (mph, °F)" />
             <Switch Grid.Row="0" Grid.Column="1" HorizontalOptions="End" IsToggled="{Binding MetricDisplay, Converter={StaticResource InvertedBoolConverter}}" />
-             
-            <Label Grid.Row="1" Grid.Column="0" VerticalOptions="Center" TextColor="Black" Text="Auto ride recording" />
+
+            <Label Grid.Row="1" Grid.Column="0" VerticalOptions="Center" Text="Auto ride recording" />
             <Switch Grid.Row="1" Grid.Column="1" HorizontalOptions="End" IsToggled="{Binding AutoRideRecording}" />
-                        
-            <Label Grid.Row="2" Grid.Column="0" VerticalOptions="Center" TextColor="Black" Text="Theme" />
-            <Label Grid.Row="2" Grid.Column="1" VerticalOptions="Center" HorizontalOptions="End" TextColor="DarkGray" Text="Coming Soon" />
+
+            <Label Grid.Row="2" Grid.Column="0" VerticalOptions="Center" Text="Theme" />
+            <Picker Grid.Row="2" Grid.Column="1" VerticalOptions="Center" HorizontalOptions="End" WidthRequest="160" ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedThemeOption}" />
 
         </Grid>
 

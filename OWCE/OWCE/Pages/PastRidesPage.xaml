@@ -22,8 +22,8 @@
                     </SwipeView.RightItems>
 
                     
-                    <Grid BackgroundColor="White" RowDefinitions="Auto,Auto,1" xcte:TouchEffect.NativeAnimation="true" xcte:TouchEffect.Command="{Binding Source={RelativeSource AncestorType={x:Type pages:BaseContentPage}}, Path=RideSelectedCommand}" xcte:TouchEffect.CommandParameter="{Binding .}">
-                        <Label Grid.Row="0" Text="{Binding Name}" Padding="8,8,8,0" FontSize="22" FontAttributes="Bold" TextColor="Black" />
+                    <Grid BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource darkBackgroundColor}}" RowDefinitions="Auto,Auto,1" xcte:TouchEffect.NativeAnimation="true" xcte:TouchEffect.Command="{Binding Source={RelativeSource AncestorType={x:Type pages:BaseContentPage}}, Path=RideSelectedCommand}" xcte:TouchEffect.CommandParameter="{Binding .}">
+                        <Label Grid.Row="0" Text="{Binding Name}" Padding="8,8,8,0" FontSize="22" FontAttributes="Bold" />
                         <Label Grid.Row="1" Text="{Binding StartTime}" Padding="8,0,0,8" FontSize="16" TextColor="DarkGray" />
                         <BoxView Grid.Row="2" BackgroundColor="LightGray" />
                     </Grid>
@@ -35,7 +35,7 @@
         <CollectionView.EmptyViewTemplate>
             <DataTemplate>
                 <Grid HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-                    <Label Text="No past rides found" HorizontalOptions="Center" VerticalOptions="Center" TextColor="Black" />
+                    <Label Text="No past rides found" HorizontalOptions="Center" VerticalOptions="Center" />
                 </Grid>
             </DataTemplate>
         </CollectionView.EmptyViewTemplate>
