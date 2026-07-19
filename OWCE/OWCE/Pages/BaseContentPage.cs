@@ -157,13 +157,13 @@ namespace OWCE.Pages
         protected override void OnAppearing()
         {
             base.OnAppearing();
-            Application.Current.RequestedThemeChanged += OnRequestedThemeChanged;
+            Xamarin.Forms.Application.Current.RequestedThemeChanged += OnRequestedThemeChanged;
         }
 
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
-            Application.Current.RequestedThemeChanged -= OnRequestedThemeChanged;
+            Xamarin.Forms.Application.Current.RequestedThemeChanged -= OnRequestedThemeChanged;
         }
 
 
