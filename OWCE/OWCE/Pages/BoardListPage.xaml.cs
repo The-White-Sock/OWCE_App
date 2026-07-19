@@ -458,6 +458,23 @@ namespace OWCE.Pages
                 }
                 */
             }
+            else if (baseBoard.HasCachedData)
+            {
+                // Not currently reachable, but we have a last-known snapshot (see
+                // #34) - open BoardPage straight into its disconnected/cached view
+                // (ApplyCachedSnapshot) instead of a dead-end "not available" error.
+                // Can't attempt a real connect here even if the board is actually
+                // back in range: NativePeripheral (the native BLE handle) is only
+                // ever set by OWBLE_BoardDiscovered rediscovering it, which hasn't
+                // happened yet for a board loaded purely from CachedBoardData.
+                CachedBoardData cachedData = Database.Connection.Find<CachedBoardData>(baseBoard.ID);
+                if (cachedData != null)
+                {
+                    var board = new OWBoard(App.Current.OWBLE, baseBoard);
+                    board.ApplyCachedSnapshot(cachedData);
+                    await Navigation.PushModalAsync(new CustomNavigationPage(new BoardPage(board)));
+                }
+            }
             else
             {
                 var alert = new Pages.Popup.Alert("Error", $"{baseBoard.Name} is not available.");

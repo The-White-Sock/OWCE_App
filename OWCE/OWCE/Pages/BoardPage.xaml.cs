@@ -57,9 +57,19 @@ namespace OWCE.Pages
             // TODO: Fix ImperialSwitch.IsToggled = !App.Current.MetricDisplay;
 
 
-            Board.Init();
-            // I really don't like this.
-            _ = Board.SubscribeToBLE();
+            // Skip Init()/SubscribeToBLE() when opened straight from a cached
+            // snapshot (BoardListPage.BoardSelectedAsync, board.IsDisconnected
+            // already true at this point) - there's no live connection to record
+            // from or subscribe to, and SubscribeToBLE() unconditionally starts an
+            // RSSI-polling timer (RSSIMonitor(), its NativePeripheral-null guard is
+            // #if DEBUG only) that would otherwise spin forever against a board
+            // that was never connected this session at all.
+            if (Board.IsDisconnected == false)
+            {
+                Board.Init();
+                // I really don't like this.
+                _ = Board.SubscribeToBLE();
+            }
 
             App.Current.OWBLE.BoardDisconnected += OWBLE_BoardDisconnected;
             App.Current.OWBLE.BoardReconnecting += OWBLE_BoardReconnecting;
@@ -190,6 +200,19 @@ namespace OWCE.Pages
         {
             if (Board.IsDisconnected == false)
             {
+                return;
+            }
+
+            if (Board.NativePeripheral == null)
+            {
+                // This board was opened from its cached snapshot (see
+                // BoardListPage.BoardSelectedAsync) without ever being rediscovered
+                // over BLE this session, so there's no native handle yet to connect
+                // to. OWBLE.Connect() only wires up its give-up timer and the
+                // cancellation callback inside its own "is this actually a native
+                // peripheral" check (OWBLE.cs ~line 1050) - calling it here would
+                // return a Task that never resolves and can't even be cancelled.
+                await DisplayAlert("Not in range", $"{Board.Name} hasn't been seen since it was last connected. Make sure it's powered on and nearby, then go back to the board list and try again - it'll reconnect normally once rediscovered.", "Okay");
                 return;
             }
 

@@ -8,6 +8,7 @@
     x:Class="OWCE.Pages.BoardPage"
     xmlns:xctc="clr-namespace:Xamarin.CommunityToolkit.Converters;assembly=Xamarin.CommunityToolkit"
     xmlns:xcte="clr-namespace:Xamarin.CommunityToolkit.Effects;assembly=Xamarin.CommunityToolkit"
+    xmlns:yummy="clr-namespace:Xamarin.Forms.PancakeView;assembly=Xamarin.Forms.PancakeView"
     x:Name="ThisPage"
     Title="{Binding Name}">
 
@@ -105,14 +106,25 @@
         <ScrollView>
             <StackLayout Spacing="16" Margin="0,16,0,0">
 
-                <!-- Shown only once OWBLE's reconnect watchdog has given up (see
-                     BoardPage.EnterDisconnectedState) - the rider stays on this page
-                     seeing the values below (dimmed, frozen at their last live
-                     reading) instead of being exited back to the board list. -->
-                <Grid Padding="20,10" Margin="16,0" BackgroundColor="#333333" ColumnDefinitions="*,Auto" ColumnSpacing="12" IsVisible="{Binding IsDisconnected}">
-                    <Label Grid.Column="0" Text="{Binding DisconnectedText}" TextColor="White" FontSize="14" VerticalOptions="Center" LineBreakMode="WordWrap" />
-                    <Button Grid.Column="1" Text="Reconnect" VerticalOptions="Center" Command="{Binding Source={x:Reference ThisPage}, Path=ReconnectCommand}" />
-                </Grid>
+                <!-- Shown once OWBLE's reconnect watchdog has given up (see
+                     BoardPage.EnterDisconnectedState), or when a board is opened
+                     straight from its cached card on the board list
+                     (BoardListPage.BoardSelectedAsync) - the rider stays on this
+                     page seeing the values below (dimmed, frozen at their last
+                     known reading) instead of being exited back to the board list
+                     or a dead-end error. Styled like the app's popups (BrightYellow
+                     PancakeView, SairaExtraCondensed, RoundButtonStyle) rather than
+                     as an ad-hoc banner. -->
+                <yummy:PancakeView Margin="16,0" CornerRadius="11" BackgroundColor="{StaticResource BrightYellow}" IsVisible="{Binding IsDisconnected}">
+                    <yummy:PancakeView.Shadow>
+                        <yummy:DropShadow Color="Black" Opacity="0.14" Offset="0,1" BlurRadius="5" />
+                    </yummy:PancakeView.Shadow>
+                    <Grid Padding="20,16" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" ColumnSpacing="12" RowSpacing="4">
+                        <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="Disconnected" FontFamily="SairaExtraCondensed-Black" FontSize="22" TextColor="Black" CharacterSpacing="0.29" />
+                        <Label Grid.Row="1" Grid.Column="0" Text="{Binding DisconnectedText}" FontFamily="SairaExtraCondensed-SemiBold" FontSize="14" TextColor="Black" VerticalOptions="Center" LineBreakMode="WordWrap" />
+                        <Button Grid.Row="1" Grid.Column="1" Text="Reconnect" Style="{StaticResource RoundButtonStyle}" WidthRequest="112" VerticalOptions="Center" Command="{Binding Source={x:Reference ThisPage}, Path=ReconnectCommand}" />
+                    </Grid>
+                </yummy:PancakeView>
 
                 <StackLayout Spacing="16" Opacity="{Binding IsConnected, Converter={StaticResource boardIsAvailableOpacityConverter}}">
                     <views:SpeedRangeDistanceView x:Name="SpeedRangeDistanceView" HeightRequest="180" RPM="{Binding RPM}" WheelCircumference="{Binding WheelCircumference}" LifetimeOdometer="{Binding LifetimeOdometer}" TripOdometer="{Binding TripOdometer}" />
