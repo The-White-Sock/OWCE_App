@@ -602,6 +602,8 @@ namespace OWCE
             }
         }
 
+        // Body text for BoardPage's disconnected-state banner - the "Disconnected"
+        // headline itself is a static label there, not part of this string.
         public string DisconnectedText
         {
             get
@@ -611,7 +613,7 @@ namespace OWCE
                     return String.Empty;
                 }
 
-                return $"Disconnected - showing last known values, synced {FormatElapsedSince(DisconnectedAt.Value)}";
+                return $"Showing last known values, synced {FormatElapsedSince(DisconnectedAt.Value)}";
             }
         }
 
@@ -626,6 +628,14 @@ namespace OWCE
         bool _isHandshaking;
         TaskCompletionSource<byte[]> _handshakeTaskCompletionSource;
         bool _isTornDown;
+
+        // True once this board has actually been connected to real hardware this
+        // session (set at the top of SubscribeToBLE(), which only ever runs right
+        // after a successful OWBLE connect) - guards SaveCachedData() from
+        // overwriting a good previous snapshot with this board's still-default
+        // fields when it was only ever opened from that snapshot and never really
+        // connected (see BoardListPage.BoardSelectedAsync's cached-board branch).
+        bool _hasLiveData;
 
         public OWBoard(IOWBLE owble, OWBaseBoard baseBoard) : base(baseBoard)
         {
@@ -698,6 +708,17 @@ namespace OWCE
         // reconnect) already funnels through.
         public void SaveCachedData()
         {
+            if (_hasLiveData == false)
+            {
+                // Opened straight from a previous cached snapshot (see
+                // BoardListPage.BoardSelectedAsync's ApplyCachedSnapshot) and never
+                // actually connected this session - RideModeString, LifetimeOdometer,
+                // etc. below are all still at their defaults, so saving now would
+                // silently overwrite the real cached values with blanks. Nothing
+                // changed, so there's nothing new to persist.
+                return;
+            }
+
             new CachedBoardData()
             {
                 BoardID = ID,
@@ -706,10 +727,29 @@ namespace OWCE
                 BatteryPercent = BatteryPercent,
                 RideModeString = RideModeString,
                 TripOdometerDescription = TripOdometerDescription,
+                TripOdometer = TripOdometer,
                 LifetimeOdometer = LifetimeOdometer,
                 LifetimeAmpHours = LifetimeAmpHours,
                 LastUpdated = DateTime.UtcNow,
             }.Save();
+        }
+
+        // Populates this OWBoard's live-facing properties from a last-known snapshot
+        // instead of an actual BLE connection - used when a board is opened straight
+        // from its cached card on the board list (BoardListPage.BoardSelectedAsync),
+        // which never establishes a real connection this session at all. Deliberately
+        // only sets what CachedBoardData actually has (BoardType drives
+        // WheelCircumference, BatteryPercent, and TripOdometer, which together make
+        // TripOdometerDescription correct) - everything else (RPM, temperatures, amp
+        // draw, serial/firmware, RSSI) has no cached equivalent and stays at its
+        // default, same as any other characteristic BoardPage hasn't read yet.
+        public void ApplyCachedSnapshot(CachedBoardData cachedData)
+        {
+            BoardType = cachedData.BoardType;
+            BatteryPercent = cachedData.BatteryPercent;
+            TripOdometer = cachedData.TripOdometer;
+            DisconnectedAt = cachedData.LastUpdated;
+            IsDisconnected = true;
         }
 
         public virtual void Init()
@@ -944,6 +984,7 @@ namespace OWCE
 
         internal async Task SubscribeToBLE()
         {
+            _hasLiveData = true;
 #if DEBUG
             if (NativePeripheral == null)
                 return;
