@@ -25,7 +25,7 @@
             <Switch Grid.Row="1" Grid.Column="1" HorizontalOptions="End" IsToggled="{Binding AutoRideRecording}" />
 
             <Label Grid.Row="2" Grid.Column="0" VerticalOptions="Center" Text="Theme" />
-            <Picker Grid.Row="2" Grid.Column="1" VerticalOptions="Center" HorizontalOptions="End" WidthRequest="160" ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedThemeOption}" />
+            <Picker Grid.Row="2" Grid.Column="1" VerticalOptions="Center" HorizontalOptions="End" WidthRequest="160" TextColor="{AppThemeBinding Light=Black, Dark=White}" TitleColor="{AppThemeBinding Light=Black, Dark=White}" ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedThemeOption}" />
 
         </Grid>
 
