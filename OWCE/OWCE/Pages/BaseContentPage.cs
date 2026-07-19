@@ -134,17 +134,30 @@ namespace OWCE.Pages
             Content = _mainGrid;
         }
 
-        // These two are built in C# rather than XAML, so they don't get the automatic
+        // These are built in C# rather than XAML, so they don't get the automatic
         // live theme-reactivity {AppThemeBinding ...} gives everything else (#35) -
         // refreshed explicitly on OnAppearing/OnDisappearing's subscription below,
         // since this same page instance can otherwise sit visible for a long time
         // (BoardListPage is the app's root page) while the rider changes the theme
         // from Settings in a separate modal.
+        //
+        // _mainGrid's own background matters here too, not just belt-and-suspenders:
+        // App.xaml's implicit Style TargetType="ContentPage" never actually applies to
+        // this class, since Xamarin.Forms implicit styles only match a resource's exact
+        // TargetType, not subclasses, without ApplyToDerivedTypes="True". Pages whose
+        // own content already paints a full-bleed background (BoardPage/BoardListPage's
+        // gradient Grid) hide that gap by accident; pages that don't (AppSettingsPage,
+        // SubmitRidePage, PastRidesPage, AboutPage) were left showing the platform's
+        // true default (light) page background under theme-aware dark-mode text.
         void UpdateThemedColors()
         {
+            Color darkBackground = (App.Current.Resources["darkBackgroundColor"] as Color?) ?? Color.Black;
+
+            _mainGrid.BackgroundColor = ThemeHelper.Pick(Color.White, darkBackground);
+
             _navBackgroundView.BackgroundColor = ThemeHelper.Pick(
                 (App.Current.Resources["BackgroundGradientStart"] as Color?) ?? Color.White,
-                (App.Current.Resources["darkBackgroundColor"] as Color?) ?? Color.Black);
+                darkBackground);
 
             _titleLabel.TextColor = ThemeHelper.Pick(Color.Black, Color.White);
         }
@@ -157,6 +170,13 @@ namespace OWCE.Pages
         protected override void OnAppearing()
         {
             base.OnAppearing();
+
+            // A page sitting behind a pushed modal (eg BoardPage behind AppSettingsPage)
+            // gets OnDisappearing'd - and unsubscribed - while the modal is up. If the
+            // theme changes while it's hidden, it misses RequestedThemeChanged entirely;
+            // re-subscribing on return only catches *future* changes, not the one that
+            // already happened. Refresh unconditionally so it can't come back stale.
+            UpdateThemedColors();
             Xamarin.Forms.Application.Current.RequestedThemeChanged += OnRequestedThemeChanged;
         }
 

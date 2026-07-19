@@ -29,13 +29,21 @@
                 <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark={StaticResource textColor}}" />
             </Style>
 
-            <Style TargetType="NavigationPage">
+            <!-- ApplyToDerivedTypes: without it, an implicit style only matches its exact
+                 TargetType, not subclasses - and virtually every page in this app is a
+                 BaseContentPage (or CustomNavigationPage), not a bare ContentPage/
+                 NavigationPage. BaseContentPage/CustomNavigationPage additionally set
+                 their own colors directly in code (see BaseContentPage.UpdateThemedColors)
+                 since that's the only mechanism guaranteed to run regardless of implicit-
+                 style cascade rules; these stay as a correct fallback for anything that
+                 isn't one of those two (eg BoardDetailsPage, ListLogsPage). -->
+            <Style TargetType="NavigationPage" ApplyToDerivedTypes="True">
                 <Setter Property="BarTextColor" Value="{AppThemeBinding Light=Black, Dark={StaticResource textColor}}" />
                 <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource BackgroundGradientStart}, Dark={StaticResource darkBackgroundColor}}" />
                 <Setter Property="BarBackgroundColor" Value="{AppThemeBinding Light={StaticResource BackgroundGradientStart}, Dark={StaticResource darkBackgroundColor}}" />
             </Style>
 
-            <Style TargetType="ContentPage">
+            <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
                 <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark={StaticResource darkBackgroundColor}}" />
             </Style>
             
