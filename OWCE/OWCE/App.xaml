@@ -15,27 +15,28 @@
             <Color x:Key="BackgroundGradientEnd">#EEEEEE</Color>
             <Color x:Key="BrightYellow">#ECEC00</Color>
             <Color x:Key="ButtonBoarder">#DBDBDF</Color>
-          
 
 
+            <!-- Dark theme (#35) - lightBackgroundColor/darkBackgroundColor/textColor
+                 were already defined but never wired up anywhere (an earlier, unfinished
+                 attempt at this same feature); reused here as the dark-theme equivalent
+                 of BackgroundGradientStart/End and the primary dark-theme text color. -->
             <Color x:Key="lightBackgroundColor">#23354d</Color>
             <Color x:Key="darkBackgroundColor">#1C2D41</Color>
             <Color x:Key="textColor">White</Color>
 
-            <!--
             <Style TargetType="Label">
-                <Setter Property="TextColor" Value="{DynamicResource textColor}" />
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark={StaticResource textColor}}" />
             </Style>
-            -->
 
             <Style TargetType="NavigationPage">
-                <Setter Property="BarTextColor" Value="Black" />
-                <Setter Property="BackgroundColor" Value="{StaticResource BackgroundGradientStart}" />
-                <Setter Property="BarBackgroundColor" Value="{StaticResource BackgroundGradientStart}" />
+                <Setter Property="BarTextColor" Value="{AppThemeBinding Light=Black, Dark={StaticResource textColor}}" />
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource BackgroundGradientStart}, Dark={StaticResource darkBackgroundColor}}" />
+                <Setter Property="BarBackgroundColor" Value="{AppThemeBinding Light={StaticResource BackgroundGradientStart}, Dark={StaticResource darkBackgroundColor}}" />
             </Style>
 
             <Style TargetType="ContentPage">
-                <Setter Property="BackgroundColor" Value="White" />
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark={StaticResource darkBackgroundColor}}" />
             </Style>
             
             <Style TargetType="ScrollView">

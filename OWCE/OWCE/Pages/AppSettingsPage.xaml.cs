@@ -9,8 +9,16 @@ namespace OWCE.Pages
 {
     public partial class AppSettingsPage : BaseContentPage
     {
+        const string FollowSystemOption = "Follow System";
+        const string LightOption = "Light";
+        const string DarkOption = "Dark";
+
         public bool MetricDisplay { get; set; }
         public bool AutoRideRecording { get; set; }
+
+        public IReadOnlyList<string> ThemeOptions { get; } = new[] { FollowSystemOption, LightOption, DarkOption };
+
+        public string SelectedThemeOption { get; set; }
 
         public AppSettingsPage()
         {
@@ -18,6 +26,13 @@ namespace OWCE.Pages
 
             MetricDisplay = App.Current.MetricDisplay;
             AutoRideRecording = Preferences.Get("auto_ride_recording", false);
+
+            SelectedThemeOption = ThemeHelper.LoadPersistedTheme() switch
+            {
+                OSAppTheme.Light => LightOption,
+                OSAppTheme.Dark => DarkOption,
+                _ => FollowSystemOption,
+            };
 
             CustomToolbarItems.Add(new CustomToolbarItem()
             {
@@ -40,6 +55,15 @@ namespace OWCE.Pages
 
                     Preferences.Set("metric_display", MetricDisplay);
                     Preferences.Set("auto_ride_recording", AutoRideRecording);
+
+                    var selectedTheme = SelectedThemeOption switch
+                    {
+                        LightOption => OSAppTheme.Light,
+                        DarkOption => OSAppTheme.Dark,
+                        _ => OSAppTheme.Unspecified,
+                    };
+                    ThemeHelper.PersistTheme(selectedTheme);
+                    Application.Current.UserAppTheme = selectedTheme;
 
                     MessagingCenter.Send<App>(App.Current, App.UnitDisplayUpdatedKey);
 

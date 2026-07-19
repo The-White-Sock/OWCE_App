@@ -10,27 +10,27 @@
 
     <ScrollView>
         <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto" Padding="16">
-            <Label Grid.Row="0" Grid.Column="0" VerticalTextAlignment="Center" Text="Ride Name" FontAttributes="Bold" TextColor="Black" />
+            <Label Grid.Row="0" Grid.Column="0" VerticalTextAlignment="Center" Text="Ride Name" FontAttributes="Bold" />
             <Entry Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,16" Text="{Binding RideName}" />
 
-            <Label Grid.Row="2" Grid.Column="0" VerticalTextAlignment="Center" Text="Aftermarket Battery" FontAttributes="Bold" TextColor="Black" />
+            <Label Grid.Row="2" Grid.Column="0" VerticalTextAlignment="Center" Text="Aftermarket Battery" FontAttributes="Bold" />
             <Switch Grid.Row="2" Grid.Column="1" IsToggled="{Binding IsAftermarketBattery}"  />
             <Entry Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,16" Placeholder="Battery type" Text="{Binding BatteryType}" IsEnabled="{Binding IsAftermarketBattery}" />
 
-            <Label Grid.Row="4" Grid.Column="0" VerticalTextAlignment="Center" Text="Remove Identifiers" FontAttributes="Bold" TextColor="Black" />
+            <Label Grid.Row="4" Grid.Column="0" VerticalTextAlignment="Center" Text="Remove Identifiers" FontAttributes="Bold" />
             <Switch Grid.Row="4" Grid.Column="1" IsToggled="{Binding RemoveIdentifiers}" />
-            <Label Grid.Row="5" Grid.ColumnSpan="2" Text="Replace all personally identifiable information such as board serial number with zeros." FontSize="Small" TextColor="Black" Margin="0,0,0,16"  />
+            <Label Grid.Row="5" Grid.ColumnSpan="2" Text="Replace all personally identifiable information such as board serial number with zeros." FontSize="Small" Margin="0,0,0,16"  />
 
-            <Label Grid.Row="6" Grid.Column="0" VerticalTextAlignment="Center" Text="Allow Publicly"  FontAttributes="Bold" TextColor="Black" />
+            <Label Grid.Row="6" Grid.Column="0" VerticalTextAlignment="Center" Text="Allow Publicly"  FontAttributes="Bold" />
             <Switch Grid.Row="6" Grid.Column="1" IsToggled="{Binding AllowPublicly}" />
-            <Label Grid.Row="7" Grid.ColumnSpan="2" Text="Your ride may be added to the OWCE repository so anyone working from the source could replay your ride through the app." FontSize="Small" TextColor="Black" Margin="0,0,0,16"  />
+            <Label Grid.Row="7" Grid.ColumnSpan="2" Text="Your ride may be added to the OWCE repository so anyone working from the source could replay your ride through the app." FontSize="Small" Margin="0,0,0,16"  />
 
-            <Label Grid.Row="8" Grid.Column="0" VerticalTextAlignment="Center" Text="Additional Notes" FontAttributes="Bold" TextColor="Black" />
+            <Label Grid.Row="8" Grid.Column="0" VerticalTextAlignment="Center" Text="Additional Notes" FontAttributes="Bold" />
             <yummy:PancakeView Grid.Row="9" Grid.ColumnSpan="2" CornerRadius="4">
                 <yummy:PancakeView.Border>
                     <yummy:Border  Color="LightGray" Thickness="1" />
                 </yummy:PancakeView.Border>
-                <Editor Text="{Binding AdditionalNotes}" TextColor="Black" />
+                <Editor Text="{Binding AdditionalNotes}" TextColor="{AppThemeBinding Light=Black, Dark=White}" />
             </yummy:PancakeView>
 
             <Button Grid.Row="10" Grid.ColumnSpan="2" Text="View raw ride data being submitted" Command="{Binding ViewDataSubmittedCommand}" />

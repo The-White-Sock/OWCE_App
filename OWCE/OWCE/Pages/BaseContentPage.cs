@@ -109,10 +109,7 @@ namespace OWCE.Pages
                 ColumnSpacing = 0,
             };
 
-            _navBackgroundView = new BoxView()
-            {
-                BackgroundColor = (App.Current.Resources["BackgroundGradientStart"] as Color?) ?? Color.White,
-            };
+            _navBackgroundView = new BoxView();
             Grid.SetRowSpan(_navBackgroundView, 2);
             Grid.SetRow(_navBackgroundView, 0);
             _mainGrid.Children.Add(_navBackgroundView);
@@ -125,7 +122,6 @@ namespace OWCE.Pages
             {
                 FontAttributes = FontAttributes.Bold,
                 FontSize = 18,
-                TextColor = Color.Black,
                 VerticalOptions = LayoutOptions.Center,
                 HorizontalOptions = LayoutOptions.Center,
             };
@@ -133,7 +129,41 @@ namespace OWCE.Pages
             Grid.SetRow(_titleLabel, 1);
             _mainGrid.Children.Add(_titleLabel);
 
+            UpdateThemedColors();
+
             Content = _mainGrid;
+        }
+
+        // These two are built in C# rather than XAML, so they don't get the automatic
+        // live theme-reactivity {AppThemeBinding ...} gives everything else (#35) -
+        // refreshed explicitly on OnAppearing/OnDisappearing's subscription below,
+        // since this same page instance can otherwise sit visible for a long time
+        // (BoardListPage is the app's root page) while the rider changes the theme
+        // from Settings in a separate modal.
+        void UpdateThemedColors()
+        {
+            _navBackgroundView.BackgroundColor = ThemeHelper.Pick(
+                (App.Current.Resources["BackgroundGradientStart"] as Color?) ?? Color.White,
+                (App.Current.Resources["darkBackgroundColor"] as Color?) ?? Color.Black);
+
+            _titleLabel.TextColor = ThemeHelper.Pick(Color.Black, Color.White);
+        }
+
+        void OnRequestedThemeChanged(object sender, AppThemeChangedEventArgs e)
+        {
+            UpdateThemedColors();
+        }
+
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+            Application.Current.RequestedThemeChanged += OnRequestedThemeChanged;
+        }
+
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            Application.Current.RequestedThemeChanged -= OnRequestedThemeChanged;
         }
 
 

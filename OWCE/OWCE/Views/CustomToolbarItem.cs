@@ -159,7 +159,7 @@ namespace OWCE.Views
                 _label = new Label()
                 {
                     FontSize = 18,
-                    TextColor = Color.Black,
+                    TextColor = ThemeHelper.Pick(Color.Black, Color.White),
                     VerticalOptions = LayoutOptions.Center,
                     HorizontalOptions = LayoutOptions.Center,
                 };

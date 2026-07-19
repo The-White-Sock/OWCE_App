@@ -72,6 +72,10 @@ namespace OWCE
 
             MetricDisplay = Preferences.Get("metric_display", System.Globalization.RegionInfo.CurrentRegion.IsMetric);
 
+            // Applied before MainPage is constructed below so the first frame already
+            // renders in the right theme (see #35), rather than flashing light then dark.
+            UserAppTheme = ThemeHelper.LoadPersistedTheme();
+
             if (Directory.Exists(LogsDirectory) == false)
             {
                 Directory.CreateDirectory(LogsDirectory);
