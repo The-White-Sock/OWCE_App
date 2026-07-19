@@ -48,6 +48,16 @@ namespace OWCE
 
         public string LogsDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "past_rides");
 
+        // The board BoardPage is currently showing, if any - set/cleared by its
+        // constructor/TearDown(). OnSleep() below uses this to persist a cached
+        // snapshot (see #34) before the OS can reclaim a backgrounded app, since
+        // SaveCachedData() otherwise only ever runs from the explicit disconnect
+        // path (BoardPage.DisconnectAndPop) - background/force-close without
+        // tapping Disconnect first previously lost that session's data entirely,
+        // even though CachedBoardData is already SQLite-backed (owce.db) and would
+        // otherwise survive an app restart just fine.
+        public OWBoard ActiveBoard { get; set; }
+
         public string UserAgent => $"OWCE/{Xamarin.Essentials.AppInfo.VersionString} Build/{Xamarin.Essentials.AppInfo.BuildString} ({Xamarin.Essentials.DeviceInfo.Platform}; {Xamarin.Essentials.DeviceInfo.VersionString})";
 
 
@@ -169,7 +179,12 @@ namespace OWCE
 
         protected override void OnSleep()
         {
-            // Handle when your app sleeps
+            // Persist the active board's data before Android can kill a
+            // backgrounded app - see ActiveBoard's comment above. SaveCachedData()
+            // already no-ops for a board that was only ever opened from a cached
+            // snapshot and never actually connected this session, so this is safe
+            // to call unconditionally.
+            ActiveBoard?.SaveCachedData();
         }
 
         protected override void OnResume()
