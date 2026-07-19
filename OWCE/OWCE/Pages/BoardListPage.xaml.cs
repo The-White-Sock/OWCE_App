@@ -205,6 +205,7 @@ namespace OWCE.Pages
 
                 App.Current.OWBLE.ErrorOccurred += OWBLE_ErrorOccurred;
                 App.Current.OWBLE.BoardDiscovered += OWBLE_BoardDiscovered;
+                App.Current.OWBLE.BoardDisconnected += OWBLE_BoardDisconnected;
 
                 // If this is the first launch of the current app we want to re-alert the user that this is a community driven app.
                 if (VersionTracking.IsFirstLaunchForCurrentVersion)
@@ -346,6 +347,32 @@ namespace OWCE.Pages
             }
         }
 
+        // The board a BoardPage is currently connected to, so OWBLE_BoardDisconnected
+        // below knows which Boards entry to update - OWBLE.BoardDisconnected doesn't
+        // pass the board itself, and only one board is ever connected at a time.
+        string _connectedBoardId;
+
+        // Without this, a board's IsAvailable never resets to false anywhere once
+        // OWBLE_BoardDiscovered above has set it true - it just stays true for the
+        // rest of this page's lifetime, even after the user disconnects. Since
+        // ShowCachedInfo (see OWBaseBoard.cs) requires IsAvailable == false, that
+        // permanently hid the #34 cached-data panel for any board already seen once
+        // this session (see #63) - this is the fix for that.
+        void OWBLE_BoardDisconnected()
+        {
+            if (_connectedBoardId == null)
+            {
+                return;
+            }
+
+            OWBaseBoard board = Boards.FirstOrDefault(b => b.ID == _connectedBoardId);
+            if (board != null)
+            {
+                board.IsAvailable = false;
+            }
+            _connectedBoardId = null;
+        }
+
         /*
         void OWBLE_BoardConnected(OWBoard board)
         {
@@ -406,6 +433,8 @@ namespace OWCE.Pages
                 await PopupNavigation.Instance.PopAllAsync();
                 if (board != null)
                 {
+                    _connectedBoardId = baseBoard.ID;
+
                     await Navigation.PushModalAsync(new CustomNavigationPage(new BoardPage(board)));
                     // Publish notification that board was connected
                     IWatch watchService = DependencyService.Get<IWatch>();
