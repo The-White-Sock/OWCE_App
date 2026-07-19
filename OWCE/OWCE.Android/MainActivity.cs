@@ -2,6 +2,7 @@
 
 using Android.App;
 using Android.Content.PM;
+using Android.Graphics;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
@@ -50,6 +51,31 @@ namespace OWCE.Droid
             global::Xamarin.Forms.Forms.Init(this, savedInstanceState);
             LoadApplication(new App());
 
+            // MainTheme (styles.xml) is a fixed AppCompat.Light theme with no day/night
+            // handling, so the OS-drawn system navigation bar (the bar with the
+            // back/home/recents buttons, distinct from anything Xamarin.Forms draws)
+            // always rendered light regardless of the in-app theme (#35) - this keeps
+            // it in sync, both at startup and whenever the theme changes afterwards
+            // (Settings' Light/Dark/Follow System picker, or an OS-level change while
+            // following system).
+            ApplySystemNavigationBarTheme();
+            global::Xamarin.Forms.Application.Current.RequestedThemeChanged += (sender, e) => ApplySystemNavigationBarTheme();
+        }
+
+        void ApplySystemNavigationBarTheme()
+        {
+            bool isDark = global::Xamarin.Forms.Application.Current.RequestedTheme == global::Xamarin.Forms.OSAppTheme.Dark;
+
+            Window.SetNavigationBarColor(isDark ? Color.ParseColor("#1C2D41") : Color.ParseColor("#E6E6E6"));
+
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
+            {
+                int uiOptions = (int)Window.DecorView.SystemUiVisibility;
+                uiOptions = isDark
+                    ? uiOptions & ~(int)SystemUiFlags.LightNavigationBar
+                    : uiOptions | (int)SystemUiFlags.LightNavigationBar;
+                Window.DecorView.SystemUiVisibility = (StatusBarVisibility)uiOptions;
+            }
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Android.Content.PM.Permission[] grantResults)
