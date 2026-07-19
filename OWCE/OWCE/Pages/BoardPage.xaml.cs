@@ -49,6 +49,11 @@ namespace OWCE.Pages
         {
             Board = board;
 
+            // Lets App.OnSleep() cache this board's data if the app gets
+            // backgrounded/killed before an explicit disconnect happens - see
+            // App.ActiveBoard's comment.
+            App.Current.ActiveBoard = board;
+
             InitializeComponent();
             BindingContext = board;
 
@@ -362,6 +367,14 @@ namespace OWCE.Pages
             }
 
             _isTornDown = true;
+
+            // Only clear if it's still us - defensive, in case a new BoardPage
+            // somehow already replaced this as the active one before this one got
+            // torn down.
+            if (App.Current.ActiveBoard == Board)
+            {
+                App.Current.ActiveBoard = null;
+            }
 
             App.Current.OWBLE.BoardDisconnected -= OWBLE_BoardDisconnected;
             App.Current.OWBLE.BoardReconnecting -= OWBLE_BoardReconnecting;
