@@ -892,10 +892,16 @@ namespace OWCE
             LastErrorCodeUUID,
             //SerialRead,
             //SerialWrite,
-            //UNKNOWN1UUID,
-            //UNKNOWN2UUID,
-            //UNKNOWN3UUID,
-            //UNKNOWN4UUID,
+
+            // #38 - never reverse-engineered; enabled here (one-time read, not a live
+            // subscription) purely to start observing values. Deliberately NOT added to
+            // _characteristicsToSubscribeTo below - that list is already at the Android
+            // 15-subscription cap (see its comment), and adding 4 more there would risk
+            // breaking other live telemetry to investigate something exploratory.
+            UNKNOWN1UUID,
+            UNKNOWN2UUID,
+            UNKNOWN3UUID,
+            UNKNOWN4UUID,
         };
 
         // Android can subscribe up to 15 things at once. Subscriptions are
@@ -1349,6 +1355,16 @@ namespace OWCE
 
             uuid = uuid.ToUpperInvariant();
 
+            // #38 - logged ahead of the `data.Length != 2` check a few lines down,
+            // since we don't actually know these four's payload size/format yet (unlike
+            // everything else handled below) - if it turns out not to be 2 bytes, that
+            // check would otherwise silently discard it before the switch further down
+            // ever sees it, making it look like the value is just always zero.
+            if (uuid == UNKNOWN1UUID || uuid == UNKNOWN2UUID || uuid == UNKNOWN3UUID || uuid == UNKNOWN4UUID)
+            {
+                Debug.WriteLine($"[#38] {GetNameFromUUID(uuid)}: {BitConverter.ToString(data)}");
+            }
+
             if (initialData)
             {
                 if (IsRecordingRide)
@@ -1588,6 +1604,14 @@ namespace OWCE
                 case LastErrorCodeUUID:
 
                     break;
+
+                // #38 - `value` here is the same ushort widened to float as everywhere
+                // else in this switch (see BitConverter.ToUInt16 above), NOT a real
+                // IEEE754 float read from the raw bytes, despite the UNKNOWN* properties
+                // being declared float. Double-check that assumption once real values
+                // come in - the [#38] Debug.WriteLine above logs the raw bytes too, so
+                // this can be compared against BitConverter.ToSingle(data, 0) if a plain
+                // ushort doesn't look right.
                 case UNKNOWN1UUID:
                     UNKNOWN1 = value;
                     break;
