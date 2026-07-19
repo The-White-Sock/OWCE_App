@@ -1047,7 +1047,31 @@ namespace OWCE.Droid.DependencyImplementations
             var connectTaskCompletionSource = new TaskCompletionSource<bool>();
             _connectTaskCompletionSource = connectTaskCompletionSource;
 
-            if (board.NativePeripheral is BluetoothDevice device)
+            BluetoothDevice device = board.NativePeripheral as BluetoothDevice;
+            if (device == null && _adapter != null && String.IsNullOrEmpty(board.ID) == false)
+            {
+                // A board opened from its cached snapshot (see
+                // BoardListPage.BoardSelectedAsync/BoardPage.ReconnectAsync) was
+                // never rediscovered by a scan this session, so NativePeripheral is
+                // still null. board.ID is the BLE MAC address on Android 5.0+ (see
+                // OWBLE_ScanCallback.OnScanResult), so resolve a device directly
+                // from it instead - unlike scanning, GetRemoteDevice() doesn't
+                // require the peripheral to currently be advertising to succeed,
+                // only ConnectGatt() below actually needs that.
+                try
+                {
+                    device = _adapter.GetRemoteDevice(board.ID);
+                }
+                catch (Exception)
+                {
+                    // board.ID isn't a valid BLE MAC address (eg a pre-Lollipop
+                    // legacy scan callback ID - see OWBLE_LeScanCallback.OnLeScan) -
+                    // nothing to resolve it to.
+                    device = null;
+                }
+            }
+
+            if (device != null)
             {
                 _gattCallback = new OWBLE_BluetoothGattCallback(this);
                 _bluetoothGatt = device.ConnectGatt(Xamarin.Essentials.Platform.CurrentActivity, false, _gattCallback);
@@ -1079,6 +1103,14 @@ namespace OWCE.Droid.DependencyImplementations
                     }
                     return false;
                 });
+            }
+            else
+            {
+                // Nothing to connect to at all (no native peripheral, and board.ID
+                // couldn't be resolved to one either) - resolve immediately instead
+                // of returning a Task that never completes and can't even be
+                // cancelled from whatever "Connecting..." popup is awaiting it.
+                connectTaskCompletionSource.TrySetResult(false);
             }
 
             return connectTaskCompletionSource.Task;
