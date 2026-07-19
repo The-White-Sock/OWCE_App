@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using OWCE.DependencyInterfaces;
 using OWCE.Pages.Popup;
@@ -38,6 +39,9 @@ namespace OWCE.Pages
 
         IAsyncCommand _stopRecordRideCommand;
         public IAsyncCommand StopRecordRideCommand => _stopRecordRideCommand ??= new AsyncCommand(StopRecordingAsync, allowsMultipleExecutions: false);
+
+        IAsyncCommand _reconnectCommand;
+        public IAsyncCommand ReconnectCommand => _reconnectCommand ??= new AsyncCommand(ReconnectAsync, allowsMultipleExecutions: false);
 
 
 
@@ -126,16 +130,29 @@ namespace OWCE.Pages
         }
 
         // Fires once the OWBLE layer itself gives up retrying (see
-        // ReconnectGiveUpAfter) - previously the "Reconnecting..." popup would
-        // otherwise sit there forever if the user never pressed Cancel themselves,
-        // since the underlying retry loop had no automatic cutoff at all.
+        // ReconnectGiveUpAfter). Previously this exited straight back to the board
+        // list via DisconnectAndPop, same as an explicit user disconnect - jarring
+        // mid-ride, and it threw away perfectly readable last-known values for no
+        // reason. Now it stays on this page instead (see EnterDisconnectedState)
+        // and only actually leaves if the rider explicitly disconnects or a manual
+        // Reconnect attempt fails outright.
         private async void OWBLE_BoardReconnectFailed()
         {
             System.Diagnostics.Debug.WriteLine("OWBLE_BoardReconnectFailed");
 
-            await GiveUpAndDisconnect();
+            if (PopupNavigation.Instance.PopupStack.Any())
+            {
+                await PopupNavigation.Instance.PopAllAsync();
+            }
+            _reconnectingAlert = null;
+
+            await EnterDisconnectedState();
         }
 
+        // Used only by the "Reconnecting..." popup's own Cancel button - the rider
+        // actively watching that popup and choosing to cancel is a deliberate "take
+        // me back" action, unlike OWBLE_BoardReconnectFailed's silent watchdog
+        // timeout above, so this still exits to the board list as before.
         private async Task GiveUpAndDisconnect()
         {
             if (PopupNavigation.Instance.PopupStack.Any())
@@ -144,6 +161,82 @@ namespace OWCE.Pages
             }
             _reconnectingAlert = null;
             await DisconnectAndPop();
+        }
+
+        // Freezes this page in a "showing last known values" state instead of
+        // exiting - dims the existing gauges and disables ride-mode/recording
+        // controls (see BoardPage.xaml's bindings to Board.IsConnected), and shows
+        // a banner with a manual Reconnect action. Board.Teardown()/the page's own
+        // TearDown() deliberately aren't called here: this OWBoard and its OWBLE
+        // subscriptions need to stay alive and reusable in case the rider taps
+        // Reconnect below.
+        async Task EnterDisconnectedState()
+        {
+            if (Board.IsDisconnected)
+            {
+                return;
+            }
+
+            await App.Current.OWBLE.Disconnect();
+
+            Board.SaveCachedData();
+            Board.StopLogging();
+            Board.PauseBackgroundLoops();
+            Board.DisconnectedAt = DateTime.UtcNow;
+            Board.IsDisconnected = true;
+        }
+
+        async Task ReconnectAsync()
+        {
+            if (Board.IsDisconnected == false)
+            {
+                return;
+            }
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            var connectingAlert = new ConnectingAlert(Board.Name, new Command(() =>
+            {
+                if (cancellationTokenSource.IsCancellationRequested == false)
+                {
+                    cancellationTokenSource.Cancel();
+                }
+            }), "Reconnecting...");
+            await PopupNavigation.Instance.PushAsync(connectingAlert, true);
+
+            bool didConnect;
+            try
+            {
+                // Reuses this same Board instance (rather than App.ConnectToBoard,
+                // which would construct a new OWBoard) so its existing bindings,
+                // event subscriptions, and any other in-memory state don't need to
+                // be re-wired - OWBLE.Connect only needs an OWBaseBoard with the
+                // right ID/NativePeripheral, both already set on Board.
+                didConnect = await App.Current.OWBLE.Connect(Board, cancellationTokenSource.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                didConnect = false;
+            }
+            await PopupNavigation.Instance.PopAllAsync();
+
+            if (didConnect)
+            {
+                Board.IsDisconnected = false;
+                Board.DisconnectedAt = null;
+
+                // Same re-arm SubscribeToBLE() does for the very first connect
+                // (hardware/firmware reads, the handshake/Jumpstart flow if this
+                // board needs it, and re-subscribing to live notifications) - a
+                // full give-up closes the native GATT connection entirely, so this
+                // is a fresh connection from scratch, not the same kind of resume
+                // OWBLE's own automatic reconnect does via BoardReconnected.
+                _ = Board.SubscribeToBLE();
+            }
+            else
+            {
+                var alert = new Alert("Error", $"Unable to reconnect to {Board.Name}.");
+                await PopupNavigation.Instance.PushAsync(alert, true);
+            }
         }
 
         protected override void OnAppearing()
@@ -209,10 +302,11 @@ namespace OWCE.Pages
             if (_isDisconnecting)
             {
                 // Already in progress - reachable concurrently from the user's
-                // Disconnect action, the reconnect popup's own Cancel command, and
-                // OWBLE's independent reconnect-give-up watchdog (BoardReconnectFailed)
-                // landing at nearly the same time. Without this guard, a second call
-                // here would call Navigation.PopModalAsync() twice on the same modal.
+                // Disconnect action and the reconnect popup's own Cancel command
+                // (GiveUpAndDisconnect) landing at nearly the same time. Without
+                // this guard, a second call here would call Navigation.PopModalAsync()
+                // twice on the same modal. (OWBLE's own reconnect-give-up watchdog no
+                // longer goes through here at all - see OWBLE_BoardReconnectFailed.)
                 return;
             }
             _isDisconnecting = true;

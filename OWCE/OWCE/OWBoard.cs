@@ -563,6 +563,58 @@ namespace OWCE
             set { if (_isRecordingRide != value) { _isRecordingRide = value; OnPropertyChanged(); } }
         }
 
+        // Set once OWBLE gives up trying to reconnect (see BoardPage.EnterDisconnectedState) -
+        // the page stays up showing the last known values instead of exiting to the
+        // board list, so this needs its own flag distinct from IsAvailable (which
+        // BoardListPage already uses for a different purpose - see #63).
+        bool _isDisconnected;
+        public bool IsDisconnected
+        {
+            get { return _isDisconnected; }
+            set
+            {
+                if (_isDisconnected != value)
+                {
+                    _isDisconnected = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsConnected));
+                }
+            }
+        }
+
+        // Inverse of IsDisconnected, so XAML can bind Opacity/IsEnabled directly -
+        // BoardIsAvailableOpacityConverter (reused here for a consistent look with
+        // BoardListPage's cached-data treatment) expects true to mean "not dimmed".
+        public bool IsConnected => IsDisconnected == false;
+
+        DateTime? _disconnectedAt;
+        public DateTime? DisconnectedAt
+        {
+            get { return _disconnectedAt; }
+            set
+            {
+                if (_disconnectedAt != value)
+                {
+                    _disconnectedAt = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(DisconnectedText));
+                }
+            }
+        }
+
+        public string DisconnectedText
+        {
+            get
+            {
+                if (DisconnectedAt == null)
+                {
+                    return String.Empty;
+                }
+
+                return $"Disconnected - showing last known values, synced {FormatElapsedSince(DisconnectedAt.Value)}";
+            }
+        }
+
         readonly IOWBLE _owble;
 
         OWBoardEventList _events = new OWBoardEventList();
@@ -598,6 +650,20 @@ namespace OWCE
             // Subscribe to property changes to keep watch app in sync
             // (eg speed, battery percent changes)
             this.PropertyChanged += WatchSyncHandler.HandlePropertyChanged;
+        }
+
+        // Stops the per-connection background loops SubscribeToBLE() starts (RSSI
+        // polling, GT/XR keep-alive) without unsubscribing from OWBLE's events or
+        // marking this instance torn down - used when OWBLE gives up reconnecting
+        // (see BoardPage.EnterDisconnectedState) so those loops stop firing against
+        // a GATT connection OWBLE has already fully closed, while still leaving
+        // this OWBoard reusable for a later manual reconnect (which calls
+        // SubscribeToBLE() again, starting fresh copies of both loops - stopping
+        // the old ones here first avoids ending up with two of each running).
+        internal void PauseBackgroundLoops()
+        {
+            _keepHandshakeBackgroundRunning = false;
+            _keepRSSIMonitorRunning = false;
         }
 
         // Undoes everything done in the constructor/SubscribeToBLE, and stops any

@@ -126,23 +126,30 @@ namespace OWCE
                     return String.Empty;
                 }
 
-                var elapsed = DateTime.UtcNow - CachedLastUpdated.Value;
-                if (elapsed.TotalMinutes < 1)
-                {
-                    return "Last synced just now";
-                }
-                else if (elapsed.TotalMinutes < 60)
-                {
-                    return $"Last synced {(int)elapsed.TotalMinutes}m ago";
-                }
-                else if (elapsed.TotalHours < 24)
-                {
-                    return $"Last synced {(int)elapsed.TotalHours}h ago";
-                }
-                else
-                {
-                    return $"Last synced {(int)elapsed.TotalDays}d ago";
-                }
+                return $"Last synced {FormatElapsedSince(CachedLastUpdated.Value)}";
+            }
+        }
+
+        // Shared by LastSyncedText above and OWBoard.DisconnectedText, which needs
+        // the identical "just now"/"Xm ago"/etc. formatting for its own banner text.
+        protected static string FormatElapsedSince(DateTime timestampUtc)
+        {
+            var elapsed = DateTime.UtcNow - timestampUtc;
+            if (elapsed.TotalMinutes < 1)
+            {
+                return "just now";
+            }
+            else if (elapsed.TotalMinutes < 60)
+            {
+                return $"{(int)elapsed.TotalMinutes}m ago";
+            }
+            else if (elapsed.TotalHours < 24)
+            {
+                return $"{(int)elapsed.TotalHours}h ago";
+            }
+            else
+            {
+                return $"{(int)elapsed.TotalDays}d ago";
             }
         }
 
